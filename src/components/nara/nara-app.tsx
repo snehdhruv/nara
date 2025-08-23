@@ -9,6 +9,12 @@ import { useAudiobook } from "@/hooks/nara/use-audiobook";
 import { useNotes } from "@/hooks/nara/use-notes";
 import { Icon } from "@iconify/react";
 import { Dashboard } from "./dashboard";
+// Import the real audio system
+import { VoiceAgentBridge, VoiceContext } from "../../../main/audio/VoiceAgentBridge";
+import { AudioOrchestrator } from "../../../main/audio/AudioOrchestrator";
+import { VapiService } from "../../../main/audio/VapiService";
+import { TTSService } from "../../../main/audio/TTSService";
+import { AudioManager } from "../../../main/audio/AudioManager";
 
 export function NaraApp() {
   const [selectedBookId, setSelectedBookId] = React.useState<string | null>(null);
@@ -26,33 +32,114 @@ export function NaraApp() {
   
   const { notes, addNote } = useNotes();
 
+  // Audio system refs
+  const voiceAgentBridge = React.useRef<VoiceAgentBridge | null>(null);
+  const audioOrchestrator = React.useRef<AudioOrchestrator | null>(null);
+
+  // Initialize audio system
+  React.useEffect(() => {
+    if (selectedBookId && currentBook) {
+      const initAudioSystem = async () => {
+        try {
+          // Initialize audio services
+          const vapi = new VapiService();
+          const tts = new TTSService();
+          const audio = new AudioManager();
+          const orchestrator = new AudioOrchestrator();
+          
+          // Set up voice context for current book
+          const voiceContext: VoiceContext = {
+            audiobookId: currentBook.id,
+            datasetPath: `/data/${currentBook.id}.json`, // Assumes book data exists
+            currentPosition_s: currentPosition,
+            userProgressIdx: Math.floor(currentPosition / 60), // Rough chapter estimation
+            modeHint: "auto"
+          };
+
+          // Initialize voice agent bridge
+          const bridge = new VoiceAgentBridge({
+            vapi,
+            tts,
+            audio,
+            orchestrator,
+            context: voiceContext,
+            runner: null // Will be initialized when needed
+          });
+
+          // Set up event listeners
+          bridge.on('interactionStart', () => {
+            setIsListening(true);
+            setIsVoiceAgentActive(true);
+          });
+
+          bridge.on('interactionEnd', (result) => {
+            setIsListening(false);
+            setIsVoiceAgentActive(false);
+            
+            // Add note if there was a conversation
+            if (result.question && result.answer) {
+              addNote({
+                id: Date.now().toString(),
+                title: "Voice Discussion",
+                content: `Q: ${result.question}\n\nA: ${result.answer}`,
+                timestamp: Date.now() / 1000,
+                audiobookPosition: currentPosition,
+                topic: "Voice Chat"
+              });
+            }
+          });
+
+          voiceAgentBridge.current = bridge;
+          audioOrchestrator.current = orchestrator;
+
+          console.log('[Audio System] Initialized successfully');
+        } catch (error) {
+          console.error('[Audio System] Failed to initialize:', error);
+        }
+      };
+
+      initAudioSystem();
+    }
+
+    return () => {
+      // Cleanup
+      if (voiceAgentBridge.current) {
+        voiceAgentBridge.current.removeAllListeners();
+      }
+    };
+  }, [selectedBookId, currentBook, currentPosition, addNote]);
+
   const handleNarratorActivate = async () => {
     try {
+      if (!voiceAgentBridge.current) {
+        console.warn('[Voice Agent] Audio system not initialized');
+        return;
+      }
+
       if (isListening) {
-        // Stop listening
-        setIsListening(false);
-        setIsVoiceAgentActive(false);
+        // Stop current voice interaction
+        await voiceAgentBridge.current.stopInteraction();
         console.log('[Voice Agent] Stopped listening');
-        // TODO: Stop voice service when audio team provides interface
       } else {
-        // Start listening
-        setIsListening(true);
-        setIsVoiceAgentActive(true);
-        console.log('[Voice Agent] Started listening...');
+        // Start voice interaction
+        console.log('[Voice Agent] Starting voice interaction...');
         
-        // Pause current playback if active and not muted
-        if (isPlaying && !isMuted) {
-          togglePlayback();
+        // Update voice context with current position
+        const updatedContext: VoiceContext = {
+          audiobookId: currentBook.id,
+          datasetPath: `/data/${currentBook.id}.json`,
+          currentPosition_s: currentPosition,
+          userProgressIdx: Math.floor(currentPosition / 60),
+          modeHint: "auto"
+        };
+
+        // Start voice interaction with real audio system
+        await voiceAgentBridge.current.startInteraction(updatedContext);
+        
+        // Pause audiobook if playing and not muted
+        if (isPlaying && !isMuted && audioOrchestrator.current) {
+          audioOrchestrator.current.pauseBackgroundAudio();
         }
-        
-        // TODO: Initialize voice service when audio team provides interface
-        // Example: await voiceService.startListening();
-        
-        // Simulate listening timeout for demo
-        setTimeout(() => {
-          setIsListening(false);
-          setIsVoiceAgentActive(false);
-        }, 5000);
       }
     } catch (error) {
       console.error('[Voice Agent] Activation failed:', error);
@@ -64,30 +151,18 @@ export function NaraApp() {
   const handleMuteToggle = () => {
     setIsMuted(!isMuted);
     console.log(`[Audio] ${!isMuted ? 'Muted' : 'Unmuted'}`);
-    // TODO: Connect to actual mute functionality when audio team provides interface
-  };
-
-  // Voice response handler - will be connected when audio team provides interface
-  const handleVoiceResponse = React.useCallback((transcript: string, response: string) => {
-    // Handle voice interaction completion
-    addNote({
-      id: Date.now().toString(),
-      title: "Voice Discussion",
-      content: `Q: ${transcript}\n\nA: ${response}`,
-      timestamp: Date.now() / 1000, // Use current time for proper ordering
-      audiobookPosition: currentPosition, // Capture where in the book the conversation happened
-      topic: "Voice Chat"
-    });
     
-    // Reset listening state
-    setIsListening(false);
-  }, [addNote, currentPosition]);
-
-  React.useEffect(() => {
-    // TODO: Setup voice service event listeners when available
-    // voiceService.on('transcription', handleVoiceResponse);
-    // return () => voiceService.off('transcription', handleVoiceResponse);
-  }, []);
+    // Mute/unmute the audio system
+    if (audioOrchestrator.current) {
+      if (!isMuted) {
+        // Muting - stop any active interactions and duck audio
+        audioOrchestrator.current.duckAudio(0.1); // Very low volume
+      } else {
+        // Unmuting - restore normal audio levels
+        audioOrchestrator.current.resumeAudio();
+      }
+    }
+  };
 
   // Handle book selection from dashboard
   const handleSelectBook = (bookId: string) => {
