@@ -10,7 +10,9 @@ interface TopBarProps {
   togglePlayback: () => void;
   playbackSpeed: number;
   setPlaybackSpeed: (speed: number) => void;
-  onBackToDashboard: () => void; // Add back navigation prop
+  seekTo: (position: number) => void;
+  skipToChapter: (chapterIdx: number) => void;
+  onBackToDashboard: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -20,7 +22,9 @@ export const TopBar: React.FC<TopBarProps> = ({
   togglePlayback,
   playbackSpeed,
   setPlaybackSpeed,
-  onBackToDashboard // Add parameter
+  seekTo,
+  skipToChapter,
+  onBackToDashboard
 }) => {
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -65,8 +69,8 @@ export const TopBar: React.FC<TopBarProps> = ({
             isIconOnly 
             variant="light" 
             className="text-gray-600 hover:text-gray-800"
-            onPress={() => {}}
-            aria-label="Previous chapter"
+            onPress={() => seekTo(0)}
+            aria-label="Rewind to beginning"
           >
             <Icon icon="lucide:skip-back" width={20} />
           </Button>
@@ -86,8 +90,8 @@ export const TopBar: React.FC<TopBarProps> = ({
             isIconOnly 
             variant="light"
             className="text-gray-600 hover:text-gray-800" 
-            onPress={() => {}}
-            aria-label="Next chapter"
+            onPress={() => seekTo(currentPosition + 30)}
+            aria-label="Skip forward 30 seconds"
           >
             <Icon icon="lucide:skip-forward" width={20} />
           </Button>

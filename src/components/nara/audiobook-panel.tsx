@@ -15,6 +15,9 @@ interface WordWithTiming {
   isActive: boolean;
 }
 
+// Cache for word timing calculations
+const wordTimingCache = new Map<string, WordWithTiming[]>();
+
 export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
   book,
   currentPosition,
@@ -24,56 +27,72 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
   const currentParagraphRef = React.useRef<HTMLParagraphElement>(null);
   const activeWordRef = React.useRef<HTMLSpanElement>(null);
 
-  // Parse content into words with timing information using improved algorithm
+  // Parse content into words with timing information using improved algorithm and caching
   const wordsWithTiming = React.useMemo(() => {
     if (!book.content || book.content.length === 0) return [];
     
-    const words: WordWithTiming[] = [];
+    // Create cache key from book content
+    const contentHash = book.id + '_' + JSON.stringify(book.content).slice(0, 100);
     
-    book.content.forEach((paragraph) => {
-      const text = paragraph.text;
-      const paragraphWords = text.split(/\s+/).filter(word => word.trim().length > 0);
-      const duration = paragraph.endTime - paragraph.startTime;
+    // Check cache first
+    let cachedWords = wordTimingCache.get(contentHash);
+    if (!cachedWords) {
+      console.log('[AudiobookPanel] Computing word timings for first time...');
+      const words: WordWithTiming[] = [];
       
-      // Calculate word weights based on length and complexity
-      const wordWeights = paragraphWords.map(word => {
-        const baseWeight = 1.0;
-        const lengthWeight = Math.max(0.5, word.length / 8); // Longer words take more time
-        const punctuationWeight = /[.!?;,]/.test(word) ? 1.3 : 1.0; // Punctuation adds pause
-        const capitalWeight = /^[A-Z]/.test(word) ? 1.1 : 1.0; // Capitalized words (names) take slightly more time
-        return baseWeight * lengthWeight * punctuationWeight * capitalWeight;
-      });
-      
-      const totalWeight = wordWeights.reduce((sum, weight) => sum + weight, 0);
-      
-      let currentTime = paragraph.startTime;
-      
-      paragraphWords.forEach((word, index) => {
-        const wordDuration = (wordWeights[index] / totalWeight) * duration;
-        const startTime = currentTime;
-        const endTime = startTime + wordDuration;
+      book.content.forEach((paragraph) => {
+        const text = paragraph.text;
+        const paragraphWords = text.split(/\s+/).filter(word => word.trim().length > 0);
+        const duration = paragraph.endTime - paragraph.startTime;
         
-        words.push({
-          word: word.trim(),
-          startTime,
-          endTime,
-          isActive: currentPosition >= startTime && currentPosition < endTime
+        // Calculate word weights based on length and complexity
+        const wordWeights = paragraphWords.map(word => {
+          const baseWeight = 1.0;
+          const lengthWeight = Math.max(0.5, word.length / 8); // Longer words take more time
+          const punctuationWeight = /[.!?;,]/.test(word) ? 1.3 : 1.0; // Punctuation adds pause
+          const capitalWeight = /^[A-Z]/.test(word) ? 1.1 : 1.0; // Capitalized words (names) take slightly more time
+          return baseWeight * lengthWeight * punctuationWeight * capitalWeight;
         });
         
-        currentTime = endTime;
+        const totalWeight = wordWeights.reduce((sum, weight) => sum + weight, 0);
+        let currentTime = paragraph.startTime;
+        
+        paragraphWords.forEach((word, index) => {
+          const wordDuration = (wordWeights[index] / totalWeight) * duration;
+          const startTime = currentTime;
+          const endTime = startTime + wordDuration;
+          
+          words.push({
+            word: word.trim(),
+            startTime,
+            endTime,
+            isActive: false // Will be set below
+          });
+          
+          currentTime = endTime;
+        });
+        
+        // Add paragraph break marker
+        words.push({
+          word: '\n\n',
+          startTime: paragraph.endTime - 0.1,
+          endTime: paragraph.endTime,
+          isActive: false
+        });
       });
       
-      // Add paragraph break marker
-      words.push({
-        word: '\n\n',
-        startTime: paragraph.endTime - 0.1,
-        endTime: paragraph.endTime,
-        isActive: false
-      });
-    });
+      // Cache the computed timings
+      cachedWords = words;
+      wordTimingCache.set(contentHash, cachedWords);
+      console.log('[AudiobookPanel] Cached word timings for', words.length, 'words');
+    }
     
-    return words;
-  }, [book.content, currentPosition]);
+    // Update active state based on current position (fast operation)
+    return cachedWords.map(word => ({
+      ...word,
+      isActive: currentPosition >= word.startTime && currentPosition < word.endTime
+    }));
+  }, [book.content, book.id, currentPosition]);
 
   // Calculate which paragraph to highlight based on current position
   const currentParagraphIndex = React.useMemo(() => {

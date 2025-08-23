@@ -43,6 +43,8 @@ export function NaraApp() {
     pause,
     setPlaybackSpeed, 
     playbackSpeed,
+    seekTo,
+    skipToChapter,
     loading: bookLoading,
     error: bookError,
     isAudioMuted,
@@ -139,6 +141,18 @@ export function NaraApp() {
       setIsListening(false);
       setIsVoiceAgentActive(false);
       
+      // Resume narrator after voice interaction is complete
+      console.log('[Voice Agent] Voice interaction complete - resuming narrator');
+      currentAudioRef.current = 'audiobook';
+      
+      // Resume audiobook playback after a brief pause
+      setTimeout(() => {
+        if (!isInterruptedRef.current) {
+          play();
+          console.log('[Voice Agent] Resumed narrator playback');
+        }
+      }, 500);
+      
       // Process next query in queue if any
       const nextQuery = queryQueueRef.current.shift();
       if (nextQuery) {
@@ -148,10 +162,10 @@ export function NaraApp() {
     }
   };
 
-  // Initialize voice system only when user explicitly requests it
+  // Initialize simple voice system - just Vapi with pause/resume
   const initializeVoiceService = async () => {
     try {
-      console.log('[Voice Agent] Initializing voice system (user requested)...');
+      console.log('[Voice Agent] Initializing simple voice system...');
 
       // Check if voice modules are available first
       if (typeof window.NaraAudioFactory === 'undefined') {
@@ -159,10 +173,9 @@ export function NaraApp() {
         return false;
       }
 
-      // Request microphone permission only when user wants voice features
-      let mediaStream;
+      // Request microphone permission
       try {
-        mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        const mediaStream = await navigator.mediaDevices.getUserMedia({ 
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
@@ -170,80 +183,55 @@ export function NaraApp() {
           }
         });
         console.log('[Voice Agent] Microphone permission granted');
-        
-        // Stop the test stream immediately to avoid keeping mic active
-        mediaStream.getTracks().forEach(track => track.stop());
+        mediaStream.getTracks().forEach(track => track.stop()); // Stop test stream
       } catch (permissionError) {
         console.warn('[Voice Agent] Microphone permission denied:', permissionError);
         return false;
       }
 
-      // Initialize VAD processor if available
-      if (window.NaraAudioFactory.createVADProcessor) {
-        vadProcessorRef.current = await window.NaraAudioFactory.createVADProcessor({
-          frameSize: 20,
-          threshold: 0.6,
-          hysteresis: {
-            speechFrames: 3,
-            totalFrames: 5,
-            silenceMs: 250
-          },
-          sampleRate: 48000
-        });
-
-        // Set up VAD event handlers
-        vadProcessorRef.current.on('speechStart', async (data) => {
-          console.log('[Voice Agent] Speech detected');
-          setIsListening(true);
-          setIsVoiceAgentActive(true);
-          
-          // Interrupt TTS if playing
-          if (currentAudioRef.current === 'tts') {
-            enableTTSInterruption();
-          }
-          // Pause audiobook when speech is detected
-          else if (isPlaying && currentAudioRef.current === 'audiobook') {
-            pause();
-            console.log('[Voice Agent] Paused audiobook for voice input');
-          }
-        });
-
-        vadProcessorRef.current.on('speechEnd', () => {
-          console.log('[Voice Agent] Speech ended');
-          setIsListening(false);
-          setIsVoiceAgentActive(false);
-        });
-
-        await vadProcessorRef.current.initialize();
-        await vadProcessorRef.current.start();
-        console.log('[Voice Agent] VAD processor ready');
-      }
-
-      // Initialize Vapi service for STT
+      // Initialize Vapi service for voice interaction
       const vapiService = await window.NaraAudioFactory.createVapiService({
         apiKey: '765f8644-1464-4b36-a4fe-c660e15ba313',
         assistantId: '73c59df7-34d0-4e5a-89b0-d0668982c8cc',
-        sttOnly: true,
+        sttOnly: false, // Full voice interaction
         continuousListening: true
       });
 
-      // Set up transcript handling
+      // Set up voice events
+      vapiService.addEventListener('speechStart', () => {
+        console.log('[Voice Agent] User started speaking - pausing narrator');
+        setIsListening(true);
+        if (isPlaying) {
+          pause(); // Pause narrator
+          console.log('[Voice Agent] PAUSED narrator');
+        }
+      });
+
       vapiService.addEventListener('userTranscript', async (event: CustomEvent) => {
         const transcript = event.detail;
-        console.log(`[Voice Agent] STT: "${transcript}"`);
+        console.log(`[Voice Agent] User said: "${transcript}"`);
+        await processVoiceQuery(transcript);
+      });
+
+      vapiService.addEventListener('responseEnd', () => {
+        console.log('[Voice Agent] Voice interaction complete - resuming narrator');
+        setIsListening(false);
+        setIsVoiceAgentActive(false);
         
-        if (isListeningContinuously.current) {
-          await processVoiceQuery(transcript);
-        }
+        // Resume narrator after brief pause
+        setTimeout(() => {
+          play();
+          console.log('[Voice Agent] Resumed narrator');
+        }, 500);
       });
 
       vapiServiceRef.current = vapiService;
       
-      // Start listening
+      // Start continuous listening
       await vapiService.startConversation();
       isListeningContinuously.current = true;
       
-      console.log('[Voice Agent] Voice system ready');
+      console.log('[Voice Agent] Simple voice system ready and listening');
       return true;
       
     } catch (error) {
@@ -589,6 +577,8 @@ export function NaraApp() {
         togglePlayback={togglePlayback}
         playbackSpeed={playbackSpeed}
         setPlaybackSpeed={setPlaybackSpeed}
+        seekTo={seekTo}
+        skipToChapter={skipToChapter}
         onBackToDashboard={handleBackToDashboard}
       />
       
