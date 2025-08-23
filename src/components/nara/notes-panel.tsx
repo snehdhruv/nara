@@ -103,7 +103,43 @@ const NoteSection: React.FC<NoteSectionProps> = ({ note, index, isLast }) => {
           </div>
         </div>
         
-        <p className="text-small text-wood-700 leading-relaxed">{note.content}</p>
+        {/* Render note content with proper bullet points */}
+        <div className="text-small text-wood-700 leading-relaxed space-y-2">
+          {note.content.split('\n').map((line, lineIndex) => {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) return null;
+            
+            // Skip any lines that contain markdown artifacts or JSON
+            if (
+              trimmedLine.includes('answer_markdown') || 
+              trimmedLine.includes('answer_text') ||
+              trimmedLine.match(/^["'{\}\[\]]/) ||
+              trimmedLine.includes('":') ||
+              trimmedLine.startsWith('"') && trimmedLine.endsWith('"') ||
+              trimmedLine === '{' || trimmedLine === '}' ||
+              trimmedLine === ',' || trimmedLine === '",' ||
+              trimmedLine.startsWith('{"') ||
+              trimmedLine.endsWith('"}')
+            ) {
+              return null;
+            }
+            
+            if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*')) {
+              return (
+                <div key={lineIndex} className="flex items-start gap-2">
+                  <span className="text-amber-600 font-semibold mt-0.5">•</span>
+                  <span className="flex-1">{trimmedLine.replace(/^[•\-*]\s*/, '')}</span>
+                </div>
+              );
+            } else {
+              return (
+                <div key={lineIndex} className="font-medium text-wood-800">
+                  {trimmedLine}
+                </div>
+              );
+            }
+          })}
+        </div>
         
         {/* Separator line between notes (except for last note) */}
         {!isLast && (

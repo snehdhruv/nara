@@ -1,0 +1,248 @@
+{
+  "source": {
+    "platform": "youtube",
+    "video_id": "dQw4w9WgXcQ",
+    "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)",
+    "channel": "Rick Astley",
+    "duration_s": 213,
+    "rights": "owner_ok",
+    "language": "en",
+    "captions_kind": "asr",
+    "asr_provider": "openai",
+    "asr_model": "whisper-1"
+  },
+  "chapters": [
+    {
+      "idx": 1,
+      "title": "Full",
+      "start_s": 0,
+      "end_s": 213
+    }
+  ],
+  "segments": [
+    {
+      "chapter_idx": 1,
+      "start_s": 0,
+      "end_s": 27,
+      "text": "We're no strangers to love You know the rules and so do I"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 27,
+      "end_s": 35,
+      "text": "My full commitment's what I'm thinking of You wouldn't get this from any other guy"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 35,
+      "end_s": 43,
+      "text": "I just wanna tell you how I'm feeling Gotta make you understand"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 43,
+      "end_s": 47,
+      "text": "Never gonna give you up Never gonna let you down"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 47,
+      "end_s": 53,
+      "text": "Never gonna run around and desert you Never gonna make you cry"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 53,
+      "end_s": 60,
+      "text": "Never gonna say goodbye Never gonna tell a lie and hurt you"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 60,
+      "end_s": 69,
+      "text": "We've known each other for so long Your heart's been aching but you're too shy to say it"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 69,
+      "end_s": 77,
+      "text": "Inside we both know what's been going on We know the game and we're gonna play it"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 77,
+      "end_s": 85,
+      "text": "And if you ask me how I'm feeling Don't tell me you're too blind to see"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 85,
+      "end_s": 89,
+      "text": "Never gonna give you up Never gonna let you down"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 89,
+      "end_s": 95,
+      "text": "Never gonna run around and desert you Never gonna make you cry"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 95,
+      "end_s": 102,
+      "text": "Never gonna say goodbye Never gonna tell a lie and hurt you"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 102,
+      "end_s": 106,
+      "text": "Never gonna give you up Never gonna let you down"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 106,
+      "end_s": 112,
+      "text": "Never gonna run around and desert you Never gonna make you cry"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 112,
+      "end_s": 119,
+      "text": "Never gonna say goodbye Never gonna tell a lie and hurt you"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 119,
+      "end_s": 128,
+      "text": "Give you up Give you up"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 128,
+      "end_s": 136,
+      "text": "Never gonna give you up Never gonna give you up"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 136,
+      "end_s": 145,
+      "text": "We've known each other for so long Your heart's been aching but you're too shy to say it"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 145,
+      "end_s": 153,
+      "text": "Inside we both know what's been going on We know the game and we're gonna play it"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 153,
+      "end_s": 161,
+      "text": "I just wanna tell you how I'm feeling Gotta make you understand"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 161,
+      "end_s": 165,
+      "text": "Never gonna give you up Never gonna let you down"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 165,
+      "end_s": 171,
+      "text": "Never gonna run around and desert you Never gonna make you cry"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 171,
+      "end_s": 177,
+      "text": "Never gonna say goodbye Never gonna tell a lie and hurt you"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 177,
+      "end_s": 182,
+      "text": "Never gonna give you up Never gonna let you down"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 182,
+      "end_s": 188,
+      "text": "Never gonna run around and desert you Never gonna make you cry"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 188,
+      "end_s": 194,
+      "text": "Never gonna say goodbye Never gonna tell a lie and hurt you"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 195,
+      "end_s": 199,
+      "text": "Never gonna give you up Never gonna let you down"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 199,
+      "end_s": 205,
+      "text": "Never gonna run around and desert you Never gonna make you cry"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 205,
+      "end_s": 211,
+      "text": "Never gonna say goodbye Never gonna tell a lie and hurt you"
+    }
+  ],
+  "paragraphs": [
+    {
+      "chapter_idx": 1,
+      "start_s": 0,
+      "end_s": 47,
+      "text": "We're no strangers to love You know the rules and so do I My full commitment's what I'm thinking of You wouldn't get this from any other guy I just wanna tell you how I'm feeling Gotta make you understand Never gonna give you up Never gonna let you down"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 47,
+      "end_s": 77,
+      "text": "Never gonna run around and desert you Never gonna make you cry Never gonna say goodbye Never gonna tell a lie and hurt you We've known each other for so long Your heart's been aching but you're too shy to say it Inside we both know what's been going on We know the game and we're gonna play it"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 77,
+      "end_s": 102,
+      "text": "And if you ask me how I'm feeling Don't tell me you're too blind to see Never gonna give you up Never gonna let you down Never gonna run around and desert you Never gonna make you cry Never gonna say goodbye Never gonna tell a lie and hurt you"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 102,
+      "end_s": 128,
+      "text": "Never gonna give you up Never gonna let you down Never gonna run around and desert you Never gonna make you cry Never gonna say goodbye Never gonna tell a lie and hurt you Give you up Give you up"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 128,
+      "end_s": 161,
+      "text": "Never gonna give you up Never gonna give you up We've known each other for so long Your heart's been aching but you're too shy to say it Inside we both know what's been going on We know the game and we're gonna play it I just wanna tell you how I'm feeling Gotta make you understand"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 161,
+      "end_s": 182,
+      "text": "Never gonna give you up Never gonna let you down Never gonna run around and desert you Never gonna make you cry Never gonna say goodbye Never gonna tell a lie and hurt you Never gonna give you up Never gonna let you down"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 182,
+      "end_s": 205,
+      "text": "Never gonna run around and desert you Never gonna make you cry Never gonna say goodbye Never gonna tell a lie and hurt you Never gonna give you up Never gonna let you down Never gonna run around and desert you Never gonna make you cry"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 205,
+      "end_s": 211,
+      "text": "Never gonna say goodbye Never gonna tell a lie and hurt you"
+    }
+  ]
+}

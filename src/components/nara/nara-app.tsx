@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Button } from "@heroui/react";
-import { AudiobookPanel } from "./audiobook-panel";
+import { AudiobookPanelV2 } from "./audiobook-panel-v2";
 import { NotesPanel } from "./notes-panel";
 import { TopBar } from "./top-bar";
 import { useAudiobook } from "@/hooks/nara/use-audiobook";
@@ -10,6 +10,7 @@ import { useNotes } from "@/hooks/nara/use-notes";
 import { Icon } from "@iconify/react";
 import { Dashboard } from "./dashboard";
 import Script from 'next/script';
+import { generateActionableNote, createShareableNote } from '@/services/nara/note-generation';
 
 export function NaraApp() {
   const [selectedBookId, setSelectedBookId] = React.useState<string | null>(null);
@@ -27,6 +28,7 @@ export function NaraApp() {
   const abortControllerRef = React.useRef<AbortController | null>(null);
   const queryQueueRef = React.useRef<string[]>([]);
   const vapiServiceRef = React.useRef<any>(null);
+  const narratorCloningRef = React.useRef<any>(null);
   
   // Simple voice interaction approach (no VAD/continuous listening)
   
@@ -162,9 +164,11 @@ export function NaraApp() {
   };
 
   // Initialize simple voice service for STT-only mode
-  const initializeVoiceService = async () => {
+  const initializeVoiceService = async (retryCount = 0) => {
+    const maxRetries = 3;
+    
     try {
-      console.log('[Voice Agent] Initializing voice service for STT...');
+      console.log(`[Voice Agent] Initializing voice service for STT... (attempt ${retryCount + 1})`);
 
       // Check if voice modules are available first
       if (typeof window.NaraAudioFactory === 'undefined') {
@@ -202,19 +206,52 @@ export function NaraApp() {
         await processVoiceQuery(transcript);
       });
 
+      // Set up automatic error recovery
+      vapiService.addEventListener('error', async (event: CustomEvent) => {
+        console.error('[Voice Agent] VAPI service error detected, attempting recovery...');
+        vapiServiceRef.current = null;
+        setIsVoiceAgentActive(false);
+        setIsListening(false);
+        
+        // Auto-retry initialization after brief delay
+        setTimeout(async () => {
+          if (retryCount < maxRetries) {
+            console.log(`[Voice Agent] Auto-retrying service initialization... (${retryCount + 1}/${maxRetries})`);
+            await initializeVoiceService(retryCount + 1);
+          } else {
+            console.error('[Voice Agent] Max retries reached, voice service unavailable');
+          }
+        }, 2000);
+      });
+
       vapiServiceRef.current = vapiService;
       
-      console.log('[Voice Agent] Simple voice system ready and listening');
+      console.log('[Voice Agent] Voice service ready with auto-recovery');
       return true;
       
     } catch (error) {
-      console.error('[Voice Agent] Voice system initialization failed:', error);
-      return false;
+      console.error('[Voice Agent] Voice service initialization failed:', error);
+      
+      // Retry logic
+      if (retryCount < maxRetries) {
+        console.log(`[Voice Agent] Retrying initialization in 2 seconds... (${retryCount + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return await initializeVoiceService(retryCount + 1);
+      } else {
+        console.error('[Voice Agent] Max initialization retries reached');
+        return false;
+      }
     }
   };
 
   // Simple "Hey Narrator" button approach - manual voice interaction
   const handleNarratorActivate = async () => {
+    // Prevent rapid clicking
+    if (processingQueryRef.current) {
+      console.log('[Voice Agent] Operation in progress, ignoring button press');
+      return;
+    }
+    
     try {
       if (isListening) {
         // Stop listening and cancel any ongoing queries
@@ -258,14 +295,42 @@ export function NaraApp() {
         
         // Initialize voice service if not already done
         if (!vapiServiceRef.current) {
-          await initializeVoiceService();
+          console.log('[Voice Agent] Initializing voice service...');
+          const success = await initializeVoiceService();
+          if (!success) {
+            console.error('[Voice Agent] Failed to initialize voice service');
+            setIsVoiceAgentActive(false);
+            setIsListening(false);
+            return;
+          }
         }
         
         // Start listening (this enables STT through Vapi, VoiceAgentBridge handles the rest)
-        await vapiServiceRef.current.startConversation();
+        if (vapiServiceRef.current && typeof vapiServiceRef.current.startConversation === 'function') {
+          try {
+            await vapiServiceRef.current.startConversation();
+          } catch (startError) {
+            console.warn('[Voice Agent] startConversation failed, reinitializing service...');
+            vapiServiceRef.current = null;
+            await initializeVoiceService();
+            if (vapiServiceRef.current) {
+              await vapiServiceRef.current.startConversation();
+            } else {
+              throw new Error('Failed to reinitialize VAPI service');
+            }
+          }
+        } else {
+          throw new Error('VAPI service not properly initialized');
+        }
       }
     } catch (error) {
       console.error('[Voice Agent] Activation failed:', error);
+      console.error('[Voice Agent] Error details:', {
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name,
+        cause: error?.cause
+      });
       setIsVoiceAgentActive(false);
       setIsListening(false);
     }
@@ -276,28 +341,58 @@ export function NaraApp() {
     console.log(`[Audio] ${!isAudioMuted ? 'Muted' : 'Unmuted'} audiobook`);
   };
 
-  // Create note from voice interaction (separate from TTS handling)
+  // Create note from voice interaction using LangGraph note generation
   const createNoteFromVoiceInteraction = async (transcript: string, response: string) => {
     try {
+      // Generate actionable note using the service with book context
+      const generatedNote = await generateActionableNote(
+        transcript,
+        response,
+        currentPosition,
+        {
+          audiobookId: currentBook?.id,
+          chapterIdx: currentBook?.currentChapter || 1
+        }
+      );
+      
+      // Create shareable note with book context
+      const shareableNote = createShareableNote(
+        generatedNote,
+        {
+          bookId: currentBook?.id || 'unknown',
+          bookTitle: currentBook?.title || 'Audiobook',
+          currentChapter: currentBook?.currentChapter,
+          chapterTitle: currentBook?.chapterTitle
+        },
+        {
+          startTime: currentPosition - 30,
+          endTime: currentPosition,
+          transcriptSnippet: transcript.substring(0, 100)
+        }
+      );
+      
+      // Save to database
       const noteResponse = await fetch('/api/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          bookId: 'zero-to-one',
-          title: "Voice Discussion",
-          content: `Q: ${transcript}\n\nA: ${response}`,
-          timestamp: Date.now() / 1000,
-          audiobookPosition: currentPosition,
-          topic: "Voice Chat",
+          bookId: currentBook?.id || 'unknown',
+          title: shareableNote.title,
+          content: shareableNote.content,
+          bulletPoints: shareableNote.bulletPoints,
+          timestamp: shareableNote.timestamp,
+          audiobookPosition: shareableNote.audiobookPosition,
+          topic: "Voice Insight",
           userQuestion: transcript,
-          aiResponse: response
+          aiResponse: response,
+          chapterInfo: shareableNote.chapterInfo
         })
       });
 
       const data = await noteResponse.json();
       if (data.success) {
         addNote(data.note);
-        console.log('[Voice Agent] Note created:', data.note.id);
+        console.log('[Voice Agent] Actionable note created:', data.note.id);
       } else {
         console.error('[Voice Agent] Failed to create note:', data.error);
       }
@@ -417,8 +512,52 @@ export function NaraApp() {
   };
 
   React.useEffect(() => {
-    // VoiceAgentBridge handles all voice interactions end-to-end
-    // No additional setup needed for frontend
+    // Initialize narrator voice cloning properly
+    if (currentBook && typeof window !== 'undefined' && !narratorCloningRef.current) {
+      // Dynamically import the voice cloning service
+      const initializeVoiceCloning = async () => {
+        try {
+          // Import the NarratorVoiceCloning class dynamically
+          const { NarratorVoiceCloning } = await import('../../../main/audio/NarratorVoiceCloning');
+          const elevenlabsKey = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || '765f8644-1464-4b36-a4fe-c660e15ba313';
+          narratorCloningRef.current = new NarratorVoiceCloning(elevenlabsKey);
+          
+          console.log('[NaraApp] Voice cloning service initialized');
+          
+          // Clone voice when YouTube player is ready
+          const cloneNarratorVoice = async () => {
+            const youtubePlayer = (window as any).youtubePlayer;
+            if (youtubePlayer && currentBook) {
+              try {
+                const profile = await narratorCloningRef.current.cloneNarratorFromYouTube(
+                  currentBook.id,
+                  currentBook.title,
+                  youtubePlayer,
+                  30, // Start at 30 seconds for clean audio
+                  30  // 30 second sample
+                );
+                console.log('[NaraApp] Narrator voice cloned successfully:', profile.voiceId);
+              } catch (error) {
+                console.error('[NaraApp] Voice cloning failed:', error);
+                // Don't fall back - let the error be visible
+                throw error;
+              }
+            }
+          };
+          
+          // Attempt cloning after YouTube player is ready
+          setTimeout(cloneNarratorVoice, 5000);
+          
+        } catch (error) {
+          console.error('[NaraApp] Failed to initialize voice cloning:', error);
+          throw error;
+        }
+      };
+      
+      initializeVoiceCloning().catch(error => {
+        console.error('[NaraApp] Voice cloning initialization failed completely:', error);
+      });
+    }
     
     // Cleanup function to prevent race conditions
     return () => {
@@ -567,7 +706,7 @@ export function NaraApp() {
       />
       
       <div className="flex flex-1 overflow-hidden">
-        <AudiobookPanel 
+        <AudiobookPanelV2 
           book={currentBook}
           currentPosition={currentPosition}
           isPlaying={isPlaying}
