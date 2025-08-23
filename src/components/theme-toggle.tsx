@@ -8,9 +8,6 @@ import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@
 const themes = [
   { key: "light", label: "Light", icon: "lucide:sun" },
   { key: "dark", label: "Dark", icon: "lucide:moon" },
-  { key: "minimalist", label: "Minimalist", icon: "lucide:circle" },
-  { key: "rich", label: "Rich", icon: "lucide:palette" },
-  { key: "tech", label: "Tech", icon: "lucide:monitor" },
   { key: "system", label: "System", icon: "lucide:laptop" },
 ]
 
