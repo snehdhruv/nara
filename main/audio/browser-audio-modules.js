@@ -8,7 +8,7 @@ const NARA_AUDIO_CONFIG = {
   // Default Vapi configuration
   vapi: {
     audioQuality: {
-      sampleRate: 24000,
+      sampleRate: 16000,
       bitrate: 128,
       echoCancellation: true,
       noiseSuppression: true,

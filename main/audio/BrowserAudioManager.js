@@ -12,7 +12,7 @@ class BrowserAudioManager extends EventTarget {
         apiKey: config.vapiApiKey || '',
         assistantId: config.vapiAssistantId || '',
         audioQuality: {
-          sampleRate: 24000,
+          sampleRate: 16000,
           bitrate: 128,
           echoCancellation: true,
           noiseSuppression: true,
