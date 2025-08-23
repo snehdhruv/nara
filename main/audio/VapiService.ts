@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from 'events';
-import Vapi from '@vapi-ai/web';
+import WebSocket from 'ws';
 
 export interface VapiConfig {
   apiKey: string;
@@ -43,7 +43,7 @@ export interface VapiSession {
 export class VapiService extends EventEmitter {
   private config: VapiConfig;
   private currentSession: VapiSession | null = null;
-  private vapi: Vapi | null = null;
+
   private mediaRecorder: MediaRecorder | null = null;
   private audioStream: MediaStream | null = null;
   private websocket: WebSocket | null = null;
@@ -59,11 +59,8 @@ export class VapiService extends EventEmitter {
     console.log('[VapiService] Initializing Vapi STT service...');
 
     try {
-      // Initialize Vapi Web SDK
-      this.vapi = new Vapi(this.config.apiKey);
-
-      // Set up event listeners
-      this.setupVapiEventListeners();
+      // Validate API key
+      await this.validateApiKey();
 
       this.isConnected = true;
       console.log('[VapiService] Vapi service ready');
@@ -180,27 +177,27 @@ export class VapiService extends EventEmitter {
 
         this.websocket = new WebSocket(wsUrl);
 
-        this.websocket.onopen = () => {
+        this.websocket.on('open', () => {
           console.log('[VapiService] WebSocket connected successfully');
           this.isConnected = true;
           resolve();
-        };
+        });
 
-        this.websocket.onmessage = (event) => {
-          this.handleWebSocketMessage(event);
-        };
+        this.websocket.on('message', (data) => {
+          this.handleWebSocketMessage(data);
+        });
 
-        this.websocket.onerror = (error) => {
+        this.websocket.on('error', (error) => {
           console.error('[VapiService] WebSocket error:', error);
           this.isConnected = false;
           reject(error);
-        };
+        });
 
-        this.websocket.onclose = (event) => {
-          console.log('[VapiService] WebSocket disconnected, code:', event.code);
+        this.websocket.on('close', (code) => {
+          console.log('[VapiService] WebSocket disconnected, code:', code);
           this.isConnected = false;
           this.emit('sessionEnded');
-        };
+        });
 
         // Timeout after 15 seconds
         setTimeout(() => {
@@ -216,13 +213,67 @@ export class VapiService extends EventEmitter {
     }
   }
 
-  private handleWebSocketMessage(event: MessageEvent): void {
+  private handleWebSocketMessage(data: any): void {
     try {
-      const message = JSON.parse(event.data);
+      // Check if this is binary audio data (Buffer or ArrayBuffer)
+      if (Buffer.isBuffer(data) || data instanceof ArrayBuffer) {
+        // This is audio data from Vapi - ignore it for STT-only mode
+        // console.log('[VapiService] Received audio data (ignored in STT-only mode)');
+        return;
+      }
+
+      // Convert Buffer to string if needed
+      const messageStr = typeof data === 'string' ? data : data.toString();
+
+      // Only try to parse text messages as JSON
+      if (typeof messageStr !== 'string') {
+        console.log(`[VapiService] Ignoring non-text message: ${typeof messageStr}`);
+        return;
+      }
+
+      const message = JSON.parse(messageStr);
+
+      // Log raw messages for debugging (truncated)
+      const logMessage = JSON.stringify(message).substring(0, 100);
+      console.log(`[VapiService] Raw message: ${logMessage}${JSON.stringify(message).length > 100 ? '...' : ''}`);
 
       switch (message.type) {
-        case 'transcription':
-          this.handleTranscription(message.data);
+        case 'transcript':
+          // Only process USER transcripts, ignore assistant transcripts
+          if (message.role === 'user') {
+            this.handleTranscription(message);
+          } else {
+            console.log(`[VapiService] Assistant transcript (ignored): "${message.transcript}"`);
+          }
+          break;
+
+        case 'speech-update':
+          console.log(`[VapiService] Speech ${message.status}: ${message.role}`);
+          if (message.status === 'started' && message.role === 'user') {
+            this.emit('speechStarted');
+          } else if (message.status === 'stopped' && message.role === 'user') {
+            this.emit('speechEnded');
+          }
+          break;
+
+        case 'status-update':
+          console.log(`[VapiService] Status: ${message.status}`);
+          break;
+
+        case 'conversation-update':
+          // Ignore conversation updates to reduce log spam
+          break;
+
+        case 'model-output':
+          // Suppress model output messages to prevent log spam
+          break;
+
+        case 'voice-input':
+          console.log(`[VapiService] Voice input: "${message.input}"`);
+          break;
+
+        case 'user-interrupted':
+          console.log('[VapiService] User interrupted');
           break;
 
         case 'error':
@@ -230,8 +281,9 @@ export class VapiService extends EventEmitter {
           this.emit('error', new Error(message.error));
           break;
 
-        case 'session_end':
-          this.handleSessionEnd();
+        default:
+          console.log(`[VapiService] Unknown message type: ${message.type}`);
+          console.log(`[VapiService]    Content: ${JSON.stringify(message)}`);
           break;
       }
 
@@ -240,16 +292,17 @@ export class VapiService extends EventEmitter {
     }
   }
 
-    private handleTranscription(data: any): void {
+    private handleTranscription(message: any): void {
+    // Handle Vapi's transcript message format
     const transcription: VapiTranscription = {
-      text: data.text,
-      isFinal: data.is_final || false,
-      confidence: data.confidence || 0,
+      text: message.transcript || message.text || '',
+      isFinal: message.transcriptType === 'final',
+      confidence: message.confidence || 0.9, // Vapi doesn't always provide confidence
       timestamp: Date.now(),
       isWakeWord: false
     };
 
-    console.log(`[VapiService] Transcription: "${transcription.text}" (final: ${transcription.isFinal})`);
+    console.log(`[VapiService] USER Transcript: "${transcription.text}" (${message.transcriptType || 'unknown'})`);
 
     // Check for wake word if in wake word mode
     if (this.isWakeWordMode && this.config.wakeWord?.enabled) {
@@ -435,77 +488,24 @@ export class VapiService extends EventEmitter {
   }
 
     private setupVapiEventListeners(): void {
-    if (!this.vapi) return;
-
-    // Listen for transcription events
-    this.vapi.on('message', (message) => {
-      if (message.type === 'transcript') {
-        const transcript = message.transcript.toLowerCase();
-        console.log(`[VapiService] 📝 Transcript: "${message.transcript}"`);
-
-        // Check for wake word in transcript
-        if (transcript.includes('hey nara')) {
-          console.log(`[VapiService] 🎯 Wake word detected in: "${message.transcript}"`);
-
-          // Extract command after "hey nara"
-          const command = message.transcript.replace(/hey nara/i, '').trim();
-
-          this.emit('wakeWordDetected', {
-            phrase: 'Hey Nara',
-            confidence: 0.95,
-            timestamp: Date.now(),
-            command: command || 'test'
-          });
-
-          // Emit the command as transcription
-          if (command) {
-            this.emit('transcription', {
-              text: command,
-              confidence: 0.9,
-              isFinal: true,
-              timestamp: Date.now()
-            });
-          }
-        }
-      }
-    });
-
-    // Listen for call events
-    this.vapi.on('call-start', () => {
-      console.log('[VapiService] 🎤 Continuous listening started');
-      this.isWakeWordMode = true;
-    });
-
-    this.vapi.on('call-end', () => {
-      console.log('[VapiService] 🔇 Continuous listening ended');
-      this.isWakeWordMode = false;
-      this.emit('sessionEnded');
-    });
-
-    this.vapi.on('error', (error) => {
-      console.error('[VapiService] Vapi error:', error);
-      this.emit('error', error);
-    });
+    // Event listeners are now handled in handleWebSocketMessage
+    // This method is kept for compatibility but does nothing
   }
 
   private async startContinuousSTT(): Promise<void> {
     console.log('[VapiService] Starting continuous STT for wake word detection...');
 
-    if (!this.vapi || !this.isConnected) {
-      console.log('[VapiService] Vapi not connected, using mock mode');
+    if (!this.config.assistantId) {
+      console.log('[VapiService] No assistant ID configured, using mock mode');
       this.startWakeWordPolling();
       return;
     }
 
     try {
-      // Start Vapi call for continuous listening
-      if (this.config.assistantId) {
-        await this.vapi.start(this.config.assistantId);
-        console.log('[VapiService] 👂 Continuous listening active with assistant');
-      } else {
-        console.log('[VapiService] No assistant ID configured, using mock mode');
-        this.startWakeWordPolling();
-      }
+      // Use our working WebSocket approach
+      await this.connectWebSocket();
+      console.log('[VapiService] 👂 Continuous listening active with assistant');
+      this.isWakeWordMode = true;
     } catch (error) {
       console.error('[VapiService] Failed to start continuous STT:', error);
       console.log('[VapiService] Falling back to mock wake word detection');

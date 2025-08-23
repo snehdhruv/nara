@@ -10,7 +10,7 @@ export const AUDIO_CONFIG = {
   // Vapi Configuration (Wake Word + STT)
   vapi: {
     apiKey: '765f8644-1464-4b36-a4fe-c660e15ba313',           // Replace with your Vapi API key
-    assistantId: '9a887c78-5ced-41db-8a3b-459caca52af4',      // Riley assistant from your Vapi account
+    assistantId: '0bfc6364-690a-492b-9671-a109c5937342',      // Nara STT-Only assistant
     transcriptionModel: 'nova-2' as const,      // Fast and accurate
     language: 'en-US',
     wakeWord: {

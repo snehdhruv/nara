@@ -208,9 +208,7 @@ export class VADProcessor extends EventEmitter {
     this.metrics = {
       frameProcessingTime: 0,
       speechConfidence: 0,
-      backgroundNoise: 0.1,
-      framesProcessed: 0,
-      speechEvents: 0
+      backgroundNoise: 0.1
     };
 
     console.log('[VADProcessor] Mock VAD setup complete');

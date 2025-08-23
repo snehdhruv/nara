@@ -135,12 +135,19 @@ export class TTSService extends EventEmitter {
     // If in mock mode (voiceWarmed is false), return mock response
     if (!this.voiceWarmed) {
       console.log(`[TTSService] Mock TTS synthesis: "${text}"`);
+
+      // Create a mock readable stream
+      const mockStream = new Readable({
+        read() {
+          this.push(null); // End stream immediately for mock
+        }
+      });
+
       return {
-        audioBuffer: Buffer.alloc(0), // Empty buffer for mock
-        duration: text.length * 0.1, // Estimate ~100ms per character
-        format: 'mp3',
-        sampleRate: 44100,
-        channels: 1
+        audioStream: mockStream,
+        duration: text.length * 100, // Estimate ~100ms per character
+        format: 'mp3' as const,
+        sampleRate: 22050
       };
     }
 

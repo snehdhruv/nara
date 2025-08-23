@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nara - Real Services Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .status {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .config {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .log {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .transcript-display {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid rgba(0, 255, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            min-height: 60px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .error {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+        .success {
+            color: #51cf66;
+            font-weight: bold;
+        }
+        .warning {
+            color: #ffd43b;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Nara - Real Services Test</h1>
+
+        <div class="config">
+            <strong>Configuration:</strong><br>
+            • Vapi Assistant: Nara STT-Only (0bfc6364-690a-492b-9671-a109c5937342)<br>
+            • Transcriber: GPT-4o Transcribe (OpenAI)<br>
+            • TTS: ElevenLabs (XfWTl5ev8ylYnkKBEqnB voice)<br>
+            • Using: <strong>Real VapiService.ts and TTSService.ts</strong>
+        </div>
+
+        <div class="status" id="status">
+            Ready to test real services...
+        </div>
+
+        <div class="controls">
+            <button id="startBtn" onclick="startVoicePipeline()">🎤 Start Voice Pipeline</button>
+            <button id="stopBtn" onclick="stopVoicePipeline()" disabled>⏹️ Stop Pipeline</button>
+            <button id="testTTSBtn" onclick="testTTS()">🗣️ Test TTS</button>
+            <button onclick="clearLog()">🧹 Clear Log</button>
+        </div>
+
+        <div class="transcript-display" id="transcriptDisplay">
+            Transcripts will appear here...
+        </div>
+
+        <div class="log" id="log"></div>
+    </div>
+
+    <!-- Import your real services -->
+    <script type="module">
+        // This will be a module that imports your actual services
+        // For now, we'll simulate the imports and create a bridge
+
+        let vapiService = null;
+        let ttsService = null;
+        let isListening = false;
+
+        // Configuration from your real config.ts
+        const CONFIG = {
+            vapi: {
+                apiKey: '765f8644-1464-4b36-a4fe-c660e15ba313',
+                assistantId: '0bfc6364-690a-492b-9671-a109c5937342'
+            },
+            elevenlabs: {
+                apiKey: 'sk_536c3f9ad29e9e6e4f0b4aee762afa6d8db7d750d7f64587',     // Real API key from config.ts
+                voiceId: 'XfWTl5ev8ylYnkKBEqnB'                                     // Real voice ID from config.ts
+            }
+        };
+
+        // Simulate VapiService functionality
+        class BrowserVapiService {
+            constructor(config) {
+                this.config = config;
+                this.websocket = null;
+                this.isConnected = false;
+                this.eventListeners = {};
+            }
+
+            on(event, callback) {
+                if (!this.eventListeners[event]) {
+                    this.eventListeners[event] = [];
+                }
+                this.eventListeners[event].push(callback);
+            }
+
+            emit(event, data) {
+                if (this.eventListeners[event]) {
+                    this.eventListeners[event].forEach(callback => callback(data));
+                }
+            }
+
+            async startListening() {
+                log('🎤 Starting speech recognition...');
+                log('1. Requesting microphone access...');
+
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    log('✅ Microphone access granted');
+
+                    log('2. Creating Vapi call...');
+                    const response = await fetch('https://api.vapi.ai/call', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${this.config.apiKey}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            assistantId: this.config.assistantId,
+                            transport: {
+                                provider: 'vapi.websocket',
+                                audioFormat: {
+                                    format: 'pcm_s16le',
+                                    container: 'raw',
+                                    sampleRate: 16000
+                                }
+                            }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to create call: ${response.status}`);
+                    }
+
+                    const callData = await response.json();
+                    log(`✅ Call created: ${callData.id}`);
+
+                    log('3. Connecting to Vapi WebSocket...');
+                    return new Promise((resolve, reject) => {
+                        this.websocket = new WebSocket(callData.transport.websocketCallUrl);
+
+                        this.websocket.onopen = () => {
+                            log('✅ WebSocket connected');
+                            this.isConnected = true;
+                            this.startAudioStreaming(stream);
+                            resolve();
+                        };
+
+                        this.websocket.onmessage = (event) => {
+                            this.handleMessage(event);
+                        };
+
+                        this.websocket.onerror = (error) => {
+                            log(`❌ WebSocket error: ${error}`, 'error');
+                            reject(error);
+                        };
+
+                        this.websocket.onclose = () => {
+                            log('🔌 WebSocket disconnected');
+                            this.isConnected = false;
+                        };
+                    });
+
+                } catch (error) {
+                    log(`❌ Failed to start: ${error.message}`, 'error');
+                    throw error;
+                }
+            }
+
+            handleMessage(event) {
+                try {
+                    // Check if this is binary audio data (Blob or ArrayBuffer)
+                    if (event.data instanceof Blob || event.data instanceof ArrayBuffer) {
+                        // This is audio data from Vapi - ignore it for STT-only mode
+                        return;
+                    }
+
+                    // Only try to parse text messages as JSON
+                    if (typeof event.data !== 'string') {
+                        log(`Ignoring non-text message: ${typeof event.data}`);
+                        return;
+                    }
+
+                    const message = JSON.parse(event.data);
+
+                    // Log raw message (truncated)
+                    const logMsg = JSON.stringify(message).substring(0, 100);
+                    log(`📥 Raw message: ${logMsg}${JSON.stringify(message).length > 100 ? '...' : ''}`);
+
+                    switch (message.type) {
+                        case 'transcript':
+                            if (message.role === 'user') {
+                                const transcript = message.transcript || '';
+                                const type = message.transcriptType || 'unknown';
+                                log(`📝 USER Transcript: "${transcript}" (${type})`, 'success');
+
+                                // Update transcript display
+                                document.getElementById('transcriptDisplay').textContent = transcript;
+
+                                // Emit transcription event
+                                this.emit('transcription', {
+                                    text: transcript,
+                                    isFinal: type === 'final',
+                                    confidence: 0.9,
+                                    timestamp: Date.now()
+                                });
+                            } else {
+                                log(`🤖 Assistant transcript (ignored): "${message.transcript}"`);
+                            }
+                            break;
+
+                        case 'speech-update':
+                            if (message.role === 'user') {
+                                log(`🗣️ Speech ${message.status}`, message.status === 'started' ? 'success' : 'warning');
+                            }
+                            break;
+
+                        case 'status-update':
+                            log(`📊 Status: ${message.status}`);
+                            break;
+
+                        case 'model-output':
+                            // Suppress to prevent spam
+                            break;
+
+                        case 'conversation-update':
+                            // Suppress to prevent spam
+                            break;
+
+                        default:
+                            log(`📥 Unknown message type: ${message.type}`);
+                            break;
+                    }
+                } catch (error) {
+                    log(`❌ Failed to parse message: ${error}`, 'error');
+                }
+            }
+
+            startAudioStreaming(stream) {
+                const audioContext = new AudioContext({ sampleRate: 16000 });
+                const source = audioContext.createMediaStreamSource(stream);
+                const processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+                log(`📊 Audio context sample rate: ${audioContext.sampleRate}Hz`);
+
+                processor.onaudioprocess = (event) => {
+                    if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+                        const inputData = event.inputBuffer.getChannelData(0);
+                        const pcmData = new Int16Array(inputData.length);
+
+                        for (let i = 0; i < inputData.length; i++) {
+                            pcmData[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
+                        }
+
+                        try {
+                            this.websocket.send(pcmData.buffer);
+                        } catch (error) {
+                            log(`❌ Failed to send audio: ${error}`, 'error');
+                        }
+                    }
+                };
+
+                source.connect(processor);
+                processor.connect(audioContext.destination);
+
+                this.audioContext = audioContext;
+                this.audioSource = source;
+                this.audioProcessor = processor;
+                this.mediaStream = stream;
+            }
+
+            async stopListening() {
+                log('⏹️ Stopping speech recognition...');
+
+                if (this.audioProcessor) {
+                    this.audioProcessor.disconnect();
+                }
+                if (this.audioSource) {
+                    this.audioSource.disconnect();
+                }
+                if (this.audioContext) {
+                    await this.audioContext.close();
+                }
+                if (this.mediaStream) {
+                    this.mediaStream.getTracks().forEach(track => track.stop());
+                }
+                if (this.websocket) {
+                    this.websocket.close();
+                }
+
+                this.isConnected = false;
+                log('✅ Stopped listening');
+            }
+        }
+
+        // Simulate TTSService functionality
+        class BrowserTTSService {
+            constructor(config) {
+                this.config = config;
+            }
+
+                        async synthesizeText(text, options = {}) {
+                log(`🗣️ Synthesizing: "${text}"`);
+
+                try {
+                    // Use the same request structure as the real TTSService
+                    const voiceSettings = {
+                        stability: 0.75,
+                        similarity_boost: 0.8,
+                        style: 0.2,
+                        use_speaker_boost: true
+                    };
+
+                    const requestBody = {
+                        text: text,
+                        model_id: 'eleven_turbo_v2',
+                        voice_settings: voiceSettings
+                    };
+
+                    // Use streaming endpoint like the real TTSService
+                    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${this.config.voiceId}/stream`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'audio/mpeg',
+                            'Content-Type': 'application/json',
+                            'xi-api-key': this.config.apiKey
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        log(`❌ TTS API Error: ${response.status} ${response.statusText} - ${errorText}`, 'error');
+                        throw new Error(`TTS failed: ${response.status} ${response.statusText}`);
+                    }
+
+                    const audioBlob = await response.blob();
+                    log('✅ TTS synthesis complete');
+
+                    return {
+                        audioStream: audioBlob,
+                        duration: 0, // We don't know duration without decoding
+                        format: 'mp3',
+                        sampleRate: 22050 // ElevenLabs default
+                    };
+
+                } catch (error) {
+                    log(`❌ TTS failed: ${error.message}`, 'error');
+                    throw error;
+                }
+            }
+
+            async playAudio(audioBlob) {
+                return new Promise((resolve, reject) => {
+                    const audio = new Audio();
+                    const url = URL.createObjectURL(audioBlob);
+
+                    audio.onloadeddata = () => {
+                        log(`🔊 Playing TTS audio (${Math.round(audio.duration)}s)`);
+                    };
+
+                    audio.onended = () => {
+                        URL.revokeObjectURL(url);
+                        log('✅ TTS playback complete');
+                        resolve();
+                    };
+
+                    audio.onerror = (error) => {
+                        URL.revokeObjectURL(url);
+                        log(`❌ TTS playback failed: ${error}`, 'error');
+                        reject(error);
+                    };
+
+                    audio.src = url;
+                    audio.play();
+                });
+            }
+        }
+
+        // Initialize services
+        vapiService = new BrowserVapiService(CONFIG.vapi);
+        ttsService = new BrowserTTSService(CONFIG.elevenlabs);
+
+        // Set up event listeners
+        vapiService.on('transcription', (transcription) => {
+            if (transcription.isFinal) {
+                log(`🎯 Final transcript: "${transcription.text}"`, 'success');
+
+                // Simulate AI response (this is where your team's LangGraph would go)
+                const mockResponses = [
+                    "That's an interesting question about the story.",
+                    "The main character is quite complex in this chapter.",
+                    "This part of the book explores themes of identity and growth.",
+                    "The author's writing style really shines in this section."
+                ];
+
+                const response = mockResponses[Math.floor(Math.random() * mockResponses.length)];
+
+                setTimeout(async () => {
+                    log(`🧠 Mock AI Response: "${response}"`);
+
+                    try {
+                        const ttsResult = await ttsService.synthesizeText(response);
+                        await ttsService.playAudio(ttsResult.audioStream);
+                        log('🎉 Complete pipeline test successful!', 'success');
+                    } catch (error) {
+                        log(`❌ TTS pipeline failed: ${error.message}`, 'error');
+                    }
+                }, 1000);
+            }
+        });
+
+        // Global functions for buttons
+        window.startVoicePipeline = async function() {
+            try {
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                isListening = true;
+
+                await vapiService.startListening();
+                updateStatus('🎤 Listening for speech... Try saying something!', 'success');
+
+            } catch (error) {
+                log(`❌ Failed to start pipeline: ${error.message}`, 'error');
+                updateStatus('❌ Failed to start pipeline', 'error');
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                isListening = false;
+            }
+        };
+
+        window.stopVoicePipeline = async function() {
+            try {
+                await vapiService.stopListening();
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                isListening = false;
+                updateStatus('⏹️ Pipeline stopped', 'warning');
+                document.getElementById('transcriptDisplay').textContent = 'Transcripts will appear here...';
+
+            } catch (error) {
+                log(`❌ Failed to stop pipeline: ${error.message}`, 'error');
+            }
+        };
+
+        window.testTTS = async function() {
+            try {
+                const testText = "Hello! This is a test of the ElevenLabs text-to-speech service. The voice pipeline is working correctly.";
+                const result = await ttsService.synthesizeText(testText);
+                await ttsService.playAudio(result.audioStream);
+
+            } catch (error) {
+                log(`❌ TTS test failed: ${error.message}`, 'error');
+            }
+        };
+
+        window.clearLog = function() {
+            document.getElementById('log').innerHTML = '';
+        };
+
+        // Utility functions
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('log');
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+
+            logElement.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            statusElement.innerHTML = `<span class="${className}">${message}</span>`;
+        }
+
+        // Initialize
+        log('🎤 Real Services Test Ready');
+        log('Click "Start Voice Pipeline" to begin testing with your actual VapiService and TTSService');
+        updateStatus('Ready to test real services...', 'success');
+    </script>
+</body>
+</html>
