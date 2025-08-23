@@ -1,0 +1,87 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+---
+alwaysApply: true
+---
+Project Name: Nara
+
+<aside>
+**AI Audiobook Copilot** — A macoc desktop overlay app that lets users pause audiobooks on Spotify, ask natural-language questions, and hear real-time answers in the narrator's voice.
+
+</aside>
+
+# Project Summary
+
+AI Audiobook Copilot enhances the audiobook experience by providing real-time information about characters, plot points, or concepts without leaving the listening experience. The app uses advanced AI to understand book content, generate contextual answers, and deliver them in a voice matching the audiobook's narrator.
+
+### AI & Voice
+
+- **Claude 4.1** - Natural language understanding and response generation
+- **ElevenLabs** - Voice cloning and text-to-speech synthesis
+- **Vapi** - Voice API integration
+
+### Backend & Frontend
+
+- **Convex** - Backend infrastructure and state management
+- Next.js
+
+## Key Features
+
+- Overlay interface that works with Spotify and Audible
+- Natural language question processing about book content
+- Real-time AI-generated answers using Claude 4.1
+- Voice response synthesis matching narrator's voice via ElevenLabs
+- Minimal context-switching from the audiobook experience
+
+## Project Goals
+
+- [ ]  Build functioning MVP within 20hour hackathon timeframe
+- [ ]  Successfully integrate all key technologies (Claude, ElevenLabs, Vapi, Convex, Expo)
+- [ ]  Create smooth user experience with minimal latency
+- [ ]  Prepare compelling demo showcasing key use cases
+- [ ]  Document technical approach and product vision
+
+## Success Metrics
+
+- Working prototype that demonstrates core functionality
+- Response accuracy for questions about book content
+- Voice synthesis quality and narrator matching
+- Latency between question asked and answer delivered
+- Judge and audience feedback during presentation
+
+
+Based on the AI Audiobook Copilot PRD, I can suggest the following task updates for your project:
+
+### AI Audiobook Copilot Tasks
+
+- **Project Setup**
+    - Form hackathon team with required roles (AI Engineer, Voice Engineer, Backend Developer)
+    - Establish project timeline for 2-day hackathon
+    - Set up shared development environment with selected tech stack
+- **AI & Voice Implementation**
+    - Integrate Claude 4.1 for natural language understanding and response generation
+    - Set up ElevenLabs voice cloning and text-to-speech synthesis
+    - Implement Vapi for voice API integration
+    - Develop playback position estimation and spoiler control features
+- ** Application Development**
+    - Create overlay interface compatible with Spotify and Audible
+    - Build question processing system for book content
+    - Implement Expo/React Native UI for minimal context-switching
+- **Backend Development**
+    - Set up Convex infrastructure for backend and state management
+    - Create database for book content and context management
+    - Optimize response latency between question and answer delivery
+- **Testing & Demo Preparation**
+    - Test response accuracy for book content questions
+    - Evaluate voice synthesis quality and narrator matching
+    - Prepare compelling demo showcasing key use cases
+    - Document technical approach and product vision
+
+    [Create overlay interface compatible with Spotify and Audible]
+
+    [Build question processing system for book content]
+
+    [Implement Expo/React Native UI for minimal context-switching]

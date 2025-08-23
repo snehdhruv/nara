@@ -5,13 +5,8 @@ export default function IndexPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // If we have a code parameter (OAuth callback), redirect to home
-    if (router.query.code) {
-      router.push('/home');
-    } else {
-      // Otherwise, redirect to home page as default
-      router.push('/home');
-    }
+    // Redirect to home page with SimpleAudioTest component
+    router.push('/home');
   }, [router]);
 
   return (

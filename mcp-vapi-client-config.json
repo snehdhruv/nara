@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "nara-vapi": {
+      "command": "node",
+      "args": ["./mcp-vapi-server.js"],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}

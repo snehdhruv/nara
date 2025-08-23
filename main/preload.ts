@@ -1,3 +1,5 @@
+// TODO(electron): expose typed IPC (qa:ask, playback:devices, playback:playChapter, voice:state)
+
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron'
 
 const handler = {
