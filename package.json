@@ -1,0 +1,34 @@
+{
+  "name": "nara-next-convex-betterauth-langgraph",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "dev:full": "concurrently -k -n next,convex \"next dev\" \"convex dev\"",
+    "build": "next build",
+    "start": "next start",
+    "convex:codegen": "convex codegen"
+  },
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "convex": "latest",
+    "zod": "latest",
+    "axios": "latest",
+    "jose": "latest",
+    "@langchain/langgraph": "latest",
+    "langchain": "latest",
+    "better-auth": "latest",
+    "tailwindcss": "latest",
+    "postcss": "latest",
+    "autoprefixer": "latest"
+  },
+  "devDependencies": {
+    "typescript": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "concurrently": "latest"
+  }
+}
