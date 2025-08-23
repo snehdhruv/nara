@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "@daveyplate/better-auth-ui/css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -141,4 +142,44 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
+}
+
+/* Auth page styling overrides - must come after better-auth-ui import */
+.auth-container .auth-view {
+  @apply max-w-md mx-auto;
+}
+
+/* Override better-auth-ui button styles */
+.auth-container button[type="button"],
+.auth-container .oauth-button,
+.auth-container .social-button {
+  height: 3rem !important;
+  min-height: 3rem !important;
+  max-height: 3rem !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+}
+
+.auth-container button[type="button"] svg,
+.auth-container .oauth-button svg,
+.auth-container .social-button svg {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  max-width: 1.25rem !important;
+  max-height: 1.25rem !important;
+}
+
+/* Spotify specific overrides */
+.auth-container button:has([fill="#1DB954"]),
+.auth-container button:has([fill="#1ed760"]) {
+  height: 3rem !important;
+  min-height: 3rem !important;
+  max-height: 3rem !important;
+}
+
+.auth-container button:has([fill="#1DB954"]) svg,
+.auth-container button:has([fill="#1ed760"]) svg {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
 }
