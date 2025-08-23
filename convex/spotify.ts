@@ -5,8 +5,278 @@ import { betterAuthComponent } from "./auth";
 import { createAuth } from "../src/lib/auth";
 import { Id } from "./_generated/dataModel";
 
-// Get user's Spotify account info using Better Auth's auth.api
-export const getSpotifyAccount = query({
+// Helper function to detect if the current playback is an audiobook or podcast
+function isAudiobookOrPodcast(playbackData: any): boolean {
+  if (!playbackData?.item) return false;
+  
+  const item = playbackData.item;
+  
+  // Primary check: If it's an episode type, it's definitely a podcast/audiobook
+  if (item.type === 'episode') {
+    console.log('[Spotify] Detected episode:', item.name, 'from show:', item.show?.name);
+    return true;
+  }
+  
+  // Secondary check: Check if it's a track but from an audiobook/podcast
+  if (item.type === 'track') {
+    const album = item.album;
+    const albumType = album?.album_type;
+    
+    // Check album type for audiobooks
+    if (albumType === 'audiobook') {
+      console.log('[Spotify] Detected audiobook by album type:', albumType, album.name);
+      return true;
+    }
+    
+    // Check context for shows (podcasts played as tracks)
+    if (playbackData.context?.type === 'show') {
+      console.log('[Spotify] Detected podcast from show context:', playbackData.context.uri);
+      return true;
+    }
+    
+    // Enhanced keyword detection for audiobooks and podcasts
+    const albumName = album?.name?.toLowerCase() || '';
+    const artistName = item.artists?.[0]?.name?.toLowerCase() || '';
+    const trackName = item.name?.toLowerCase() || '';
+    
+    const audiobookIndicators = [
+      'audiobook', 'audio book', 'unabridged', 'narrated by', 'read by', 'performed by',
+      'chapter', 'part 1', 'part 2', 'part 3', 'book', 'novel', 'memoir', 'biography', 
+      'autobiography', 'audio edition', 'listening library', 'brilliance audio',
+      'tantor audio', 'macmillan audio', 'penguin random house audio'
+    ];
+    
+    const podcastIndicators = [
+      'podcast', 'episode', 'the joe rogan experience', 'lex fridman', 'tim ferriss',
+      'talk', 'interview', 'conversation', 'show', 'cast', 'pod', 'npr', 'bbc',
+      'radiolab', 'serial', 'this american life', 'ted talks', 'the daily',
+      'smartless', 'conan', 'fresh air', 'planet money', 'stuff you should know'
+    ];
+    
+    const allIndicators = [...audiobookIndicators, ...podcastIndicators];
+    const foundIndicator = allIndicators.find(indicator =>
+      albumName.includes(indicator) || artistName.includes(indicator) || trackName.includes(indicator)
+    );
+    
+    if (foundIndicator) {
+      console.log('[Spotify] Detected audio content by keyword:', foundIndicator);
+      return true;
+    }
+    
+    // Check track duration - audiobooks/podcasts are typically longer than songs
+    const durationMinutes = (item.duration_ms || 0) / (1000 * 60);
+    if (durationMinutes > 10) { // Tracks longer than 10 minutes are likely not songs
+      // Additional check for typical music patterns to avoid false positives
+      const musicKeywords = ['feat', 'ft.', 'remix', 'radio edit', 'single', 'deluxe', 'remaster'];
+      const hasMusicKeywords = musicKeywords.some(keyword => 
+        albumName.includes(keyword) || trackName.includes(keyword)
+      );
+      
+      if (!hasMusicKeywords) {
+        console.log('[Spotify] Long track detected (>10min), likely audio content:', trackName, `${Math.round(durationMinutes)}min`);
+        return true;
+      }
+    }
+  }
+  
+  return false;
+}
+
+// Helper function to control Spotify playback with better error handling
+export const controlSpotifyPlayback = action({
+  args: {
+    action: v.union(v.literal("play"), v.literal("pause"), v.literal("next"), v.literal("previous")),
+    positionMs: v.optional(v.number()),
+    deviceId: v.optional(v.string()),
+  },
+  handler: async (ctx, { action, positionMs, deviceId }): Promise<{ success: boolean; device?: string; action: string }> => {
+    const accessToken: string = await ctx.runAction(api.spotify.getSpotifyAccessToken);
+    
+    try {
+      // First, check if we have an active device
+      const devicesResponse: Response = await fetch("https://api.spotify.com/v1/me/player/devices", {
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
+        },
+      });
+      
+      if (!devicesResponse.ok) {
+        throw new Error(`Failed to get devices: ${devicesResponse.status}`);
+      }
+      
+      const devicesData: any = await devicesResponse.json();
+      const activeDevice: any = devicesData.devices?.find((d: any) => d.is_active) || devicesData.devices?.[0];
+      
+      if (!activeDevice) {
+        throw new Error("No Spotify device available. Please open Spotify on a device first.");
+      }
+      
+      let url = `https://api.spotify.com/v1/me/player/${action}`;
+      let method = 'PUT';
+      let body: any = undefined;
+      
+      // Handle different actions
+      if (action === 'play' && positionMs !== undefined) {
+        url = `https://api.spotify.com/v1/me/player/seek?position_ms=${positionMs}`;
+      } else if (action === 'play') {
+        // For play, we might need to specify device and context
+        body = deviceId ? { device_ids: [deviceId] } : { device_ids: [activeDevice.id] };
+      }
+      
+      const requestOptions: RequestInit = {
+        method,
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      };
+      
+      if (body) {
+        requestOptions.body = JSON.stringify(body);
+      }
+      
+      const response = await fetch(url, requestOptions);
+      
+      // Spotify API returns 204 for successful playback control
+      if (!response.ok && response.status !== 204) {
+        const errorText = await response.text();
+        console.error(`[Spotify] Control failed:`, {
+          status: response.status,
+          action,
+          error: errorText,
+          device: activeDevice.name
+        });
+        
+        // Try to provide more helpful error messages
+        if (response.status === 403) {
+          throw new Error("Spotify Premium required for playback control");
+        } else if (response.status === 404) {
+          throw new Error("No active playback found. Please start playing something on Spotify first.");
+        } else {
+          throw new Error(`Spotify control failed: ${response.status} - ${errorText}`);
+        }
+      }
+      
+      console.log(`[Spotify] Successfully ${action === 'play' ? 'resumed' : action === 'pause' ? 'paused' : action} playback on ${activeDevice.name}`);
+      return { 
+        success: true, 
+        device: activeDevice.name,
+        action: action
+      };
+    } catch (error) {
+      console.error(`[Spotify] Control action '${action}' failed:`, error);
+      throw error;
+    }
+  },
+});
+
+// Get user's saved audiobooks and podcasts
+export const getAudiobooksAndPodcasts = action({
+  args: {
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+  },
+  handler: async (ctx, { limit = 20, offset = 0 }): Promise<{
+    podcasts: any[];
+    audiobooks: any[];
+    recentAudioContent: any[];
+    total: {
+      podcasts: number;
+      audiobooks: number;
+    };
+  }> => {
+    const accessToken: string = await ctx.runAction(api.spotify.getSpotifyAccessToken);
+    
+    try {
+      // Get user's saved shows (podcasts)
+      const showsResponse: Response = await fetch(
+        `https://api.spotify.com/v1/me/shows?limit=${limit}&offset=${offset}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+          },
+        }
+      );
+      
+      // Get user's saved audiobooks
+      const audiobooksResponse: Response = await fetch(
+        `https://api.spotify.com/v1/me/audiobooks?limit=${limit}&offset=${offset}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+          },
+        }
+      );
+      
+      const shows: any = showsResponse.ok ? await showsResponse.json() : { items: [] };
+      const audiobooks: any = audiobooksResponse.ok ? await audiobooksResponse.json() : { items: [] };
+      
+      // Also get recently played items that are audiobooks/podcasts
+      const recentResponse = await fetch(
+        'https://api.spotify.com/v1/me/player/recently-played?limit=50',
+        {
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+          },
+        }
+      );
+      
+      const recentData = recentResponse.ok ? await recentResponse.json() : { items: [] };
+      const recentAudioContent = recentData.items.filter((item: any) => 
+        isAudiobookOrPodcast({ item: item.track })
+      );
+      
+      return {
+        podcasts: shows.items || [],
+        audiobooks: audiobooks.items || [],
+        recentAudioContent: recentAudioContent || [],
+        total: {
+          podcasts: shows.total || 0,
+          audiobooks: audiobooks.total || 0,
+        }
+      };
+    } catch (error) {
+      console.error("Error fetching audiobooks and podcasts:", error);
+      throw new Error("Failed to fetch audio content");
+    }
+  },
+});
+
+// Search for audiobooks and podcasts
+export const searchAudioContent = action({
+  args: {
+    query: v.string(),
+    types: v.optional(v.array(v.union(v.literal("show"), v.literal("audiobook"), v.literal("episode")))),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { query, types = ["show", "audiobook"], limit = 20 }): Promise<any> => {
+    const accessToken: string = await ctx.runAction(api.spotify.getSpotifyAccessToken);
+    
+    try {
+      const typeString = types.join(',');
+      const response: Response = await fetch(
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${typeString}&limit=${limit}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+          },
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Search failed: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error("Error searching audio content:", error);
+      throw new Error("Failed to search audio content");
+    }
+  },
+});
+
+// Get user's Spotify access token using Better Auth
+export const getSpotifyAccessToken = action({
   args: {},
   handler: async (ctx) => {
     const user = await betterAuthComponent.getAuthUser(ctx);
@@ -16,24 +286,23 @@ export const getSpotifyAccount = query({
 
     // Use Better Auth's auth.api.getAccessToken method
     const auth = createAuth(ctx);
-    const accessTokenData = await auth.api.getAccessToken({
-      body: {
-        providerId: "spotify",
-        userId: user.userId || "", // Handle null/undefined userId
-      },
-    });
+    try {
+      const accessTokenData = await auth.api.getAccessToken({
+        body: {
+          providerId: "spotify",
+          userId: user.userId!,
+        },
+      });
 
-    if (!accessTokenData) {
-      throw new Error("No Spotify account linked");
+      if (!accessTokenData) {
+        throw new Error("No Spotify account linked");
+      }
+
+      return accessTokenData.accessToken;
+    } catch (error) {
+      console.error("Failed to get Spotify access token:", error);
+      throw new Error("Failed to get Spotify access token");
     }
-
-    return {
-      userId: user.userId,
-      accessToken: accessTokenData.accessToken,
-      expiresAt: accessTokenData.accessTokenExpiresAt,
-      scopes: accessTokenData.scopes,
-      idToken: accessTokenData.idToken,
-    };
   },
 });
 
@@ -46,23 +315,18 @@ export const getCurrentPlayback = action({
       throw new Error("User not authenticated");
     }
 
-    // Get the user's Spotify access token from the account
-    const spotifyAccount = await ctx.runQuery(api.spotify.getSpotifyAccount);
+    // Get the user's Spotify access token
+    const accessToken = await ctx.runAction(api.spotify.getSpotifyAccessToken);
     
-    if (!spotifyAccount?.accessToken) {
-      // For now, return the user info to debug
-      return {
-        error: "No Spotify access token",
-        user: spotifyAccount,
-        message: "Check the console logs for user data"
-      };
+    if (!accessToken) {
+      throw new Error("No Spotify access token available");
     }
 
     try {
-      // Fetch current playback from Spotify API
-      const response = await fetch("https://api.spotify.com/v1/me/player", {
+      // Fetch current playback from Spotify API with additional_types=episode to get podcast episodes
+      const response = await fetch("https://api.spotify.com/v1/me/player?additional_types=episode", {
         headers: {
-          "Authorization": `Bearer ${spotifyAccount.accessToken}`,
+          "Authorization": `Bearer ${accessToken}`,
         },
       });
 
@@ -77,16 +341,35 @@ export const getCurrentPlayback = action({
 
       const playbackData = await response.json();
       
-      // Store the playback state in our database
-      await ctx.runMutation(api.spotify.updatePlaybackState, {
-        playbackData,
-        userId: user.userId as Id<"users">,
-      });
-
-      return playbackData;
+      // Check if it's an audiobook or podcast using the currently_playing_type field
+      const isEpisode = playbackData.currently_playing_type === 'episode';
+      const isAudioContent = isEpisode || isAudiobookOrPodcast(playbackData);
+      
+      if (isAudioContent) {
+        console.log('[Spotify] Detected audio content:', {
+          type: playbackData.currently_playing_type,
+          name: playbackData.item?.name,
+          show: playbackData.item?.show?.name || playbackData.item?.album?.name
+        });
+        
+        // Store the playback state in our database
+        await ctx.runMutation(api.spotify.updatePlaybackState, {
+          playbackData,
+          userId: user.userId as Id<"users">,
+        });
+        
+        return playbackData;
+      } else {
+        // If it's a song or other non-audio content, return null
+        // Only log this occasionally to avoid spam
+        if (Math.random() < 0.1) { // Log only 10% of the time
+          console.log('[Spotify] Currently playing music (filtered):', playbackData.item?.name);
+        }
+        return null;
+      }
     } catch (error) {
       console.error("Error fetching Spotify playback:", error);
-      throw new Error("Failed to fetch current playback");
+      throw new Error("Failed to fetch current playbook");
     }
   },
 });
