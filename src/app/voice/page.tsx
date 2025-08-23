@@ -232,7 +232,7 @@ function VoiceAppContent() {
       const audioManager = await window.NaraAudioFactory.createAudioPipeline({
         vapiApiKey: '765f8644-1464-4b36-a4fe-c660e15ba313', // From .env
         vapiAssistantId: '73c59df7-34d0-4e5a-89b0-d0668982c8cc', // Nara Agent from config
-        ttsApiKey: 'sk_536c3f9ad29e9e6e4f0b4aee762afa6d8db7d750d7f64587', // From .env
+        ttsApiKey: process.env.NEXT_PUBLIC_TTS_API_KEY || '', // From .env
         ttsVoiceId: 'pNInz6obpgDQGcFmaJgB', // Adam voice ID
         // Optimized for low-latency voice interaction
         vapi: {
