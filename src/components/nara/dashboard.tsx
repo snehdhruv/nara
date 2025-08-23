@@ -341,30 +341,30 @@ const BookShelf: React.FC<BookShelfProps> = ({
 }) => {
   return (
     <section className="mb-16">
-      <div className="flex justify-between items-center mb-12 pb-3 border-b border-[#d4b9a8]">
-        <h2 className="text-2xl font-medium text-[#5d534f]">{title}</h2>
+      <div className="flex justify-between items-center mb-12 pb-3 border-b border-border">
+        <h2 className="text-2xl font-medium text-foreground">{title}</h2>
         <Button
           variant="light"
           size="sm"
           endContent={<Icon icon="lucide:chevron-right" width={16} />}
-          className="text-[#8a817c]"
+          className="text-muted-foreground"
         >
           Full shelf
         </Button>
       </div>
       
       {books.length === 0 ? (
-        <div className="h-48 flex items-center justify-center bg-[#f0ede8] rounded-lg">
-          <p className="text-[#8a817c]">{emptyMessage}</p>
+        <div className="h-48 flex items-center justify-center bg-muted rounded-lg">
+          <p className="text-muted-foreground">{emptyMessage}</p>
         </div>
       ) : (
         <div className="relative">
           {/* 3D Shelf - Using relative height with min/max constraints */}
           <div className="relative h-[min(420px,50vh)] min-h-[300px] mb-8">
             {/* Shelf surface */}
-            <div className="absolute bottom-0 left-0 right-0 h-[24px] bg-[#e8e4df] rounded-sm shadow-[0_2px_4px_rgba(0,0,0,0.1)]">
+            <div className="absolute bottom-0 left-0 right-0 h-[24px] bg-muted rounded-sm shadow-sm">
               {/* Shelf front edge */}
-              <div className="absolute bottom-0 left-0 right-0 h-[8px] bg-[#d8d4cf] rounded-b-sm"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-[8px] bg-border rounded-b-sm"></div>
             </div>
             
             {/* Subtle shelf shadow */}
