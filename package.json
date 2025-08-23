@@ -12,10 +12,13 @@
   },
   "dependencies": {
     "@convex-dev/auth": "^0.0.88",
+    "@types/ws": "^8.18.1",
+    "@vapi-ai/web": "^2.3.8",
     "concurrently": "^9.2.0",
     "convex": "^1.26.1",
     "electron-serve": "^1.3.0",
-    "electron-store": "^8.2.0"
+    "electron-store": "^8.2.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@types/node": "^20.11.16",

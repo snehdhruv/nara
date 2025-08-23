@@ -10,6 +10,7 @@ export const AUDIO_CONFIG = {
   // Vapi Configuration (Wake Word + STT)
   vapi: {
     apiKey: '765f8644-1464-4b36-a4fe-c660e15ba313',           // Replace with your Vapi API key
+    assistantId: '9a887c78-5ced-41db-8a3b-459caca52af4',      // Riley assistant from your Vapi account
     transcriptionModel: 'nova-2' as const,      // Fast and accurate
     language: 'en-US',
     wakeWord: {
@@ -37,6 +38,10 @@ export function validateAudioConfig(): { isValid: boolean; missing: string[] } {
 
   if (AUDIO_CONFIG.vapi.apiKey === 'your-vapi-api-key-here') {
     missing.push('Vapi API key');
+  }
+
+  if (AUDIO_CONFIG.vapi.assistantId === 'PASTE_YOUR_ASSISTANT_ID_HERE') {
+    missing.push('Vapi Assistant ID');
   }
 
   if (AUDIO_CONFIG.elevenlabs.apiKey === 'your-elevenlabs-api-key-here') {

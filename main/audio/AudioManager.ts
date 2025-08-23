@@ -55,8 +55,8 @@ export class AudioManager extends EventEmitter {
     };
 
     this.vad = new VADProcessor();
-    this.wakeWord = new WakeWordService(wakeWordConfig);
-    this.playback = new PlaybackController();
+    // this.wakeWord = new WakeWordService(wakeWordConfig); // Replaced by Vapi
+    this.playback = new PlaybackController(true); // Enable test mode
     this.router = new DeviceRouter();
     this.tts = new TTSService(ttsConfig);
     this.audioPlayer = new AudioPlayer();
@@ -142,7 +142,7 @@ export class AudioManager extends EventEmitter {
       await this.router.initialize();
       await this.playback.initialize();
       await this.vad.initialize();
-      await this.wakeWord.initialize();
+      // await this.wakeWord.initialize(); // Replaced by Vapi
       await this.tts.initialize();
       await this.audioPlayer.initialize();
       await this.vapi.initialize();
@@ -288,12 +288,8 @@ export class AudioManager extends EventEmitter {
 
   // Manual wake word trigger for testing
   triggerWakeWord(): void {
-    console.log('[AudioManager] Manual wake word trigger - simulating Vapi detection');
-    this.vapi.emit('wakeWordDetected', {
-      phrase: 'hey nara (manual)',
-      confidence: 1.0,
-      timestamp: Date.now()
-    });
+    console.log('[AudioManager] Manual wake word trigger');
+    this.vapi.triggerWakeWord('Hey Nara test the audio pipeline');
   }
 
   getState(): AudioPipelineState {

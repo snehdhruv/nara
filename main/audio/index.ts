@@ -12,6 +12,9 @@ export { TTSService, TTSConfig, TTSRequest, TTSResponse } from './TTSService';
 export { AudioPlayer, AudioPlayerConfig, PlaybackMetrics } from './AudioPlayer';
 export { VapiService, VapiConfig, VapiTranscription, VapiWakeWordDetection } from './VapiService';
 
+// Configuration
+export { AUDIO_CONFIG, getAudioConfig, validateAudioConfig } from './config';
+
 // Test utilities
 export { TTSTest, testTTS, quickTTSTest } from './TTSTest';
 export { AudioTest, runAudioRiskValidation, quickDemoCheck } from './AudioTest';
