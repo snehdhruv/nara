@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently 'next dev --turbopack' 'bunx convex dev'",
-    "build": "next build --turbopack",
+    "build": "bunx convex deploy && next build --turbopack",
     "start": "next start",
     "lint": "eslint"
   },
