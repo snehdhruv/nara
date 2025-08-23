@@ -5,11 +5,16 @@ import Head from 'next/head'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useQuery, useMutation } from 'convex/react'
+import { useAuthActions } from '@convex-dev/auth/react'
 import { api } from '../../convex/_generated/api'
 
 export default function HomePage() {
   const [newMessage, setNewMessage] = useState('')
   const [authorName, setAuthorName] = useState('Anonymous')
+
+  // Auth hooks
+  const { signIn, signOut } = useAuthActions()
+  const currentUser = useQuery(api.users.currentUser)
 
   // Use Convex hooks to interact with the backend
   const greeting = useQuery(api.messages.getGreeting, { name: "Nextron User" })
@@ -25,6 +30,14 @@ export default function HomePage() {
       })
       setNewMessage('')
     }
+  }
+
+  const handleSpotifyLogin = () => {
+    void signIn("spotify")
+  }
+
+  const handleLogout = () => {
+    void signOut()
   }
 
   return (
@@ -48,9 +61,57 @@ export default function HomePage() {
         <span>+</span>
         <span>Convex</span>
         <span>+</span>
+        <span>Spotify OAuth</span>
+        <span>+</span>
         <span>tailwindcss</span>
         <span>=</span>
         <span>💕 </span>
+      </div>
+
+      {/* Authentication Section */}
+      <div className="mt-8 mx-auto max-w-2xl p-6 bg-purple-50 rounded-lg">
+        <h2 className="text-xl font-bold mb-4 text-center">🎵 Spotify Authentication</h2>
+        
+        {!currentUser ? (
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">Sign in with Spotify to access music features</p>
+            <button
+              onClick={handleSpotifyLogin}
+              className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors"
+            >
+              🎵 Sign in with Spotify
+            </button>
+          </div>
+        ) : (
+          <div className="text-center">
+            <div className="flex items-center justify-center space-x-3 mb-4">
+              {currentUser.image && (
+                <img 
+                  src={currentUser.image} 
+                  alt="Profile" 
+                  className="w-8 h-8 rounded-full"
+                />
+              )}
+              <span className="text-green-600 font-semibold">
+                Welcome, {currentUser.name || 'Spotify User'}!
+              </span>
+            </div>
+            <div className="space-x-4">
+              <Link 
+                href="/spotify"
+                className="inline-block bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors"
+              >
+                🎵 Open Spotify Dashboard
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded transition-colors"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Convex Demo Section */}
@@ -114,8 +175,13 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="mt-4 w-full flex-wrap flex justify-center">
-        <Link href="/next">Go to next page</Link>
+      <div className="mt-4 w-full flex-wrap flex justify-center space-x-4">
+        <Link href="/next" className="text-blue-500 hover:text-blue-600 underline">
+          Go to next page
+        </Link>
+        <Link href="/spotify" className="text-green-500 hover:text-green-600 underline">
+          🎵 Spotify Integration
+        </Link>
       </div>
     </React.Fragment>
   )

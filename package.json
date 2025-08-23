@@ -6,11 +6,12 @@
   "author": "Yoshihide Shiono <shiono.yoshihide@gmail.com>",
   "main": "app/background.js",
   "scripts": {
-    "dev": "concurrently 'nextron' 'bunx --bun convex dev'",
+    "dev": "concurrently 'nextron --renderer-port=3000' 'bunx --bun convex dev'",
     "build": "nextron build",
     "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
+    "@convex-dev/auth": "^0.0.88",
     "concurrently": "^9.2.0",
     "convex": "^1.26.1",
     "electron-serve": "^1.3.0",
