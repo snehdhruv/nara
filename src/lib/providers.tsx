@@ -19,9 +19,9 @@ export function Providers({ children }: { children: ReactNode }) {
             replace={router.replace}
             onSessionChange={() => router.refresh()}
             // Removed Spotify social provider - using email/password auth only
-            // social={{
-            //   providers: ["spotify"]
-            // }}
+            social={{
+              providers: ["spotify"]
+            }}
             Link={Link}
           >
             {children}

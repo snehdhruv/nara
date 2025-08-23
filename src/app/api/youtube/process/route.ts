@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       chapterTitle: processedData.chapters?.[0]?.title || 'Chapter 1',
       
       // Use real chapters from the tool
-      chapters: processedData.chapters?.map(ch => ({
+      chapters: processedData.chapters?.map((ch: { idx: any; title: any; start_s: any; end_s: any; }) => ({
         idx: ch.idx,
         title: ch.title,
         start_s: ch.start_s,
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       })) || [],
       
       // Use real paragraphs as content (transform format)
-      content: processedData.paragraphs?.slice(0, 100).map((para) => ({
+      content: processedData.paragraphs?.slice(0, 100).map((para: { text: any; start_s: any; end_s: any; }) => ({
         text: para.text,
         startTime: para.start_s,
         endTime: para.end_s
