@@ -19,7 +19,7 @@ export async function chapterLoaderNode(state: GraphState): Promise<Partial<Grap
   const chapterSegments = transcriptData.segments.filter(s => s.chapter_idx === chapterIdx);
   
   if (chapterSegments.length === 0) {
-    throw new Error(`No segments found for chapter ${chapterIdx}. Available chapter_idx values: ${[...new Set(transcriptData.segments.map(s => s.chapter_idx))].join(', ')}`);
+    throw new Error(`No segments found for chapter ${chapterIdx}. Available chapter_idx values: ${Array.from(new Set(transcriptData.segments.map(s => s.chapter_idx))).join(', ')}`);
   }
   
   console.log(`[ChapterLoader] Loaded chapter ${chapterIdx}: "${chapter.title}" with ${chapterSegments.length} segments`);

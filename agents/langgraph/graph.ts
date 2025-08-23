@@ -12,7 +12,24 @@ import { noteTakerNode } from './nodes/noteTaker';
 
 // Create the graph
 const workflow = new StateGraph<GraphState>({
-  channels: GraphState.shape
+  channels: {
+    datasetPath: { value: null, default: () => "" },
+    audiobookId: { value: null, default: () => "default" },
+    question: { value: null, default: () => "" },
+    playbackChapterIdx: { value: null, default: () => 0 },
+    userProgressIdx: { value: null, default: () => 1 },
+    modeHint: { value: null, default: () => "auto" as const },
+    tokenBudget: { value: null, default: () => 180000 },
+    includePriorSummaries: { value: null, default: () => true },
+    allowedIdx: { value: null, default: () => undefined },
+    chapter: { value: null, default: () => undefined },
+    priorSummaries: { value: null, default: () => undefined },
+    packingMode: { value: null, default: () => undefined },
+    packedMessages: { value: null, default: () => undefined },
+    answer: { value: null, default: () => undefined },
+    playbackHint: { value: null, default: () => undefined },
+    notes: { value: null, default: () => undefined }
+  }
 });
 
 // Add nodes
@@ -32,7 +49,7 @@ workflow.addEdge('chapterLoader', 'budgetPlanner');
 // Conditional routing based on packing mode
 workflow.addConditionalEdges(
   'budgetPlanner',
-  (state) => {
+  (state: GraphState) => {
     if (state.packingMode === 'focused') {
       return 'focusedSelector';
     } else if (state.packingMode === 'compressed') {
