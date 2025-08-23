@@ -28,6 +28,12 @@ export function NaraApp() {
   const queryQueueRef = React.useRef<string[]>([]);
   const vapiServiceRef = React.useRef<any>(null);
   
+  // VAD and continuous listening refs
+  const vadProcessorRef = React.useRef<any>(null);
+  const audioOrchestratorRef = React.useRef<any>(null);
+  const isListeningContinuously = React.useRef(false);
+  const [isVoiceSystemAvailable, setIsVoiceSystemAvailable] = React.useState(false);
+  
   const { 
     currentBook, 
     isPlaying, 
@@ -142,62 +148,149 @@ export function NaraApp() {
     }
   };
 
-  // Initialize voice service using full VoiceAgentBridge orchestration
+  // Initialize voice system only when user explicitly requests it
   const initializeVoiceService = async () => {
     try {
-      console.log('[Voice Agent] Initializing VoiceAgentBridge orchestration...');
+      console.log('[Voice Agent] Initializing voice system (user requested)...');
 
-      // Initialize the complete voice agent bridge via API
-      const bridgeResponse = await fetch('/api/voice-qa', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'test-connection'
-        })
-      });
-
-      const bridgeData = await bridgeResponse.json();
-      if (!bridgeData.success) {
-        throw new Error('VoiceAgentBridge connection test failed');
-      }
-
-      console.log('[Voice Agent] VoiceAgentBridge ready:', bridgeData.status);
-
-      // Check if Vapi audio modules are loaded for STT only
+      // Check if voice modules are available first
       if (typeof window.NaraAudioFactory === 'undefined') {
-        throw new Error('Voice audio modules not loaded');
+        console.warn('[Voice Agent] Voice audio modules not loaded - voice features unavailable');
+        return false;
       }
 
-      // Create Vapi service for STT only (VoiceAgentBridge handles the complete pipeline)
+      // Request microphone permission only when user wants voice features
+      let mediaStream;
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+        console.log('[Voice Agent] Microphone permission granted');
+        
+        // Stop the test stream immediately to avoid keeping mic active
+        mediaStream.getTracks().forEach(track => track.stop());
+      } catch (permissionError) {
+        console.warn('[Voice Agent] Microphone permission denied:', permissionError);
+        return false;
+      }
+
+      // Initialize VAD processor if available
+      if (window.NaraAudioFactory.createVADProcessor) {
+        vadProcessorRef.current = await window.NaraAudioFactory.createVADProcessor({
+          frameSize: 20,
+          threshold: 0.6,
+          hysteresis: {
+            speechFrames: 3,
+            totalFrames: 5,
+            silenceMs: 250
+          },
+          sampleRate: 48000
+        });
+
+        // Set up VAD event handlers
+        vadProcessorRef.current.on('speechStart', async (data) => {
+          console.log('[Voice Agent] Speech detected');
+          setIsListening(true);
+          setIsVoiceAgentActive(true);
+          
+          // Interrupt TTS if playing
+          if (currentAudioRef.current === 'tts') {
+            enableTTSInterruption();
+          }
+          // Pause audiobook when speech is detected
+          else if (isPlaying && currentAudioRef.current === 'audiobook') {
+            pause();
+            console.log('[Voice Agent] Paused audiobook for voice input');
+          }
+        });
+
+        vadProcessorRef.current.on('speechEnd', () => {
+          console.log('[Voice Agent] Speech ended');
+          setIsListening(false);
+          setIsVoiceAgentActive(false);
+        });
+
+        await vadProcessorRef.current.initialize();
+        await vadProcessorRef.current.start();
+        console.log('[Voice Agent] VAD processor ready');
+      }
+
+      // Initialize Vapi service for STT
       const vapiService = await window.NaraAudioFactory.createVapiService({
         apiKey: '765f8644-1464-4b36-a4fe-c660e15ba313',
         assistantId: '73c59df7-34d0-4e5a-89b0-d0668982c8cc',
-        sttOnly: true  // Use STT-only mode to prevent Vapi TTS
+        sttOnly: true,
+        continuousListening: true
       });
 
-      // Set up event listeners for voice interactions - Use Vapi ONLY for STT
+      // Set up transcript handling
       vapiService.addEventListener('userTranscript', async (event: CustomEvent) => {
         const transcript = event.detail;
-        console.log(`[Voice Agent] STT transcript: "${transcript}"`);
+        console.log(`[Voice Agent] STT: "${transcript}"`);
         
-        // Process with race condition prevention
-        await processVoiceQuery(transcript);
-      });
-
-      vapiService.addEventListener('conversationStopped', () => {
-        console.log('[Voice Agent] STT conversation ended');
-        setIsListening(false);
-        setIsVoiceAgentActive(false);
+        if (isListeningContinuously.current) {
+          await processVoiceQuery(transcript);
+        }
       });
 
       vapiServiceRef.current = vapiService;
-      window.vapiService = vapiService; // Keep for backward compatibility
-      console.log('[Voice Agent] VoiceAgentBridge orchestration ready');
+      
+      // Start listening
+      await vapiService.startConversation();
+      isListeningContinuously.current = true;
+      
+      console.log('[Voice Agent] Voice system ready');
+      return true;
       
     } catch (error) {
-      console.error('[Voice Agent] VoiceAgentBridge initialization failed:', error);
-      throw error;
+      console.error('[Voice Agent] Voice system initialization failed:', error);
+      return false;
     }
+  };
+
+  // Manual voice activation function - starts continuous listening
+  const activateVoiceSystem = async () => {
+    const success = await initializeVoiceService();
+    setIsVoiceSystemAvailable(success);
+    
+    if (success) {
+      console.log('[Voice Agent] Voice system activated - continuous listening enabled');
+      // Voice system is now always on and listening for wake words/speech
+    } else {
+      console.warn('[Voice Agent] Voice system activation failed');
+    }
+    
+    return success;
+  };
+
+  // Deactivate voice system
+  const deactivateVoiceSystem = () => {
+    console.log('[Voice Agent] Deactivating voice system');
+    
+    // Stop VAD processor
+    if (vadProcessorRef.current) {
+      vadProcessorRef.current.stop();
+      vadProcessorRef.current.destroy();
+      vadProcessorRef.current = null;
+    }
+    
+    // Stop voice service
+    if (vapiServiceRef.current) {
+      vapiServiceRef.current.stopConversation();
+      vapiServiceRef.current = null;
+    }
+    
+    // Reset states
+    isListeningContinuously.current = false;
+    setIsListening(false);
+    setIsVoiceAgentActive(false);
+    setIsVoiceSystemAvailable(false);
+    
+    console.log('[Voice Agent] Voice system deactivated');
   };
 
   // Create note from voice interaction (separate from TTS handling)
@@ -230,12 +323,18 @@ export function NaraApp() {
     }
   };
 
-  // Play TTS audio from base64 encoded buffer with proper state management
+  // Play TTS audio with proper audiobook timer pausing
   const playTTSAudio = async (base64AudioBuffer: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       try {
-        // Stop any current audio and set TTS as active
-        stopCurrentAudio();
+        // Pause audiobook playback (this stops the timer)
+        if (isPlaying) {
+          pause();
+          console.log('[Voice Agent] Paused audiobook for TTS playback');
+        }
+        
+        // Mute audiobook as backup
+        muteAudiobook();
         currentAudioRef.current = 'tts';
         
         // Convert base64 to blob
@@ -255,18 +354,19 @@ export function NaraApp() {
         
         // Set up event handlers
         audio.addEventListener('ended', () => {
-          console.log('[Voice Agent] LangGraph TTS playback completed');
+          console.log('[Voice Agent] TTS playback completed - resuming audiobook');
           URL.revokeObjectURL(audioUrl);
           ttsAudioRef.current = null;
-          currentAudioRef.current = null;
+          currentAudioRef.current = 'audiobook';
           
-          // Resume audiobook if not interrupted
-          if (!isInterruptedRef.current) {
-            setTimeout(() => {
-              currentAudioRef.current = 'audiobook';
-              unmuteAudiobook();
-            }, 500);
-          }
+          // Resume audiobook playback at the same position
+          unmuteAudiobook();
+          setTimeout(() => {
+            if (!isInterruptedRef.current) {
+              play();
+            }
+          }, 300);
+          
           isInterruptedRef.current = false;
           resolve();
         });
@@ -276,16 +376,27 @@ export function NaraApp() {
           URL.revokeObjectURL(audioUrl);
           ttsAudioRef.current = null;
           currentAudioRef.current = null;
+          
+          // Resume audiobook on error
+          unmuteAudiobook();
+          if (!isInterruptedRef.current) {
+            play();
+          }
           reject(error);
         });
         
         // Start playback
         audio.play().catch(reject);
-        console.log('[Voice Agent] LangGraph TTS playback started');
+        console.log('[Voice Agent] TTS playback started - audiobook timer paused');
         
       } catch (error) {
         console.error('[Voice Agent] TTS audio setup failed:', error);
         currentAudioRef.current = null;
+        // Resume audiobook on setup error
+        unmuteAudiobook();
+        if (!isInterruptedRef.current) {
+          play();
+        }
         reject(error);
       }
     });
@@ -305,58 +416,20 @@ export function NaraApp() {
     }
   };
 
-  const handleNarratorActivate = async () => {
-    try {
-      if (isListening) {
-        // Stop listening and cancel any ongoing queries
-        setIsListening(false);
-        setIsVoiceAgentActive(false);
-        console.log('[Voice Agent] Stopped listening');
-        
-        // Cancel ongoing query if any
-        if (abortControllerRef.current) {
-          console.log('[Voice Agent] Aborting ongoing query');
-          abortControllerRef.current.abort();
-        }
-        
-        // Clear query queue
-        queryQueueRef.current = [];
-        
-        // Stop the voice service
-        if (vapiServiceRef.current) {
-          vapiServiceRef.current.stopConversation();
-        }
-      } else {
-        // Prevent starting if already processing a query
-        if (processingQueryRef.current) {
-          console.log('[Voice Agent] Query in progress, cannot start listening');
-          return;
-        }
-        
-        // Start listening
-        setIsListening(true);
-        setIsVoiceAgentActive(true);
-        console.log('[Voice Agent] Started listening...');
-        
-        // Mute audiobook for voice interaction (maintain playback position)
-        if (currentAudioRef.current === 'audiobook' || isPlaying) {
-          currentAudioRef.current = 'audiobook';
-          muteAudiobook();
-          console.log('[Voice Agent] Muted audiobook for voice listening');
-        }
-        
-        // Initialize voice service if not already done
-        if (!vapiServiceRef.current) {
-          await initializeVoiceService();
-        }
-        
-        // Start listening (this enables STT through Vapi, VoiceAgentBridge handles the rest)
-        await vapiServiceRef.current.startConversation();
-      }
-    } catch (error) {
-      console.error('[Voice Agent] Activation failed:', error);
-      setIsVoiceAgentActive(false);
-      setIsListening(false);
+  // Enable voice interruption of TTS
+  const enableTTSInterruption = () => {
+    if (ttsAudioRef.current && currentAudioRef.current === 'tts') {
+      console.log('[Voice Agent] TTS interrupted by voice input');
+      ttsAudioRef.current.pause();
+      ttsAudioRef.current = null;
+      currentAudioRef.current = null;
+      
+      // Resume audiobook playback
+      setTimeout(() => {
+        currentAudioRef.current = 'audiobook';
+        unmuteAudiobook();
+        play();
+      }, 100);
     }
   };
 
@@ -367,10 +440,7 @@ export function NaraApp() {
 
 
   React.useEffect(() => {
-    // VoiceAgentBridge handles all voice interactions end-to-end
-    // No additional setup needed for frontend
-    
-    // Cleanup function to prevent race conditions
+    // Only set up cleanup - no automatic voice initialization
     return () => {
       // Cancel ongoing queries
       if (abortControllerRef.current) {
@@ -379,6 +449,12 @@ export function NaraApp() {
       
       // Clear query queue
       queryQueueRef.current = [];
+      
+      // Stop VAD processor
+      if (vadProcessorRef.current) {
+        vadProcessorRef.current.stop();
+        vadProcessorRef.current.destroy();
+      }
       
       // Stop voice service
       if (vapiServiceRef.current) {
@@ -390,6 +466,8 @@ export function NaraApp() {
         ttsAudioRef.current.pause();
         ttsAudioRef.current = null;
       }
+      
+      isListeningContinuously.current = false;
     };
   }, []);
 
@@ -534,7 +612,7 @@ export function NaraApp() {
           Add Test Note
         </Button>
         
-        {/* Connected Voice Control Buttons */}
+        {/* Voice System Status */}
         <div className="flex items-center gap-2">
           {/* Mute button */}
           <Button 
@@ -556,26 +634,61 @@ export function NaraApp() {
             />
           </Button>
 
-          {/* Hey Narrator button */}
-          <Button 
-            size="lg" 
-            className={`
-              rounded-full shadow-xl flex items-center gap-3 font-medium px-6 py-3 h-14 border-none 
-              transition-all duration-300 hover:scale-105
-              ${isListening 
-                ? 'bg-[#4CAF50] hover:bg-[#45a049] text-white animate-pulse shadow-[0_0_20px_rgba(76,175,80,0.6)]' // Listening - green with glow
-                : 'bg-[#8B7355] hover:bg-[#7A6348] text-white hover:shadow-2xl' // Inactive - brown
-              }
-            `}
-            onPress={handleNarratorActivate}
-          >
-            <Icon 
-              icon={isListening ? "lucide:mic" : "lucide:mic"} 
-              width={20} 
-              className={`text-white transition-transform duration-200 ${isListening ? 'animate-bounce' : ''}`}
-            />
-            {isListening ? 'Listening...' : 'Hey Narrator'}
-          </Button>
+          {/* Voice System Activation */}
+          {!isVoiceSystemAvailable ? (
+            <Button
+              size="lg" 
+              className={`
+                rounded-full shadow-xl flex items-center gap-3 font-medium px-6 py-3 h-14 border-none 
+                transition-all duration-300 hover:scale-105
+                bg-blue-500 hover:bg-blue-600 text-white shadow-lg
+              `}
+              onPress={activateVoiceSystem}
+            >
+              <Icon 
+                icon="lucide:mic" 
+                width={20} 
+                className="text-white"
+              />
+              <span className="text-sm">Enable Voice Assistant</span>
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <div 
+                className={`
+                  rounded-full shadow-xl flex items-center gap-3 font-medium px-6 py-3 h-14 border-none 
+                  transition-all duration-300
+                  ${isListening 
+                    ? 'bg-[#4CAF50] text-white animate-pulse shadow-[0_0_20px_rgba(76,175,80,0.6)]' // Active - green with glow
+                    : 'bg-[#8B7355] text-white shadow-lg' // Ready - brown
+                  }
+                `}
+              >
+                <Icon 
+                  icon="lucide:ear" 
+                  width={20} 
+                  className={`text-white transition-transform duration-200 ${isListening ? 'animate-bounce' : ''}`}
+                />
+                <span className="text-sm">
+                  {isListening ? 'Listening...' : 'Voice Ready'}
+                </span>
+              </div>
+              
+              {/* Voice system deactivate button */}
+              <Button
+                size="sm" 
+                className="rounded-full shadow-lg h-14 w-14 min-w-14 border-none bg-red-500 hover:bg-red-600 text-white transition-all duration-300 hover:scale-105"
+                onPress={deactivateVoiceSystem}
+                aria-label="Disable Voice System"
+              >
+                <Icon 
+                  icon="lucide:mic-off" 
+                  width={16} 
+                  className="text-white"
+                />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
       </div>

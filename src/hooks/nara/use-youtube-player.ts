@@ -155,13 +155,18 @@ export const useYouTubePlayer = ({
       if (playerRef.current && playerRef.current.getCurrentTime) {
         try {
           const time = playerRef.current.getCurrentTime();
-          const roundedTime = Math.floor(time); // Round to avoid floating point comparison issues
           
-          // Use setState callback to get the latest currentTime value
+          // Update every 250ms for smooth word highlighting, but only log every second
           setCurrentTime(prevTime => {
-            const prevRounded = Math.floor(prevTime);
-            if (roundedTime !== prevRounded) {
-              console.log('[useYouTubePlayer] Time update:', time);
+            const timeDiff = Math.abs(time - prevTime);
+            if (timeDiff >= 0.2) { // Update if difference is 200ms or more
+              const roundedTime = Math.floor(time);
+              const prevRounded = Math.floor(prevTime);
+              
+              // Log every second to avoid console spam
+              if (roundedTime !== prevRounded) {
+                console.log('[useYouTubePlayer] Time update:', time);
+              }
               
               if (onTimeUpdate) {
                 onTimeUpdate(time);
@@ -175,7 +180,7 @@ export const useYouTubePlayer = ({
           console.error('[useYouTubePlayer] Error getting current time:', error);
         }
       }
-    }, 1000); // Update every second for performance
+    }, 250); // Update every 250ms for smooth word highlighting
   }, [onTimeUpdate]);
 
   // Stop tracking playback time
