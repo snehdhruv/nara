@@ -32,6 +32,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectBook }) => {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [showYouTubeSearch, setShowYouTubeSearch] = React.useState(false);
   const { theme } = useTheme();
+  const [isMounted, setIsMounted] = React.useState(false);
+  
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   // Filter books based on search query
   const filteredBooks = React.useMemo(() => {
@@ -137,19 +142,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectBook }) => {
     <div className={`min-h-screen max-h-screen overflow-hidden flex ${themeClasses.container}`}>
       {/* Sidebar with wood texture - added min-width and max-width */}
       <div 
-        className={`h-screen min-w-[12rem] max-w-[15vw] w-48 border-r ${themeClasses.sidebar} p-4 md:p-6 flex flex-col`}
-        style={theme === 'light' ? {
-          backgroundImage: `
-            linear-gradient(to bottom, #e6d7ce, #d4b9a8),
-            repeating-linear-gradient(
-              120deg,
-              rgba(255,255,255,0.1) 0px,
-              rgba(0,0,0,0.05) 4px,
-              rgba(255,255,255,0.05) 6px,
-              rgba(0,0,0,0.02) 10px
-            )
-          `
-        } : {}}
+        className={`h-screen min-w-[12rem] max-w-[15vw] w-48 border-r ${themeClasses.sidebar} ${isMounted && theme === 'light' ? 'wood-texture-bg' : ''} p-4 md:p-6 flex flex-col`}
       >
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-8">

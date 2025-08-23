@@ -119,6 +119,13 @@ class BrowserVapiService extends EventTarget {
 
     } catch (error) {
       console.error('[BrowserVapiService] Failed to start conversation:', error);
+      // Reset listening state on error
+      this.isListening = false;
+      // Clean up any partial connections
+      if (this.websocket) {
+        this.websocket.close();
+        this.websocket = null;
+      }
       this.dispatchEvent(new CustomEvent('error', { detail: error }));
       throw error;
     }

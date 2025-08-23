@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../convex/_generated/api";
-import { generateCoverUrl } from "../../../lib/utils/cover-generator";
+// import { generateCoverUrl } from "../../../lib/utils/cover-generator";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -37,11 +37,9 @@ export async function GET(request: NextRequest) {
         const books = await Promise.all(audiobooks.map(async book => {
           let coverUrl = book.coverUrl;
           if (!coverUrl || coverUrl.includes('img.heroui.chat/image/book?w=400&h=600&u=default')) {
-            coverUrl = await generateCoverUrl({
-              title: book.title,
-              author: book.author,
-              youtubeVideoId: book.youtubeVideoId
-            });
+            coverUrl = book.youtubeVideoId 
+              ? `https://i.ytimg.com/vi/${book.youtubeVideoId}/maxresdefault.jpg`
+              : `https://img.heroui.chat/image/book?w=400&h=600&title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author || '')}`;
             
             // Update the book in the database with the new cover
             if (coverUrl !== book.coverUrl) {
@@ -89,11 +87,9 @@ export async function GET(request: NextRequest) {
     let filteredBooks = await Promise.all(audiobooksWithProgress.map(async book => {
       let coverUrl = book.coverUrl;
       if (!coverUrl || coverUrl.includes('img.heroui.chat/image/book?w=400&h=600&u=default')) {
-        coverUrl = await generateCoverUrl({
-          title: book.title,
-          author: book.author,
-          youtubeVideoId: book.youtubeVideoId
-        });
+        coverUrl = book.youtubeVideoId 
+          ? `https://i.ytimg.com/vi/${book.youtubeVideoId}/maxresdefault.jpg`
+          : `https://img.heroui.chat/image/book?w=400&h=600&title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author || '')}`;
         
         // Update the book in the database with the new cover
         if (coverUrl !== book.coverUrl) {

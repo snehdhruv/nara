@@ -3,6 +3,19 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Wood texture background for sidebar */
+.wood-texture-bg {
+  background-image: 
+    linear-gradient(to bottom, #e6d7ce, #d4b9a8),
+    repeating-linear-gradient(
+      120deg,
+      rgba(255,255,255,0.1) 0px,
+      rgba(0,0,0,0.05) 4px,
+      rgba(255,255,255,0.05) 6px,
+      rgba(0,0,0,0.02) 10px
+    );
+}
+
 :root {
   /* Default: Minimalist Approach - Clean and Simple */
   --background: oklch(1 0 0); /* #ffffff */

@@ -15,17 +15,19 @@ interface GeneratedNote {
 export async function generateActionableNote(
   userQuestion: string,
   aiResponse: string,
-  audiobookPosition: number
+  audiobookPosition: number,
+  bookContext?: { audiobookId?: string; chapterIdx?: number }
 ): Promise<GeneratedNote> {
   const transcript = `User: ${userQuestion}\n\nAI: ${aiResponse}`;
   
   try {
-    // Call to OpenAI or local LLM for note generation
+    // Call to LangGraph note generation API with book context
     const response = await fetch('/api/generate-note', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         transcript,
+        bookContext,
         prompt: `Analyze the transcript below. Identify what the reader/user needs. Then extract a minimum of 1 and maximum of 3 bullet points that really highlight the actionable takeaways from this conversation. Remember keep this as minimum as possible but use up to 3 bullet points if you feel there is a lot of high level information to extract
 
 ${transcript}
@@ -40,38 +42,109 @@ Respond with a title that summarizes the conversation actionable bullet points. 
     
     const data = await response.json();
     
-    // Parse the response to extract title and bullet points
-    const lines = data.result.split('\n').filter((line: string) => line.trim());
-    const title = lines[0].replace(/^#*\s*/, '').trim();
+    // LangGraph now returns properly formatted notes, but may have curly braces
+    let result = data.result || '';
     
-    const bulletPoints: string[] = [];
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*') || /^\d+\./.test(line)) {
-        bulletPoints.push(
-          line.replace(/^[•\-*]\s*/, '')
-              .replace(/^\d+\.\s*/, '')
-              .trim()
-        );
+    // Remove any surrounding curly braces that LangGraph might add
+    result = result.replace(/^\s*\{\s*/, '').replace(/\s*\}\s*$/, '').trim();
+    
+    // If result is still empty or malformed, try to extract from raw response
+    if (!result && data.answer_markdown) {
+      result = data.answer_markdown;
+      result = result.replace(/^\s*\{\s*/, '').replace(/\s*\}\s*$/, '').trim();
+    }
+    
+    // Aggressive cleaning of answer_markdown artifacts
+    result = result.replace(/["']?answer_markdown["']?\s*:\s*/gi, '');
+    result = result.replace(/^["']|["']$/g, ''); // Remove surrounding quotes
+    result = result.replace(/\\n/g, '\n'); // Unescape newlines
+    
+    const lines = result.split('\n').filter((line: string) => line.trim());
+    
+    // Extract title (first non-bullet line) and bullet points
+    let title = 'Voice Discussion'; // Default
+    let bulletPoints: string[] = [];
+    
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (!trimmedLine) continue;
+      
+      // Check for bullet points with various formats
+      if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*') || /^\d+\./.test(trimmedLine)) {
+        // This is a bullet point - clean it up
+        const cleanedBullet = trimmedLine
+          .replace(/^[•\-*]\s*/, '')
+          .replace(/^\d+\.\s*/, '')
+          .trim();
+        if (cleanedBullet) {
+          bulletPoints.push(cleanedBullet);
+        }
+      } else if (title === 'Voice Discussion' && !trimmedLine.startsWith('#')) {
+        // This is likely the title (first non-bullet, non-header line)
+        title = trimmedLine.replace(/^#*\s*/, '').trim();
       }
     }
     
+    // If no structured content found, try to parse it as a single block
+    if (bulletPoints.length === 0 && result.length > 0) {
+      // Split by double newlines to separate title and content
+      const sections = result.split('\n\n');
+      if (sections.length >= 2) {
+        title = sections[0].replace(/^#*\s*/, '').trim();
+        // Convert remaining sections to bullet points
+        for (let i = 1; i < sections.length; i++) {
+          const section = sections[i].trim();
+          if (section) {
+            bulletPoints.push(section);
+          }
+        }
+      } else {
+        // Split by single newlines and treat each line as potential content
+        const allLines = result.split('\n').filter((l: string) => l.trim());
+        if (allLines.length > 1) {
+          title = allLines[0].replace(/^#*\s*/, '').trim();
+          // Use remaining lines as bullet points
+          for (let i = 1; i < allLines.length; i++) {
+            const line = allLines[i].trim();
+            if (line) {
+              bulletPoints.push(line);
+            }
+          }
+        } else if (allLines.length === 1) {
+          // Single line - split into title and bullet based on length
+          const content = allLines[0].trim();
+          if (content.length > 50) {
+            // Long content - use first part as title, rest as bullet
+            const firstSentence = content.split('.')[0];
+            if (firstSentence.length < content.length) {
+              title = firstSentence.trim();
+              bulletPoints.push(content.substring(firstSentence.length + 1).trim());
+            } else {
+              title = 'Discussion Notes';
+              bulletPoints.push(content);
+            }
+          } else {
+            title = content;
+            bulletPoints.push('Key discussion point captured');
+          }
+        }
+      }
+    }
+    
+    // Ensure we always have at least one bullet point
+    if (bulletPoints.length === 0) {
+      bulletPoints.push('Discussion captured from voice interaction');
+    }
+    
     return {
-      title,
-      bulletPoints: bulletPoints.slice(0, 3), // Maximum 3 bullet points
+      title: title || 'Voice Discussion',
+      bulletPoints: bulletPoints.slice(0, 3), // Maximum 3 bullet points  
       timestamp: Date.now() / 1000,
       audiobookPosition
     };
   } catch (error) {
     console.error('[NoteGeneration] Failed to generate actionable note:', error);
-    
-    // Fallback to simple extraction
-    return {
-      title: "Voice Discussion",
-      bulletPoints: [userQuestion],
-      timestamp: Date.now() / 1000,
-      audiobookPosition
-    };
+    throw error; // No fallbacks, let it fail properly
   }
 }
 
@@ -79,13 +152,7 @@ Respond with a title that summarizes the conversation actionable bullet points. 
  * Format note for display in the notes panel
  */
 export function formatNoteForDisplay(note: GeneratedNote): string {
-  let formatted = '';
-  
-  if (note.bulletPoints.length > 0) {
-    formatted = note.bulletPoints.map(point => `• ${point}`).join('\n');
-  }
-  
-  return formatted;
+  return note.bulletPoints.map(point => `• ${point}`).join('\n');
 }
 
 /**

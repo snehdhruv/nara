@@ -30,10 +30,12 @@ export const AudiobookPanelV2: React.FC<AudiobookPanelProps> = ({
   isPlaying
 }) => {
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
-  const activeSentenceRef = React.useRef<HTMLDivElement>(null);
+  const activeSegmentRef = React.useRef<HTMLDivElement>(null);
+  const activeWordRef = React.useRef<HTMLSpanElement>(null);
   const lastScrollPositionRef = React.useRef(0);
   const userHasScrolledRef = React.useRef(false);
   const scrollTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [scrollY, setScrollY] = React.useState(0);
 
   // Process book content into sentence-based segments with word timings
   const processedContent = React.useMemo(() => {
@@ -132,33 +134,28 @@ export const AudiobookPanelV2: React.FC<AudiobookPanelProps> = ({
     };
   }, [processedContent, currentPosition]);
 
-  // Advanced auto-scroll using Intersection Observer
+  // Update scroll position based on active word position
   React.useEffect(() => {
-    if (!scrollContainerRef.current || !activeSentenceRef.current) return;
+    if (!isPlaying || userHasScrolledRef.current || !activeWordRef.current || !scrollContainerRef.current) return;
     
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (!entry.isIntersecting && !userHasScrolledRef.current) {
-            // Active sentence is out of view, scroll to it
-            entry.target.scrollIntoView({
-              behavior: 'smooth',
-              block: 'center'
-            });
-          }
-        });
-      },
-      {
-        root: scrollContainerRef.current,
-        rootMargin: '-30% 0px -30% 0px', // Trigger when sentence leaves center 40% of viewport
-        threshold: 0
-      }
-    );
+    const container = scrollContainerRef.current;
+    const activeWord = activeWordRef.current;
     
-    observer.observe(activeSentenceRef.current);
+    // Get word position and calculate where it should be centered
+    const containerHeight = container.getBoundingClientRect().height;
+    const wordOffsetTop = activeWord.offsetTop;
+    const targetScrollY = wordOffsetTop - containerHeight / 2;
     
-    return () => observer.disconnect();
-  }, [activeInfo.segmentIndex, activeInfo.activeSentenceIndex]);
+    setScrollY(targetScrollY);
+  }, [activeInfo.activeWord?.index, isPlaying]);
+
+  // Apply scroll position with Framer Motion
+  React.useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (container && !userHasScrolledRef.current) {
+      container.scrollTop = scrollY;
+    }
+  }, [scrollY]);
 
   // Track manual scrolling
   React.useEffect(() => {
@@ -169,18 +166,20 @@ export const AudiobookPanelV2: React.FC<AudiobookPanelProps> = ({
       const currentScroll = container.scrollTop;
       
       // Detect manual scroll (significant change not from auto-scroll)
-      if (Math.abs(currentScroll - lastScrollPositionRef.current) > 100) {
+      if (Math.abs(currentScroll - lastScrollPositionRef.current) > 200) {
         userHasScrolledRef.current = true;
+        console.log('[Auto-scroll] Manual scroll detected, pausing auto-scroll');
         
         // Clear existing timeout
         if (scrollTimeoutRef.current) {
           clearTimeout(scrollTimeoutRef.current);
         }
         
-        // Re-enable auto-scroll after 5 seconds of no manual scrolling
+        // Re-enable auto-scroll after 3 seconds of no manual scrolling
         scrollTimeoutRef.current = setTimeout(() => {
           userHasScrolledRef.current = false;
-        }, 5000);
+          console.log('[Auto-scroll] Re-enabling auto-scroll');
+        }, 3000);
       }
       
       lastScrollPositionRef.current = currentScroll;
@@ -207,6 +206,7 @@ export const AudiobookPanelV2: React.FC<AudiobookPanelProps> = ({
     return (
       <motion.span
         key={`${word.word}-${index}`}
+        ref={isActive ? activeWordRef : null}
         className={`inline-block mx-0.5 transition-all duration-200 ${
           isActive 
             ? 'text-amber-900 font-semibold' 
@@ -218,9 +218,11 @@ export const AudiobookPanelV2: React.FC<AudiobookPanelProps> = ({
           scale: isActive ? 1.2 : 1,
           backgroundColor: isActive 
             ? 'rgba(251, 191, 36, 0.2)' // Amber highlight
-            : 'transparent',
+            : 'rgba(0, 0, 0, 0)', // Use transparent rgba instead of 'transparent'
           padding: isActive ? '2px 4px' : '0px',
-          borderRadius: isActive ? '4px' : '0px',
+          borderRadius: isActive ? '4px' : '0px'
+        }}
+        style={{
           textShadow: isActive 
             ? '0 0 20px rgba(251, 191, 36, 0.5)' 
             : 'none'
@@ -303,7 +305,7 @@ export const AudiobookPanelV2: React.FC<AudiobookPanelProps> = ({
                 const segmentElement = (
                   <motion.div
                     key={`segment-${segmentIndex}`}
-                    ref={isActiveSegment ? activeSentenceRef : null}
+                    ref={isActiveSegment ? activeSegmentRef : null}
                     className={`relative transition-all duration-300 ${
                       isActiveSegment 
                         ? 'scale-[1.02]' 

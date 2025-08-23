@@ -234,7 +234,17 @@ export class LangGraphRunner {
    * Format LangGraph output as actionable note
    */
   private formatAsNote(markdown: string): string {
-    const lines = markdown.split('\n').filter(l => l.trim());
+    // Clean up any JSON artifacts from LangGraph response
+    let cleanedMarkdown = markdown;
+    
+    // Remove JSON wrapper if present
+    cleanedMarkdown = cleanedMarkdown.replace(/^["']?answer_markdown["']?\s*:\s*["']?/, '');
+    cleanedMarkdown = cleanedMarkdown.replace(/["']?\s*[,}]\s*$/, '');
+    cleanedMarkdown = cleanedMarkdown.replace(/^["']|["']$/g, ''); // Remove surrounding quotes
+    cleanedMarkdown = cleanedMarkdown.replace(/\\n/g, '\n'); // Unescape newlines
+    cleanedMarkdown = cleanedMarkdown.replace(/\\"/g, '"'); // Unescape quotes
+    
+    const lines = cleanedMarkdown.split('\n').filter(l => l.trim());
     
     // Extract title
     let title = lines.find(l => !l.startsWith('•') && !l.startsWith('-') && !l.startsWith('*'));
