@@ -80,12 +80,12 @@ export default function VoiceApp() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
       <div className="p-6">
         <h1 className="text-3xl font-bold mb-6 text-center">🎤 Zero to One - Voice Experience</h1>
-        
+
         <SignedOut>
           <div className="max-w-md mx-auto text-center space-y-4">
             <p className="text-lg">Connect your Spotify account to start the voice audiobook experience</p>
-            <a 
-              href="/api/auth/signin/spotify" 
+            <a
+              href="/api/auth/signin/spotify"
               className="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
             >
               🎵 Connect Spotify
@@ -174,8 +174,8 @@ function VoiceAppContent() {
   // Get current chapter based on time position
   const getCurrentChapterFromTime = useCallback((timeSeconds: number): number => {
     if (!audiobook) return 1;
-    
-    const chapter = audiobook.chapters.find(ch => 
+
+    const chapter = audiobook.chapters.find(ch =>
       timeSeconds >= ch.start_s && timeSeconds < ch.end_s
     );
     return chapter?.idx || 1;
@@ -280,14 +280,14 @@ function VoiceAppContent() {
     audioManager.addEventListener('userMessage', (event: CustomEvent) => {
       const transcript = event.detail;
       console.log(`[VoiceApp] 👤 User said: "${transcript}"`);
-      
+
       addConversationItem({
         type: 'user',
         content: transcript,
         timestamp: Date.now(),
         chapter: audioState.currentChapter
       });
-      
+
       processVoiceQuestion(transcript);
     });
 
@@ -301,13 +301,13 @@ function VoiceAppContent() {
     // 4. TTS Complete - Resume Spotify audiobook
     audioManager.addEventListener('conversationStopped', async () => {
       console.log('[VoiceApp] ✅ Voice interaction complete - Resuming audiobook');
-      setAudioState(prev => ({ 
-        ...prev, 
-        isListening: false, 
-        isSpeaking: false, 
-        isProcessing: false 
+      setAudioState(prev => ({
+        ...prev,
+        isListening: false,
+        isSpeaking: false,
+        isProcessing: false
       }));
-      
+
       // Small delay to ensure clean transition
       setTimeout(async () => {
         await resumeSpotify();
@@ -318,15 +318,15 @@ function VoiceAppContent() {
     audioManager.addEventListener('error', async (event: CustomEvent) => {
       console.error('[VoiceApp] Audio manager error:', event.detail);
       setError(`Audio error: ${event.detail.message || event.detail}`);
-      
+
       // Reset state and try to resume audiobook
-      setAudioState(prev => ({ 
-        ...prev, 
-        isListening: false, 
-        isSpeaking: false, 
-        isProcessing: false 
+      setAudioState(prev => ({
+        ...prev,
+        isListening: false,
+        isSpeaking: false,
+        isProcessing: false
       }));
-      
+
       try {
         await resumeSpotify();
       } catch (resumeError) {
@@ -403,9 +403,9 @@ function VoiceAppContent() {
     const chapter = audiobook?.chapters.find(ch => ch.idx === chapterIdx);
     if (chapter) {
       try {
-        await controlSpotifyPlayback({ 
-          action: "play", 
-          positionMs: chapter.start_s * 1000 
+        await controlSpotifyPlayback({
+          action: "play",
+          positionMs: chapter.start_s * 1000
         });
         console.log(`[VoiceApp] Jumped to Chapter ${chapterIdx}`);
       } catch (error) {
@@ -437,11 +437,11 @@ function VoiceAppContent() {
   const formatTime = (timeValue: number): string => {
     // Convert milliseconds to seconds if the value is too large
     const seconds = timeValue > 10000 ? Math.floor(timeValue / 1000) : timeValue;
-    
+
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
-    
+
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
@@ -461,33 +461,33 @@ function VoiceAppContent() {
   return (
     <>
       {/* Load required scripts */}
-      <Script 
-        src="https://www.youtube.com/iframe_api" 
+      <Script
+        src="https://www.youtube.com/iframe_api"
         strategy="lazyOnload"
         onLoad={() => console.log('[VoiceApp] YouTube API loaded')}
       />
-      <Script 
-        src="/main/audio/BrowserVapiService.js" 
+      <Script
+        src="/main/audio/BrowserVapiService.js"
         strategy="lazyOnload"
         onLoad={() => console.log('[VoiceApp] BrowserVapiService loaded')}
       />
-      <Script 
-        src="/main/audio/BrowserTTSService.js" 
+      <Script
+        src="/main/audio/BrowserTTSService.js"
         strategy="lazyOnload"
         onLoad={() => console.log('[VoiceApp] BrowserTTSService loaded')}
       />
-      <Script 
-        src="/main/audio/BrowserAudioPlayer.js" 
+      <Script
+        src="/main/audio/BrowserAudioPlayer.js"
         strategy="lazyOnload"
         onLoad={() => console.log('[VoiceApp] BrowserAudioPlayer loaded')}
       />
-      <Script 
-        src="/main/audio/BrowserAudioManager.js" 
+      <Script
+        src="/main/audio/BrowserAudioManager.js"
         strategy="lazyOnload"
         onLoad={() => console.log('[VoiceApp] BrowserAudioManager loaded')}
       />
-      <Script 
-        src="/main/audio/browser-audio-modules.js" 
+      <Script
+        src="/main/audio/browser-audio-modules.js"
         strategy="lazyOnload"
         onLoad={() => {
           console.log('[VoiceApp] All audio modules loaded');
@@ -496,7 +496,7 @@ function VoiceAppContent() {
       />
 
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white flex flex-col">
-        
+
         {/* Header */}
         <header className="p-6 border-b border-white/10">
           <div className="flex items-center justify-between">
@@ -505,13 +505,13 @@ function VoiceAppContent() {
                 🎤 Zero to One - Voice Experience
               </h1>
               <p className="text-slate-400 text-sm mt-1">
-                {playbackState?.track 
-                  ? `${playbackState.track.name} • ${playbackState.track.artist}` 
+                {playbackState?.track
+                  ? `${playbackState.track.name} • ${playbackState.track.artist}`
                   : 'No audiobook or podcast detected - please play an audiobook or podcast on Spotify'
                 }
               </p>
             </div>
-            
+
             <div className="flex items-center gap-4">
               {/* System Status */}
               <div className="flex items-center gap-2 text-sm">
@@ -528,19 +528,19 @@ function VoiceAppContent() {
 
         {/* Main Content */}
         <div className="flex-1 flex">
-          
+
           {/* Left Panel - Spotify Player & Controls */}
           <div className="w-1/3 p-6 border-r border-white/10">
-            
+
             {/* Spotify Playback Info */}
             {playbackState?.track ? (
               <div className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
                 <div className="flex items-center gap-3 mb-3">
                   {playbackState.track.imageUrl && (
-                    <img 
-                      src={playbackState.track.imageUrl} 
+                    <img
+                      src={playbackState.track.imageUrl}
                       alt={playbackState.track.album}
-                      className="w-12 h-12 rounded" 
+                      className="w-12 h-12 rounded"
                     />
                   )}
                   <div>
@@ -549,14 +549,14 @@ function VoiceAppContent() {
                     <p className="text-xs text-slate-400">{playbackState.track.album}</p>
                   </div>
                 </div>
-                
+
                 {/* Progress Bar */}
                 <div className="mb-2">
                   <div className="w-full bg-white/10 rounded-full h-2">
-                    <div 
+                    <div
                       className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-1000"
-                      style={{ 
-                        width: `${playbackState.track.durationMs > 0 ? ((playbackState.progressMs || 0) / playbackState.track.durationMs) * 100 : 0}%` 
+                      style={{
+                        width: `${playbackState.track.durationMs > 0 ? ((playbackState.progressMs || 0) / playbackState.track.durationMs) * 100 : 0}%`
                       }}
                     />
                   </div>
@@ -597,17 +597,17 @@ function VoiceAppContent() {
             {/* Voice Control */}
             <div className="mb-6 p-4 bg-gradient-to-r from-purple-900/20 to-blue-900/20 rounded-lg border border-purple-500/20">
               <h3 className="font-semibold mb-3 text-center">🎤 Voice Control</h3>
-              
+
               <div className="flex flex-col gap-3">
                 <button
                   onClick={startListening}
                   disabled={!audioState.isInitialized || audioState.isListening || audioState.isProcessing}
                   className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
                 >
-                  {audioState.isListening 
-                    ? '🎤 Listening...' 
-                    : audioState.isProcessing 
-                    ? '⏳ Processing...' 
+                  {audioState.isListening
+                    ? '🎤 Listening...'
+                    : audioState.isProcessing
+                    ? '⏳ Processing...'
                     : '🎤 Ask a Question'
                   }
                 </button>
@@ -648,7 +648,7 @@ function VoiceAppContent() {
           {/* Right Panel - Conversation */}
           <div className="flex-1 p-6 flex flex-col">
             <h2 className="text-xl font-semibold mb-4 text-center">💬 Conversation History</h2>
-            
+
             {/* Conversation Area */}
             <div className="flex-1 overflow-y-auto space-y-4 mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
               {conversation.length === 0 ? (
@@ -661,8 +661,8 @@ function VoiceAppContent() {
                   {conversation.map((item, index) => (
                     <div key={index} className={`flex ${item.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[80%] p-3 rounded-lg ${
-                        item.type === 'user' 
-                          ? 'bg-blue-600 text-white ml-auto' 
+                        item.type === 'user'
+                          ? 'bg-blue-600 text-white ml-auto'
                           : 'bg-white/10 text-slate-100'
                       }`}>
                         <div className="flex items-start gap-2 mb-2">
@@ -676,7 +676,7 @@ function VoiceAppContent() {
                           </div>
                         </div>
                         <p className="whitespace-pre-wrap">{item.content}</p>
-                        
+
                         {/* Citations for assistant responses */}
                         {item.type === 'assistant' && item.citations && item.citations.length > 0 && (
                           <div className="mt-2 pt-2 border-t border-white/20">
@@ -688,7 +688,7 @@ function VoiceAppContent() {
                             ))}
                           </div>
                         )}
-                        
+
                         {/* Playback hint */}
                         {item.type === 'assistant' && item.playbackHint && (
                           <div className="mt-2 pt-2 border-t border-white/20">
