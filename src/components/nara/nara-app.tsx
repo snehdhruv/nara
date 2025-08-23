@@ -583,8 +583,26 @@ export function NaraApp() {
   }, []);
 
   // Handle book selection from dashboard
-  const handleSelectBook = (bookId: string) => {
+  const handleSelectBook = async (bookId: string) => {
     setSelectedBookId(bookId);
+    
+    // Restore saved reading position
+    try {
+      const response = await fetch(`/api/progress?bookId=${bookId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.progress && data.progress.lastPosition > 0) {
+          // Wait a moment for the book to load, then seek to saved position
+          setTimeout(() => {
+            console.log('[NaraApp] Restoring saved position:', data.progress.lastPosition);
+            seekTo(data.progress.lastPosition);
+          }, 1000);
+        }
+      }
+    } catch (error) {
+      console.error('[NaraApp] Failed to restore saved position:', error);
+      // Continue without restoration - not a critical failure
+    }
   };
 
   // Return to dashboard

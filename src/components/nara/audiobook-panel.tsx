@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Book } from "@/types/nara/book";
+import { useAutoSaveProgress } from "@/hooks/nara/use-auto-save-progress";
 
 interface AudiobookPanelProps {
   book: Book;
@@ -34,6 +35,12 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
   currentPosition,
   isPlaying
 }) => {
+  // Auto-save progress functionality
+  const { saveProgress, saveProgressImmediate } = useAutoSaveProgress({
+    bookId: book.id,
+    duration: book.duration || 0,
+    isPlaying
+  });
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const currentParagraphRef = React.useRef<HTMLParagraphElement>(null);
   const activeWordRef = React.useRef<HTMLSpanElement>(null);
@@ -101,6 +108,39 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
       isActive: currentPosition >= chunk.startTime && currentPosition < chunk.endTime
     }));
   }, [book.content, book.id, currentPosition]);
+
+  // Auto-save progress when position changes
+  React.useEffect(() => {
+    if (currentPosition > 0) {
+      // Find current chapter based on position (if chapters exist)
+      let currentChapter = undefined;
+      if (book.chapters && book.chapters.length > 0) {
+        const chapter = book.chapters.find(ch => 
+          currentPosition >= ch.start_s && currentPosition < ch.end_s
+        );
+        currentChapter = chapter ? chapter.idx : undefined;
+      }
+      
+      // Auto-save progress (debounced)
+      saveProgress(currentPosition, currentChapter);
+    }
+  }, [currentPosition, book.chapters, saveProgress]);
+
+  // Save immediately when playback stops
+  React.useEffect(() => {
+    if (!isPlaying && currentPosition > 0) {
+      let currentChapter = undefined;
+      if (book.chapters && book.chapters.length > 0) {
+        const chapter = book.chapters.find(ch => 
+          currentPosition >= ch.start_s && currentPosition < ch.end_s
+        );
+        currentChapter = chapter ? chapter.idx : undefined;
+      }
+      
+      // Save immediately when stopping
+      saveProgressImmediate(currentPosition, currentChapter);
+    }
+  }, [isPlaying, currentPosition, book.chapters, saveProgressImmediate]);
 
   // Calculate which paragraph to highlight based on current position
   const currentParagraphIndex = React.useMemo(() => {
