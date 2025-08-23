@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { ingestVideo } from '../../../../lib/tools/ingest-youtube/src/index';
 import { transcribeYouTubeVideo } from '../../../../lib/tools/asr-youtube/src/index';
+import { generateCoverUrl } from '../../../../lib/utils/cover-generator';
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,14 +84,24 @@ export async function POST(request: NextRequest) {
     
     if (processedData.source) {
       // This is from ingest-youtube tool
+      const bookTitle = title || processedData.source.title;
+      const bookAuthor = channel || processedData.source.channel;
+      
+      // Generate a proper cover URL using the cover generator
+      const coverUrl = await generateCoverUrl({
+        title: bookTitle,
+        author: bookAuthor,
+        youtubeVideoId: videoId
+      });
+      
       audioBookData = {
         id: videoId,
         youtubeVideoId: videoId,
-        title: title || processedData.source.title,
-        author: channel || processedData.source.channel,
+        title: bookTitle,
+        author: bookAuthor,
         duration: processedData.source.duration_s,
-        coverUrl: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-        narrator: channel || processedData.source.channel,
+        coverUrl,
+        narrator: bookAuthor,
         currentChapter: 1,
         chapterTitle: processedData.chapters?.[0]?.title || 'Chapter 1',
         description: `${processedData.source.title} by ${processedData.source.channel}`,
@@ -112,14 +123,24 @@ export async function POST(request: NextRequest) {
       };
     } else {
       // This is from ASR tool (has videoMeta instead of source)
+      const bookTitle = title || processedData.videoMeta?.title;
+      const bookAuthor = channel || processedData.videoMeta?.channel;
+      
+      // Generate a proper cover URL using the cover generator
+      const coverUrl = await generateCoverUrl({
+        title: bookTitle,
+        author: bookAuthor,
+        youtubeVideoId: videoId
+      });
+      
       audioBookData = {
         id: videoId,
         youtubeVideoId: videoId,
-        title: title || processedData.videoMeta?.title,
-        author: channel || processedData.videoMeta?.channel,
+        title: bookTitle,
+        author: bookAuthor,
         duration: processedData.videoMeta?.duration_s,
-        coverUrl: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-        narrator: channel || processedData.videoMeta?.channel,
+        coverUrl,
+        narrator: bookAuthor,
         currentChapter: 1,
         chapterTitle: processedData.chapters?.[0]?.title || 'Chapter 1',
         description: `${processedData.videoMeta?.title} by ${processedData.videoMeta?.channel}`,
