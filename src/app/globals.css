@@ -149,6 +149,40 @@
   @apply max-w-md mx-auto;
 }
 
+/* Custom landing page styles */
+.writing-vertical-rl {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+/* Enhanced text rendering */
+.text-rendering-optimized {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--foreground) 0%, rgba(var(--foreground-rgb), 0.8) 50%, var(--foreground) 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Artistic paint splash effects */
+.paint-splash {
+  filter: blur(0.5px) brightness(1.1) contrast(1.2);
+  mix-blend-mode: multiply;
+}
+
 /* Override better-auth-ui button styles */
 .auth-container button[type="button"],
 .auth-container .oauth-button,
