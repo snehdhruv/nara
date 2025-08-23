@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../convex/_generated/api";
+import { generateCoverUrl } from "../../../lib/utils/cover-generator";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -33,18 +34,41 @@ export async function GET(request: NextRequest) {
         console.log('[API] Falling back to audiobooks without user progress');
         const audiobooks = await convex.query(api.audiobooks.listAudiobooks, {});
         
-        const books = audiobooks.map(book => ({
-          id: book._id,
-          title: book.title,
-          author: book.author,
-          narrator: book.narrator || book.author,
-          coverUrl: book.coverUrl || "https://img.heroui.chat/image/book?w=400&h=600&u=default",
-          progress: 0.23, // Default progress for demo
-          lastPosition: 1420, // Default position for demo
-          duration: book.duration,
-          description: book.description,
-          youtubeVideoId: book.youtubeVideoId,
-          totalChapters: book.totalChapters || 0
+        const books = await Promise.all(audiobooks.map(async book => {
+          let coverUrl = book.coverUrl;
+          if (!coverUrl || coverUrl.includes('img.heroui.chat/image/book?w=400&h=600&u=default')) {
+            coverUrl = await generateCoverUrl({
+              title: book.title,
+              author: book.author,
+              youtubeVideoId: book.youtubeVideoId
+            });
+            
+            // Update the book in the database with the new cover
+            if (coverUrl !== book.coverUrl) {
+              try {
+                await convex.mutation(api.audiobooks.updateCover, {
+                  audiobookId: book._id,
+                  coverUrl
+                });
+              } catch (error) {
+                console.error(`Failed to update cover for ${book.title}:`, error);
+              }
+            }
+          }
+          
+          return {
+            id: book._id,
+            title: book.title,
+            author: book.author,
+            narrator: book.narrator || book.author,
+            coverUrl,
+            progress: 0.23, // Default progress for demo
+            lastPosition: 1420, // Default position for demo
+            duration: book.duration,
+            description: book.description,
+            youtubeVideoId: book.youtubeVideoId,
+            totalChapters: book.totalChapters || 0
+          };
         }));
         
         return NextResponse.json({
@@ -62,18 +86,41 @@ export async function GET(request: NextRequest) {
       userId: demoUserId
     });
     
-    let filteredBooks = audiobooksWithProgress.map(book => ({
-      id: book._id,
-      title: book.title,
-      author: book.author,
-      narrator: book.narrator || book.author,
-      coverUrl: book.coverUrl || "https://img.heroui.chat/image/book?w=400&h=600&u=default",
-      progress: book.progress || 0,
-      lastPosition: book.lastPosition || 0,
-      duration: book.duration,
-      description: book.description,
-      youtubeVideoId: book.youtubeVideoId,
-      totalChapters: book.totalChapters || 0
+    let filteredBooks = await Promise.all(audiobooksWithProgress.map(async book => {
+      let coverUrl = book.coverUrl;
+      if (!coverUrl || coverUrl.includes('img.heroui.chat/image/book?w=400&h=600&u=default')) {
+        coverUrl = await generateCoverUrl({
+          title: book.title,
+          author: book.author,
+          youtubeVideoId: book.youtubeVideoId
+        });
+        
+        // Update the book in the database with the new cover
+        if (coverUrl !== book.coverUrl) {
+          try {
+            await convex.mutation(api.audiobooks.updateCover, {
+              audiobookId: book._id,
+              coverUrl
+            });
+          } catch (error) {
+            console.error(`Failed to update cover for ${book.title}:`, error);
+          }
+        }
+      }
+      
+      return {
+        id: book._id,
+        title: book.title,
+        author: book.author,
+        narrator: book.narrator || book.author,
+        coverUrl,
+        progress: book.progress || 0,
+        lastPosition: book.lastPosition || 0,
+        duration: book.duration,
+        description: book.description,
+        youtubeVideoId: book.youtubeVideoId,
+        totalChapters: book.totalChapters || 0
+      };
     }));
     
     // Apply search filter
