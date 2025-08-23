@@ -17,7 +17,7 @@ async function testCitationExtraction() {
     
     try {
       const result = await runChapterQA({
-        datasetPath: '/Users/snehdhruv/Documents/hackathons/dedalus/data/zero-to-one.json',
+        datasetPath: './data/zero-to-one.json',
         audiobookId: 'zero-to-one',
         question,
         playbackChapterIdx: 1,

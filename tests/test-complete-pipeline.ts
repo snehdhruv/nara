@@ -12,7 +12,7 @@ async function testCompletePipeline() {
     console.log('Chapter: 1, Progress: 3\n');
     
     const result = await runChapterQA({
-      datasetPath: '/Users/snehdhruv/Documents/hackathons/dedalus/data/zero-to-one.json',
+      datasetPath: './data/zero-to-one.json',
       audiobookId: 'zero-to-one',
       question: 'What does Peter Thiel mean by going from zero to one?',
       playbackChapterIdx: 1,
@@ -35,7 +35,7 @@ async function testCompletePipeline() {
     // Test 2: Different modes
     console.log('Test 2: Testing Focused Mode');
     const focusedResult = await runChapterQA({
-      datasetPath: '/Users/snehdhruv/Documents/hackathons/dedalus/data/zero-to-one.json',
+      datasetPath: './data/zero-to-one.json',
       audiobookId: 'zero-to-one', 
       question: 'What specific examples does Peter Thiel give about monopolies?',
       playbackChapterIdx: 2,

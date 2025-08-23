@@ -8,7 +8,7 @@ async function testChapterFix() {
   try {
     // Test with chapter 1 (should exist and have segments)
     const result = await runChapterQA({
-      datasetPath: '/Users/snehdhruv/Documents/hackathons/dedalus/data/zero-to-one.json',
+      datasetPath: './data/zero-to-one.json',
       audiobookId: 'zero-to-one',
       question: 'What is the main challenge of the future according to Peter Thiel?',
       playbackChapterIdx: 1,
