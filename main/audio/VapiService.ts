@@ -18,6 +18,22 @@ export interface VapiConfig {
     phrase: string; // "Hey Nara"
     sensitivity: number; // 0-1
   };
+  // Enhanced audio quality settings
+  audioQuality?: {
+    sampleRate: 16000 | 24000 | 48000; // Higher sample rates for better quality
+    bitrate: number; // Audio bitrate in kbps
+    echoCancellation: boolean; // Enable echo cancellation
+    noiseSuppression: boolean; // Enable noise suppression
+    autoGainControl: boolean; // Enable automatic gain control
+    channelCount: 1 | 2; // Mono or stereo
+  };
+  // Voice enhancement options
+  voiceEnhancement?: {
+    enabled: boolean;
+    backgroundNoiseReduction: number; // 0-1 strength
+    speechEnhancement: boolean; // Enhance speech clarity
+    adaptiveFiltering: boolean; // Adaptive noise filtering
+  };
 }
 
 export interface VapiTranscription {
@@ -52,7 +68,27 @@ export class VapiService extends EventEmitter {
 
   constructor(config: VapiConfig) {
     super();
-    this.config = config;
+
+    // Set default audio quality settings if not provided
+    this.config = {
+      ...config,
+      audioQuality: {
+        sampleRate: 24000, // Higher quality than default 16kHz
+        bitrate: 128, // Good quality bitrate
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1, // Mono for voice
+        ...config.audioQuality
+      },
+      voiceEnhancement: {
+        enabled: true,
+        backgroundNoiseReduction: 0.8, // Strong noise reduction
+        speechEnhancement: true,
+        adaptiveFiltering: true,
+        ...config.voiceEnhancement
+      }
+    };
   }
 
   async initialize(): Promise<void> {
@@ -156,7 +192,19 @@ export class VapiService extends EventEmitter {
             audioFormat: {
               format: 'pcm_s16le',
               container: 'raw',
-              sampleRate: 16000
+              sampleRate: this.config.audioQuality?.sampleRate || 24000,
+              channels: this.config.audioQuality?.channelCount || 1,
+              bitrate: this.config.audioQuality?.bitrate || 128
+            },
+            // Enhanced audio processing settings
+            audioProcessing: {
+              echoCancellation: this.config.audioQuality?.echoCancellation ?? true,
+              noiseSuppression: this.config.audioQuality?.noiseSuppression ?? true,
+              autoGainControl: this.config.audioQuality?.autoGainControl ?? true,
+              voiceEnhancement: this.config.voiceEnhancement?.enabled ?? true,
+              backgroundNoiseReduction: this.config.voiceEnhancement?.backgroundNoiseReduction ?? 0.8,
+              speechEnhancement: this.config.voiceEnhancement?.speechEnhancement ?? true,
+              adaptiveFiltering: this.config.voiceEnhancement?.adaptiveFiltering ?? true
             }
           }
         })
@@ -329,8 +377,135 @@ export class VapiService extends EventEmitter {
     const transcript = text.toLowerCase().trim();
     const sensitivity = this.config.wakeWord.sensitivity || 0.7;
 
-    // Check if wake phrase is in the transcript with sufficient confidence
-    return transcript.includes(wakePhrase) && confidence >= sensitivity;
+    // Enhanced wake word detection with multiple strategies
+    const detectionMethods = [
+      this.exactMatch(transcript, wakePhrase),
+      this.fuzzyMatch(transcript, wakePhrase),
+      this.phonemeMatch(transcript, wakePhrase),
+      this.partialMatch(transcript, wakePhrase)
+    ];
+
+    // Use the highest confidence from any detection method
+    const maxDetectionConfidence = Math.max(...detectionMethods);
+    const adjustedConfidence = confidence * maxDetectionConfidence;
+
+    const detected = adjustedConfidence >= sensitivity;
+
+    if (detected) {
+      console.log(`[VapiService] Wake word detection: "${text}" -> confidence: ${Math.round(adjustedConfidence * 100)}%`);
+    }
+
+    return detected;
+  }
+
+  private exactMatch(text: string, wakePhrase: string): number {
+    // Exact phrase matching
+    if (text.includes(wakePhrase)) return 1.0;
+
+    // Check for exact words in sequence
+    const textWords = text.split(/\s+/);
+    const wakeWords = wakePhrase.split(/\s+/);
+
+    for (let i = 0; i <= textWords.length - wakeWords.length; i++) {
+      const slice = textWords.slice(i, i + wakeWords.length);
+      if (slice.join(' ') === wakePhrase) return 1.0;
+    }
+
+    return 0.0;
+  }
+
+  private fuzzyMatch(text: string, wakePhrase: string): number {
+    // Levenshtein distance-based fuzzy matching
+    const distance = this.levenshteinDistance(text, wakePhrase);
+    const maxLength = Math.max(text.length, wakePhrase.length);
+
+    if (maxLength === 0) return 1.0;
+
+    const similarity = 1 - (distance / maxLength);
+    return Math.max(0, similarity - 0.3); // Require at least 70% similarity
+  }
+
+  private phonemeMatch(text: string, wakePhrase: string): number {
+    // Simple phoneme-based matching for common speech recognition errors
+    const phonemeMap: { [key: string]: string[] } = {
+      'hey': ['hay', 'hi', 'a'],
+      'nara': ['naira', 'narrow', 'narrator', 'sarah', 'clara'],
+      'ok': ['okay', 'k'],
+      'google': ['goggle', 'goo goo'],
+      'alexa': ['alex', 'alexia']
+    };
+
+    let phoneticText = text;
+    let phoneticWake = wakePhrase;
+
+    // Apply phoneme substitutions
+    for (const [correct, variants] of Object.entries(phonemeMap)) {
+      for (const variant of variants) {
+        phoneticText = phoneticText.replace(new RegExp(variant, 'gi'), correct);
+        phoneticWake = phoneticWake.replace(new RegExp(variant, 'gi'), correct);
+      }
+    }
+
+    return phoneticText.includes(phoneticWake) ? 0.8 : 0.0;
+  }
+
+  private partialMatch(text: string, wakePhrase: string): number {
+    // Partial word matching with position weighting
+    const textWords = text.split(/\s+/);
+    const wakeWords = wakePhrase.split(/\s+/);
+
+    let matchScore = 0;
+    let totalWords = wakeWords.length;
+
+    for (let i = 0; i < wakeWords.length; i++) {
+      const wakeWord = wakeWords[i];
+      let bestMatch = 0;
+
+      for (let j = 0; j < textWords.length; j++) {
+        const textWord = textWords[j];
+
+        // Exact word match
+        if (textWord === wakeWord) {
+          bestMatch = 1.0;
+          break;
+        }
+
+        // Partial word match (for truncated words)
+        if (wakeWord.length >= 3 && textWord.startsWith(wakeWord.substring(0, 3))) {
+          bestMatch = Math.max(bestMatch, 0.7);
+        }
+
+        // Substring match
+        if (wakeWord.includes(textWord) || textWord.includes(wakeWord)) {
+          bestMatch = Math.max(bestMatch, 0.5);
+        }
+      }
+
+      matchScore += bestMatch;
+    }
+
+    const confidence = matchScore / totalWords;
+    return confidence >= 0.6 ? confidence : 0.0; // Require at least 60% word match
+  }
+
+  private levenshteinDistance(str1: string, str2: string): number {
+    const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
+
+    for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
+    for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
+
+    for (let j = 1; j <= str2.length; j++) {
+      for (let i = 1; i <= str1.length; i++) {
+        const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
+        matrix[j][i] = Math.min(
+          matrix[j][i - 1] + 1, // deletion
+          matrix[j - 1][i] + 1, // insertion
+          matrix[j - 1][i - 1] + indicator // substitution
+        );
+      }
+    }
+
+    return matrix[str2.length][str1.length];
   }
 
   private handleWakeWordDetection(transcription: VapiTranscription): void {
@@ -353,22 +528,161 @@ export class VapiService extends EventEmitter {
       throw new Error('No audio stream available');
     }
 
-    // Create MediaRecorder to capture audio
+    // Enhanced MediaRecorder configuration for better quality
+    const mimeType = this.selectBestMimeType();
     this.mediaRecorder = new MediaRecorder(this.audioStream, {
-      mimeType: 'audio/webm;codecs=opus'
+      mimeType,
+      audioBitsPerSecond: this.config.audioQuality?.bitrate ? this.config.audioQuality.bitrate * 1000 : 128000
     });
 
     this.mediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0 && this.websocket?.readyState === WebSocket.OPEN) {
-        // Send audio data to Vapi
-        this.websocket.send(event.data);
+        // Apply voice enhancement if enabled
+        if (this.config.voiceEnhancement?.enabled) {
+          this.processAudioChunk(event.data).then(processedData => {
+            this.websocket?.send(processedData);
+          }).catch(error => {
+            console.warn('[VapiService] Audio processing failed, sending original:', error);
+            this.websocket?.send(event.data);
+          });
+        } else {
+          // Send audio data to Vapi directly
+          this.websocket.send(event.data);
+        }
       }
     };
 
-    // Send audio chunks every 100ms for real-time processing
-    this.mediaRecorder.start(100);
+    // Optimize chunk size based on sample rate for lower latency
+    const chunkSize = this.calculateOptimalChunkSize();
+    this.mediaRecorder.start(chunkSize);
 
-    console.log('[VapiService] Audio capture started');
+    console.log(`[VapiService] Enhanced audio capture started (${mimeType}, ${chunkSize}ms chunks)`);
+  }
+
+  private selectBestMimeType(): string {
+    // Try different codecs in order of preference for voice quality
+    const preferredTypes = [
+      'audio/webm;codecs=opus', // Best for voice
+      'audio/ogg;codecs=opus',
+      'audio/webm;codecs=pcm',
+      'audio/webm',
+      'audio/mp4'
+    ];
+
+    for (const type of preferredTypes) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        console.log(`[VapiService] Using audio codec: ${type}`);
+        return type;
+      }
+    }
+
+    console.warn('[VapiService] No preferred codec supported, using default');
+    return 'audio/webm';
+  }
+
+  private calculateOptimalChunkSize(): number {
+    // Calculate optimal chunk size based on sample rate for minimal latency
+    const sampleRate = this.config.audioQuality?.sampleRate || 24000;
+
+    if (sampleRate >= 48000) return 50; // 50ms for high sample rates
+    if (sampleRate >= 24000) return 75; // 75ms for medium sample rates
+    return 100; // 100ms for lower sample rates
+  }
+
+  private async processAudioChunk(audioData: Blob): Promise<Blob> {
+    // Apply voice enhancement processing
+    try {
+      if (!this.config.voiceEnhancement?.enabled) {
+        return audioData;
+      }
+
+      // Convert to ArrayBuffer for processing
+      const arrayBuffer = await audioData.arrayBuffer();
+
+      // Apply noise reduction and speech enhancement
+      const processedBuffer = await this.applyVoiceEnhancement(arrayBuffer);
+
+      // Convert back to Blob
+      return new Blob([processedBuffer], { type: audioData.type });
+
+    } catch (error) {
+      console.warn('[VapiService] Voice enhancement failed:', error);
+      return audioData; // Return original on error
+    }
+  }
+
+  private async applyVoiceEnhancement(audioBuffer: ArrayBuffer): Promise<ArrayBuffer> {
+    // Simple voice enhancement implementation
+    // In a production system, you'd use more sophisticated DSP algorithms
+
+    const enhancement = this.config.voiceEnhancement!;
+
+    // Convert to Float32Array for processing
+    const samples = new Float32Array(audioBuffer);
+
+    // Apply background noise reduction (simple high-pass filter)
+    if (enhancement.backgroundNoiseReduction > 0) {
+      this.applyNoiseReduction(samples, enhancement.backgroundNoiseReduction);
+    }
+
+    // Apply speech enhancement (dynamic range compression)
+    if (enhancement.speechEnhancement) {
+      this.applySpeechEnhancement(samples);
+    }
+
+    // Apply adaptive filtering (simple moving average)
+    if (enhancement.adaptiveFiltering) {
+      this.applyAdaptiveFiltering(samples);
+    }
+
+    return samples.buffer;
+  }
+
+  private applyNoiseReduction(samples: Float32Array, strength: number): void {
+    // Simple noise gate implementation
+    const threshold = 0.01 * (1 - strength); // Lower threshold = more aggressive
+
+    for (let i = 0; i < samples.length; i++) {
+      if (Math.abs(samples[i]) < threshold) {
+        samples[i] *= (1 - strength); // Reduce low-level noise
+      }
+    }
+  }
+
+  private applySpeechEnhancement(samples: Float32Array): void {
+    // Simple dynamic range compression for speech clarity
+    const compressionRatio = 0.3;
+    const threshold = 0.5;
+
+    for (let i = 0; i < samples.length; i++) {
+      const amplitude = Math.abs(samples[i]);
+      if (amplitude > threshold) {
+        const excess = amplitude - threshold;
+        const compressedExcess = excess * compressionRatio;
+        samples[i] = Math.sign(samples[i]) * (threshold + compressedExcess);
+      }
+    }
+  }
+
+  private applyAdaptiveFiltering(samples: Float32Array): void {
+    // Simple moving average filter to smooth audio
+    const windowSize = 3;
+    const filtered = new Float32Array(samples.length);
+
+    for (let i = 0; i < samples.length; i++) {
+      let sum = 0;
+      let count = 0;
+
+      for (let j = Math.max(0, i - windowSize); j <= Math.min(samples.length - 1, i + windowSize); j++) {
+        sum += samples[j];
+        count++;
+      }
+
+      filtered[i] = sum / count;
+    }
+
+    // Copy filtered samples back
+    samples.set(filtered);
   }
 
   async stopListening(): Promise<string | null> {

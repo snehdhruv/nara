@@ -16,6 +16,21 @@ export interface VADConfig {
     silenceMs: number; // ms of silence to re-arm (200-300ms)
   };
   sampleRate: number; // 48kHz recommended for macOS
+  // Enhanced noise suppression settings
+  noiseSuppression?: {
+    enabled: boolean;
+    aggressiveness: number; // 0-3 (0=mild, 3=aggressive)
+    spectralSubtraction: boolean; // Enable spectral subtraction
+    adaptiveThreshold: boolean; // Adaptive threshold based on noise floor
+    noiseFloorEstimation: boolean; // Continuous noise floor estimation
+  };
+  // Advanced audio processing
+  audioProcessing?: {
+    preEmphasis: boolean; // High-frequency emphasis for speech clarity
+    windowing: 'hamming' | 'hanning' | 'blackman'; // Window function for FFT
+    overlapFactor: number; // Frame overlap (0-0.75)
+    energyNormalization: boolean; // Normalize energy across frames
+  };
 }
 
 export interface VADMetrics {
@@ -44,6 +59,23 @@ export class VADProcessor extends EventEmitter {
         silenceMs: 250 // 250ms silence to re-arm
       },
       sampleRate: 48000, // macOS native
+      // Enhanced noise suppression defaults
+      noiseSuppression: {
+        enabled: true,
+        aggressiveness: 2, // Moderate aggressiveness
+        spectralSubtraction: true,
+        adaptiveThreshold: true,
+        noiseFloorEstimation: true,
+        ...config?.noiseSuppression
+      },
+      // Advanced audio processing defaults
+      audioProcessing: {
+        preEmphasis: true,
+        windowing: 'hamming',
+        overlapFactor: 0.5,
+        energyNormalization: true,
+        ...config?.audioProcessing
+      },
       ...config
     };
 
@@ -51,6 +83,168 @@ export class VADProcessor extends EventEmitter {
       frameProcessingTime: 0,
       speechConfidence: 0,
       backgroundNoise: 0
+    };
+
+    // Initialize noise floor estimation
+    this.noiseFloor = 0.01; // Initial estimate
+    this.noiseFloorHistory = [];
+  }
+
+  // Noise suppression properties
+  private noiseFloor: number;
+  private noiseFloorHistory: number[];
+  private spectralBuffer: Float32Array[] = [];
+
+  /**
+   * Apply enhanced noise suppression to audio frame
+   */
+  public processAudioFrame(audioData: Float32Array): Float32Array {
+    if (!this.config.noiseSuppression?.enabled) {
+      return audioData;
+    }
+
+    const startTime = performance.now();
+
+    // Apply pre-emphasis filter for speech clarity
+    let processedData = audioData;
+    if (this.config.audioProcessing?.preEmphasis) {
+      processedData = this.applyPreEmphasis(processedData);
+    }
+
+    // Update noise floor estimation
+    if (this.config.noiseSuppression.noiseFloorEstimation) {
+      this.updateNoiseFloor(processedData);
+    }
+
+    // Apply spectral subtraction noise reduction
+    if (this.config.noiseSuppression.spectralSubtraction) {
+      processedData = this.applySpectralSubtraction(processedData);
+    }
+
+    // Apply adaptive threshold adjustment
+    if (this.config.noiseSuppression.adaptiveThreshold) {
+      this.adjustAdaptiveThreshold(processedData);
+    }
+
+    // Apply energy normalization
+    if (this.config.audioProcessing?.energyNormalization) {
+      processedData = this.normalizeEnergy(processedData);
+    }
+
+    // Update processing metrics
+    this.metrics.frameProcessingTime = performance.now() - startTime;
+
+    return processedData;
+  }
+
+  private applyPreEmphasis(audioData: Float32Array): Float32Array {
+    // High-pass filter to emphasize higher frequencies (speech clarity)
+    const alpha = 0.97; // Pre-emphasis coefficient
+    const filtered = new Float32Array(audioData.length);
+
+    filtered[0] = audioData[0];
+    for (let i = 1; i < audioData.length; i++) {
+      filtered[i] = audioData[i] - alpha * audioData[i - 1];
+    }
+
+    return filtered;
+  }
+
+  private updateNoiseFloor(audioData: Float32Array): void {
+    // Calculate RMS energy of current frame
+    let energy = 0;
+    for (let i = 0; i < audioData.length; i++) {
+      energy += audioData[i] * audioData[i];
+    }
+    const rmsEnergy = Math.sqrt(energy / audioData.length);
+
+    // Update noise floor using exponential moving average
+    const alpha = 0.01; // Slow adaptation
+    this.noiseFloor = alpha * rmsEnergy + (1 - alpha) * this.noiseFloor;
+
+    // Keep history for adaptive algorithms
+    this.noiseFloorHistory.push(rmsEnergy);
+    if (this.noiseFloorHistory.length > 100) {
+      this.noiseFloorHistory.shift(); // Keep last 100 frames
+    }
+
+    this.metrics.backgroundNoise = this.noiseFloor;
+  }
+
+  private applySpectralSubtraction(audioData: Float32Array): Float32Array {
+    // Simple spectral subtraction implementation
+    const aggressiveness = this.config.noiseSuppression!.aggressiveness;
+    const noiseReductionFactor = 0.1 + (aggressiveness * 0.2); // 0.1 to 0.7
+
+    const processed = new Float32Array(audioData.length);
+
+    for (let i = 0; i < audioData.length; i++) {
+      const amplitude = Math.abs(audioData[i]);
+
+      if (amplitude < this.noiseFloor * 2) {
+        // Likely noise - reduce significantly
+        processed[i] = audioData[i] * (1 - noiseReductionFactor);
+      } else {
+        // Likely speech - preserve with minimal reduction
+        processed[i] = audioData[i] * (1 - noiseReductionFactor * 0.2);
+      }
+    }
+
+    return processed;
+  }
+
+  private adjustAdaptiveThreshold(audioData: Float32Array): void {
+    // Adjust VAD threshold based on current noise conditions
+    const currentEnergy = this.calculateFrameEnergy(audioData);
+    const snr = currentEnergy / (this.noiseFloor + 1e-10); // Signal-to-noise ratio
+
+    // Adaptive threshold: higher noise floor = higher threshold
+    const baseThreshold = 0.6;
+    const adaptiveFactor = Math.min(2.0, Math.max(0.5, 1.0 + Math.log10(this.noiseFloor * 100)));
+
+    this.config.threshold = baseThreshold * adaptiveFactor;
+
+    // Ensure threshold stays within reasonable bounds
+    this.config.threshold = Math.max(0.3, Math.min(0.9, this.config.threshold));
+  }
+
+  private normalizeEnergy(audioData: Float32Array): Float32Array {
+    // Normalize energy to prevent volume variations
+    const energy = this.calculateFrameEnergy(audioData);
+
+    if (energy < 1e-10) return audioData; // Avoid division by zero
+
+    const targetEnergy = 0.1; // Target RMS level
+    const scaleFactor = Math.sqrt(targetEnergy / energy);
+
+    // Limit scaling to prevent over-amplification
+    const limitedScale = Math.min(3.0, Math.max(0.1, scaleFactor));
+
+    const normalized = new Float32Array(audioData.length);
+    for (let i = 0; i < audioData.length; i++) {
+      normalized[i] = audioData[i] * limitedScale;
+    }
+
+    return normalized;
+  }
+
+  private calculateFrameEnergy(audioData: Float32Array): number {
+    let energy = 0;
+    for (let i = 0; i < audioData.length; i++) {
+      energy += audioData[i] * audioData[i];
+    }
+    return Math.sqrt(energy / audioData.length);
+  }
+
+  /**
+   * Get current noise suppression metrics
+   */
+  public getNoiseMetrics() {
+    return {
+      noiseFloor: this.noiseFloor,
+      adaptiveThreshold: this.config.threshold,
+      processingTime: this.metrics.frameProcessingTime,
+      backgroundNoise: this.metrics.backgroundNoise
     };
   }
 
