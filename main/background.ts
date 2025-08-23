@@ -1,3 +1,4 @@
+// TODO(electron): create BrowserWindow; load Next; wire single-instance + external links
 import path from 'path'
 import { app, ipcMain } from 'electron'
 import serve from 'electron-serve'
