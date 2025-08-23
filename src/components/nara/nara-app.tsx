@@ -731,10 +731,10 @@ export function NaraApp() {
           <Button 
             size="lg" 
             className={`
-              rounded-full shadow-xl h-14 w-14 min-w-14 border-none transition-all duration-300 hover:scale-105
+              rounded-full shadow-xl h-16 w-16 min-w-16 border-none transition-all duration-300 hover:scale-105
               ${isAudioMuted 
-                ? 'bg-red-500 hover:bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]' 
-                : 'bg-gray-600 hover:bg-gray-700 text-white hover:shadow-xl'
+                ? 'bg-red-500 hover:bg-red-600 text-white shadow-[0_0_20px_rgba(239,68,68,0.6)]' 
+                : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-xl shadow-[0_0_15px_rgba(37,99,235,0.4)]'
               }
             `}
             onPress={handleMuteToggle}
@@ -742,7 +742,7 @@ export function NaraApp() {
           >
             <Icon 
               icon={isAudioMuted ? "lucide:volume-x" : "lucide:volume-2"} 
-              width={20} 
+              width={28} 
               className="text-white"
             />
           </Button>
