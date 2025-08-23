@@ -9,12 +9,8 @@ import { useAudiobook } from "@/hooks/nara/use-audiobook";
 import { useNotes } from "@/hooks/nara/use-notes";
 import { Icon } from "@iconify/react";
 import { Dashboard } from "./dashboard";
-// Import the real audio system
-import { VoiceAgentBridge, VoiceContext } from "../../../main/audio/VoiceAgentBridge";
+// Import browser-compatible audio services (no fs dependency)
 import { AudioOrchestrator } from "../../../main/audio/AudioOrchestrator";
-import { VapiService } from "../../../main/audio/VapiService";
-import { TTSService } from "../../../main/audio/TTSService";
-import { AudioManager } from "../../../main/audio/AudioManager";
 
 export function NaraApp() {
   const [selectedBookId, setSelectedBookId] = React.useState<string | null>(null);
@@ -32,113 +28,128 @@ export function NaraApp() {
   
   const { notes, addNote } = useNotes();
 
-  // Audio system refs
-  const voiceAgentBridge = React.useRef<VoiceAgentBridge | null>(null);
+  // Audio system refs  
   const audioOrchestrator = React.useRef<AudioOrchestrator | null>(null);
+  const browserAudioManager = React.useRef<any>(null);
 
-  // Initialize audio system
+  // Initialize browser-compatible audio system
   React.useEffect(() => {
     if (selectedBookId && currentBook) {
-      const initAudioSystem = async () => {
+      const initBrowserAudio = async () => {
         try {
-          // Initialize audio services
-          const vapi = new VapiService();
-          const tts = new TTSService();
-          const audio = new AudioManager();
+          // Initialize browser audio orchestrator
           const orchestrator = new AudioOrchestrator();
-          
-          // Set up voice context for current book
-          const voiceContext: VoiceContext = {
-            audiobookId: currentBook.id,
-            datasetPath: `/data/${currentBook.id}.json`, // Assumes book data exists
-            currentPosition_s: currentPosition,
-            userProgressIdx: Math.floor(currentPosition / 60), // Rough chapter estimation
-            modeHint: "auto"
-          };
+          audioOrchestrator.current = orchestrator;
 
-          // Initialize voice agent bridge
-          const bridge = new VoiceAgentBridge({
-            vapi,
-            tts,
-            audio,
-            orchestrator,
-            context: voiceContext,
-            runner: null // Will be initialized when needed
-          });
+          // Load browser audio modules
+          if (typeof window !== 'undefined') {
+            // Load browser audio manager from public folder
+            const script = document.createElement('script');
+            script.src = '/main/audio/BrowserAudioManager.js';
+            script.onload = () => {
+              console.log('[Audio System] Browser audio manager loaded');
+              // @ts-ignore - Browser module
+              if (window.NaraAudioFactory) {
+                // @ts-ignore
+                browserAudioManager.current = window.NaraAudioFactory;
+              }
+            };
+            document.head.appendChild(script);
+          }
 
-          // Set up event listeners
-          bridge.on('interactionStart', () => {
-            setIsListening(true);
-            setIsVoiceAgentActive(true);
-          });
+          console.log('[Audio System] Browser-compatible audio initialized');
+        } catch (error) {
+          console.error('[Audio System] Failed to initialize browser audio:', error);
+        }
+      };
 
-          bridge.on('interactionEnd', (result) => {
-            setIsListening(false);
-            setIsVoiceAgentActive(false);
+      initBrowserAudio();
+    }
+
+    return () => {
+      // Cleanup - browser audio doesn't need explicit cleanup
+      console.log('[Audio System] Cleanup completed');
+    };
+  }, [selectedBookId, currentBook]);
+
+  const handleNarratorActivate = async () => {
+    try {
+      if (isListening) {
+        // Stop current voice interaction
+        setIsListening(false);
+        setIsVoiceAgentActive(false);
+        console.log('[Voice Agent] Stopped listening');
+        
+        // Resume audiobook if it was paused
+        console.log('[Voice Agent] Audio interaction ended');
+      } else {
+        // Start voice interaction
+        console.log('[Voice Agent] Starting voice interaction...');
+        setIsListening(true);
+        setIsVoiceAgentActive(true);
+        
+        // Pause audiobook if playing and not muted
+        if (isPlaying && !isMuted) {
+          togglePlayback(); // Simple pause for now
+        }
+
+        // Use browser audio manager if available
+        if (browserAudioManager.current) {
+          try {
+            const audioSession = await browserAudioManager.current.createAudioPipeline({
+              audiobookId: currentBook?.id || 'unknown',
+              currentPosition: currentPosition,
+              mode: 'voice-qa'
+            });
             
-            // Add note if there was a conversation
-            if (result.question && result.answer) {
+            // Set up voice interaction handlers
+            audioSession.on('voiceResponse', (data: any) => {
+              // Add the conversation as a note
               addNote({
                 id: Date.now().toString(),
-                title: "Voice Discussion",
-                content: `Q: ${result.question}\n\nA: ${result.answer}`,
+                title: "Voice Discussion", 
+                content: `Q: ${data.question}\n\nA: ${data.answer}`,
                 timestamp: Date.now() / 1000,
                 audiobookPosition: currentPosition,
                 topic: "Voice Chat"
               });
-            }
-          });
-
-          voiceAgentBridge.current = bridge;
-          audioOrchestrator.current = orchestrator;
-
-          console.log('[Audio System] Initialized successfully');
-        } catch (error) {
-          console.error('[Audio System] Failed to initialize:', error);
-        }
-      };
-
-      initAudioSystem();
-    }
-
-    return () => {
-      // Cleanup
-      if (voiceAgentBridge.current) {
-        voiceAgentBridge.current.removeAllListeners();
-      }
-    };
-  }, [selectedBookId, currentBook, currentPosition, addNote]);
-
-  const handleNarratorActivate = async () => {
-    try {
-      if (!voiceAgentBridge.current) {
-        console.warn('[Voice Agent] Audio system not initialized');
-        return;
-      }
-
-      if (isListening) {
-        // Stop current voice interaction
-        await voiceAgentBridge.current.stopInteraction();
-        console.log('[Voice Agent] Stopped listening');
-      } else {
-        // Start voice interaction
-        console.log('[Voice Agent] Starting voice interaction...');
-        
-        // Update voice context with current position
-        const updatedContext: VoiceContext = {
-          audiobookId: currentBook.id,
-          datasetPath: `/data/${currentBook.id}.json`,
-          currentPosition_s: currentPosition,
-          userProgressIdx: Math.floor(currentPosition / 60),
-          modeHint: "auto"
-        };
-
-        // Start voice interaction with real audio system
-        await voiceAgentBridge.current.startInteraction(updatedContext);
-        
-        // Pause audiobook if playing and not muted
-        if (isPlaying && !isMuted && audioOrchestrator.current) {
-          audioOrchestrator.current.pauseBackgroundAudio();
+              
+              // Reset state
+              setIsListening(false);
+              setIsVoiceAgentActive(false);
+            });
+            
+            console.log('[Voice Agent] Audio session started');
+          } catch (error) {
+            console.error('[Voice Agent] Browser audio failed:', error);
+            // Fallback to basic mock interaction
+            setTimeout(() => {
+              addNote({
+                id: Date.now().toString(),
+                title: "Voice Discussion",
+                content: `Q: [User asked about the book at ${Math.floor(currentPosition/60)}:${Math.floor(currentPosition%60).toString().padStart(2,'0')}]\n\nA: [AI response about the content at this position]`,
+                timestamp: Date.now() / 1000,
+                audiobookPosition: currentPosition,
+                topic: "Voice Chat"
+              });
+              setIsListening(false);
+              setIsVoiceAgentActive(false);
+            }, 3000);
+          }
+        } else {
+          // Basic fallback for demo purposes
+          setTimeout(() => {
+            addNote({
+              id: Date.now().toString(),
+              title: "Voice Discussion",
+              content: `Q: [User question at position ${Math.floor(currentPosition/60)}:${Math.floor(currentPosition%60).toString().padStart(2,'0')}]\n\nA: This is a demo response. The full voice system will be available when audio services are configured.`,
+              timestamp: Date.now() / 1000,
+              audiobookPosition: currentPosition,
+              topic: "Voice Chat"
+            });
+            setIsListening(false);
+            setIsVoiceAgentActive(false);
+          }, 2000);
         }
       }
     } catch (error) {
@@ -152,14 +163,18 @@ export function NaraApp() {
     setIsMuted(!isMuted);
     console.log(`[Audio] ${!isMuted ? 'Muted' : 'Unmuted'}`);
     
-    // Mute/unmute the audio system
-    if (audioOrchestrator.current) {
-      if (!isMuted) {
-        // Muting - stop any active interactions and duck audio
-        audioOrchestrator.current.duckAudio(0.1); // Very low volume
-      } else {
-        // Unmuting - restore normal audio levels
-        audioOrchestrator.current.resumeAudio();
+    // Simple mute state - the actual audio ducking will be handled by the browser audio manager
+    if (browserAudioManager.current) {
+      try {
+        if (!isMuted) {
+          // Muting
+          browserAudioManager.current.setVolume?.(0.1);
+        } else {
+          // Unmuting  
+          browserAudioManager.current.setVolume?.(1.0);
+        }
+      } catch (error) {
+        console.log('[Audio] Mute toggle - browser audio manager not fully loaded');
       }
     }
   };
