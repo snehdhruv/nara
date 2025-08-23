@@ -115,17 +115,24 @@ export class TTSService extends EventEmitter {
     try {
       // Synthesize a short phrase to warm up the voice
       const warmupText = "Audio check.";
-      const response = await this.synthesizeText(warmupText, { priority: 'normal' });
+      
+      // Mark as warmed before calling synthesizeText to avoid recursion
+      this.voiceWarmed = true;
+      
+      const response = await this.processTTSRequest({
+        text: warmupText,
+        priority: 'normal'
+      });
 
       // Don't play the warmup audio, just ensure the voice is ready
       response.audioStream.destroy();
 
-      this.voiceWarmed = true;
       console.log('[TTSService] Voice warmed up successfully');
 
     } catch (error) {
       console.warn('[TTSService] Voice warmup failed:', error);
-      // Continue anyway - warmup is optimization, not requirement
+      // Mark as warmed anyway to avoid infinite retries
+      this.voiceWarmed = true;
     }
   }
 
@@ -358,10 +365,27 @@ export class TTSService extends EventEmitter {
     throw new Error('Fallback TTS not implemented - ElevenLabs required');
   }
 
+  async stop(): Promise<void> {
+    console.log('[TTSService] Stopping all TTS processing...');
+    
+    // Clear the request queue
+    this.requestQueue.forEach(request => {
+      if ((request as any).reject) {
+        (request as any).reject(new Error('TTS stopped'));
+      }
+    });
+    this.requestQueue = [];
+    
+    // Stop processing
+    this.isProcessing = false;
+    
+    this.emit('stopped');
+  }
+
   async destroy(): Promise<void> {
+    await this.stop();
     this.isInitialized = false;
     this.voiceWarmed = false;
-    this.requestQueue = [];
     this.removeAllListeners();
   }
 }

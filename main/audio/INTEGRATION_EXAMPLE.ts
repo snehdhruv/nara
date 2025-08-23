@@ -1,226 +1,234 @@
 /**
- * INTEGRATION EXAMPLE - How other teams connect to the audio pipeline
- * Copy this file and modify for your team's integration
+ * REAL VOICE AGENT BRIDGE INTEGRATION - Complete STT→QA→TTS pipeline
+ * Uses actual Zero to One dataset and real services
  */
 
-import { AudioManager, TTSConfig } from './index';
-import { LLMService, LLMRequest, LLMResponse } from '../interfaces/LLMInterface';
-import { SpotifyService, SpotifyPlaybackState } from '../interfaces/SpotifyInterface';
+import { VoiceAgentBridge, VoiceContext } from './VoiceAgentBridge';
+import { AudioManager } from './AudioManager';
+import { VapiService } from './VapiService';
+import { TTSService } from './TTSService';
+import { createLangGraphRunner } from '../../agents/langgraph/adapters/Runner';
+import { getAudioConfig } from './config';
 
 // =============================================================================
-// EXAMPLE FOR LLM TEAM: Replace the placeholder LLM service
+// REAL INTEGRATION: Complete Voice Agent Bridge setup
 // =============================================================================
 
-class RealLLMService implements LLMService {
-  async initialize(): Promise<void> {
-    console.log('[RealLLMService] Initializing Claude integration...');
-    // TODO: Initialize Claude, load spoiler prevention prompts
-  }
+export async function createVoiceAgentBridge(): Promise<VoiceAgentBridge> {
+  console.log('🔌 Creating real Voice Agent Bridge with Zero to One dataset...');
 
-  async processQuestion(request: LLMRequest): Promise<LLMResponse> {
-    console.log(`[RealLLMService] Processing: "${request.userQuestion}"`);
+  // 1. Get validated audio configuration with real API keys
+  const audioConfig = getAudioConfig();
 
-    // TODO: Send to Claude with spoiler prevention
-    // TODO: Use request.bookContext for spoiler-safe responses
+  // 2. Create real services (no mocks!)
+  const vapi = new VapiService(audioConfig.vapi);
+  const tts = new TTSService(audioConfig.tts);
+  const audio = new AudioManager({
+    vapi: audioConfig.vapi,
+    tts: audioConfig.tts
+  });
 
-    return {
-      answer: "Real Claude response would go here",
-      confidence: 0.9,
-      spoilerRisk: 'none',
-      sources: ['Chapter 1'],
-      followUpSuggestions: ['Tell me more about this character']
-    };
-  }
+  // 3. Create LangGraph runner using real runChapterQA function
+  const runner = createLangGraphRunner();
 
-  async updateBookContext(bookId: string, progress: number): Promise<void> {
-    // TODO: Update spoiler prevention based on progress
-  }
-
-  getConfig() {
-    return {
-      model: 'claude-3-sonnet',
-      temperature: 0.7,
-      maxTokens: 500,
-      spoilerGuardEnabled: true,
-      contextWindow: 3
-    };
-  }
-}
-
-// =============================================================================
-// EXAMPLE FOR AUTH/SPOTIFY TEAM: Replace the placeholder Spotify service
-// =============================================================================
-
-class RealSpotifyService implements SpotifyService {
-  private accessToken: string | null = null;
-
-  async initialize(): Promise<void> {
-    console.log('[RealSpotifyService] Initializing Spotify Web API...');
-    // TODO: Check for existing tokens, refresh if needed
-  }
-
-  async authenticate() {
-    console.log('[RealSpotifyService] Starting OAuth flow...');
-    // TODO: Real OAuth PKCE flow
-    return {
-      isAuthenticated: true,
-      accessToken: 'real_token_here',
-      refreshToken: 'real_refresh_token',
-      expiresAt: Date.now() + 3600000,
-      scopes: ['user-read-playback-state', 'user-modify-playback-state']
-    };
-  }
-
-  async pause(): Promise<void> {
-    console.log('[RealSpotifyService] Pausing via Web API...');
-    // TODO: Call https://api.spotify.com/v1/me/player/pause
-  }
-
-  async resume(): Promise<void> {
-    console.log('[RealSpotifyService] Resuming via Web API...');
-    // TODO: Call https://api.spotify.com/v1/me/player/play
-  }
-
-  async getPlaybackState(): Promise<SpotifyPlaybackState> {
-    console.log('[RealSpotifyService] Getting real playback state...');
-    // TODO: Call https://api.spotify.com/v1/me/player
-
-    return {
-      isPlaying: true,
-      track: {
-        id: 'real_track_id',
-        name: 'Real Audiobook Title',
-        artists: ['Real Author'],
-        duration: 1800000,
-        isAudiobook: true
-      },
-      position: 450000,
-      device: {
-        id: 'real_device_id',
-        name: 'User Device',
-        type: 'computer',
-        isActive: true,
-        supportsVolume: true
-      },
-      volume: 75
-    };
-  }
-
-  async getDevices() {
-    // TODO: Call https://api.spotify.com/v1/me/player/devices
-    return [];
-  }
-
-  async seek(positionMs: number): Promise<void> {
-    // TODO: Call https://api.spotify.com/v1/me/player/seek
-  }
-
-  async transferPlayback(deviceId: string): Promise<void> {
-    // TODO: Call https://api.spotify.com/v1/me/player
-  }
-
-  getAuthState() {
-    return {
-      isAuthenticated: this.accessToken !== null,
-      accessToken: this.accessToken,
-      refreshToken: null,
-      expiresAt: null,
-      scopes: []
-    };
-  }
-
-  async refreshAccessToken(): Promise<string> {
-    // TODO: Refresh OAuth token
-    return 'refreshed_token';
-  }
-}
-
-// =============================================================================
-// INTEGRATION EXAMPLE: How to wire everything together
-// =============================================================================
-
-export async function integrateWithAudioPipeline() {
-  console.log('🔌 INTEGRATION EXAMPLE: Connecting real services to audio pipeline');
-
-  // 1. Configure TTS (Audio team's domain)
-  const ttsConfig: TTSConfig = {
-    apiKey: process.env.ELEVENLABS_API_KEY!,
-    voiceId: process.env.NARRATOR_VOICE_ID!,
-    model: 'eleven_turbo_v2',
-    stability: 0.75,
-    similarityBoost: 0.8,
-    style: 0.2,
-    useSpeakerBoost: true
+  // 4. Setup voice context for Zero to One audiobook
+  const context: VoiceContext = {
+    audiobookId: 'zero-to-one',
+    datasetPath: '/Users/snehdhruv/Documents/hackathons/dedalus/data/zero-to-one.json',
+    currentPosition_s: 0, // Start of audiobook
+    playbackChapterIdx: 1, // Currently on Chapter 1
+    userProgressIdx: 5, // User has listened through Chapter 5 (allow spoilers up to Ch 5)
+    modeHint: 'auto' // Let system decide packing strategy
   };
 
-  // 2. Create audio manager with TTS config
-  const audioManager = new AudioManager(ttsConfig);
+  // 5. Create the bridge
+  const bridge = new VoiceAgentBridge({
+    vapi,
+    tts,
+    audio,
+    runner,
+    context
+  });
 
-  // 3. Replace placeholder services with real implementations
-  // NOTE: This is conceptual - actual implementation may vary
-
-  // LLM Team: Replace with your Claude service
-  const realLLMService = new RealLLMService();
-  // audioManager.setLLMService(realLLMService); // TODO: Add this method
-
-  // Auth Team: Replace with your Spotify service
-  const realSpotifyService = new RealSpotifyService();
-  // audioManager.setSpotifyService(realSpotifyService); // TODO: Add this method
-
-  // 4. Initialize complete pipeline
-  await audioManager.initialize();
-
-  // 5. Start voice activation
-  await audioManager.startListening();
-
-  console.log('✅ Complete audio pipeline with real services is running!');
-
-  return audioManager;
+  return bridge;
 }
 
 // =============================================================================
-// TESTING YOUR INTEGRATION
+// COMPLETE INTEGRATION FLOW
 // =============================================================================
 
-export async function testYourIntegration() {
-  console.log('🧪 Testing your service integration...');
+export async function initializeCompletePipeline(): Promise<VoiceAgentBridge> {
+  console.log('🚀 Initializing complete voice pipeline...');
 
   try {
-    // Test LLM service
-    const llmService = new RealLLMService();
-    await llmService.initialize();
+    // Create bridge with real services
+    const bridge = await createVoiceAgentBridge();
 
-    const testRequest: LLMRequest = {
-      userQuestion: "Who is the main character?",
-      bookContext: {
-        title: "Test Book",
-        author: "Test Author",
-        currentChapter: 1,
-        currentTimestamp: 300,
-        userProgress: 25
-      }
-    };
+    // Setup event logging for demonstration
+    setupBridgeLogging(bridge);
 
-    const llmResponse = await llmService.processQuestion(testRequest);
-    console.log('✅ LLM integration test passed:', llmResponse.answer);
+    // Initialize all services
+    await bridge.initialize();
 
-    // Test Spotify service
-    const spotifyService = new RealSpotifyService();
-    await spotifyService.initialize();
+    // Test all connections
+    const connectionStatus = await bridge.testConnection();
+    console.log('🔗 Connection Status:', connectionStatus);
 
-    const playbackState = await spotifyService.getPlaybackState();
-    console.log('✅ Spotify integration test passed:', playbackState.track?.name);
+    if (!connectionStatus.stt || !connectionStatus.tts || !connectionStatus.qa) {
+      throw new Error('One or more services failed connection test');
+    }
 
-    console.log('🟢 All integrations working!');
+    console.log('✅ Complete voice pipeline ready!');
+    return bridge;
+
+  } catch (error) {
+    console.error('❌ Pipeline initialization failed:', error);
+    throw error;
+  }
+}
+
+// =============================================================================
+// DEMONSTRATION FUNCTIONS
+// =============================================================================
+
+export async function demonstrateVoicePipeline(): Promise<void> {
+  console.log('🎤 Demonstrating complete voice pipeline...');
+
+  const bridge = await initializeCompletePipeline();
+
+  try {
+    // Start wake word listening
+    console.log('👂 Starting wake word listening for "Hey Nara"...');
+    await bridge.startWakeWordListening();
+
+    // Simulate voice questions (for testing without actual speech)
+    console.log('🗣️  Simulating voice questions...');
+    
+    // Test 1: Basic concept question
+    const result1 = await bridge.processQuestion("What does Peter Thiel mean by zero to one?");
+    console.log('📝 Answer 1:', result1.markdown.substring(0, 200) + '...');
+    console.log('⚡ Latency:', result1.latency_ms + 'ms');
+
+    // Small delay between questions
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Test 2: Specific chapter question
+    const result2 = await bridge.processQuestion("What are the characteristics of monopolies according to Thiel?");
+    console.log('📝 Answer 2:', result2.markdown.substring(0, 200) + '...');
+    console.log('⚡ Latency:', result2.latency_ms + 'ms');
+
+    // Test 3: Question with playback hint
+    const result3 = await bridge.processQuestion("Give me examples of monopoly companies mentioned in the book");
+    console.log('📝 Answer 3:', result3.markdown.substring(0, 200) + '...');
+    if (result3.playbackHint) {
+      console.log('⏯️  Seek hint: Chapter', result3.playbackHint.chapter_idx, 'at', result3.playbackHint.start_s, 'seconds');
+    }
+
+    console.log('🎉 Voice pipeline demonstration complete!');
+
+  } finally {
+    await bridge.destroy();
+  }
+}
+
+// =============================================================================
+// TESTING WITH REAL DATA
+// =============================================================================
+
+export async function testRealDataIntegration(): Promise<boolean> {
+  console.log('🧪 Testing real data integration...');
+
+  try {
+    const bridge = await createVoiceAgentBridge();
+    await bridge.initialize();
+
+    // Test chapter resolution with real dataset
+    const chapterInfo = bridge.getChapterInfo();
+    console.log('📖 Chapter info:', chapterInfo);
+
+    // Test context updates
+    bridge.updateContext({
+      currentPosition_s: 1200, // 20 minutes into audiobook
+      playbackChapterIdx: 2 // Now in Chapter 2
+    });
+
+    const updatedInfo = bridge.getChapterInfo();
+    console.log('📖 Updated chapter info:', updatedInfo);
+
+    // Test real question processing
+    const result = await bridge.processQuestion("What is competition according to Peter Thiel?");
+    
+    // Validate result structure
+    if (!result.markdown || result.markdown.length === 0) {
+      throw new Error('Empty answer received');
+    }
+
+    if (!result.citations || result.citations.length === 0) {
+      console.warn('⚠️  No citations in answer');
+    } else {
+      console.log('🔗 Citations:', result.citations.length);
+    }
+
+    if (result.latency_ms <= 0) {
+      throw new Error('Invalid latency measurement');
+    }
+
+    console.log('✅ Real data integration test passed!');
+    console.log('📊 Answer length:', result.markdown.length, 'characters');
+    console.log('⚡ Response time:', result.latency_ms, 'ms');
+
+    await bridge.destroy();
     return true;
 
   } catch (error) {
-    console.error('❌ Integration test failed:', error);
+    console.error('❌ Real data integration test failed:', error);
     return false;
   }
 }
 
-// Usage:
-// import { integrateWithAudioPipeline, testYourIntegration } from './INTEGRATION_EXAMPLE';
-// await testYourIntegration();
-// const audioManager = await integrateWithAudioPipeline();
+// =============================================================================
+// EVENT LOGGING SETUP
+// =============================================================================
+
+function setupBridgeLogging(bridge: VoiceAgentBridge): void {
+  bridge.on('ready', () => {
+    console.log('🟢 Bridge ready');
+  });
+
+  bridge.on('wakeWordDetected', (detection) => {
+    console.log(`🎯 Wake word: "${detection.phrase}" (${Math.round(detection.confidence * 100)}%)`);
+  });
+
+  bridge.on('questionProcessed', (result) => {
+    console.log(`💬 Question processed: ${result.interactionId} (${result.latency_ms}ms)`);
+  });
+
+  bridge.on('pauseBackgroundAudio', (interactionId) => {
+    console.log(`⏸️  Paused audio for: ${interactionId}`);
+  });
+
+  bridge.on('resumeBackgroundAudio', (interactionId) => {
+    console.log(`▶️  Resumed audio after: ${interactionId}`);
+  });
+
+  bridge.on('bargeIn', ({ previousId, newId }) => {
+    console.log(`🔄 Barge-in: ${previousId} → ${newId}`);
+  });
+
+  bridge.on('seekRequested', (position) => {
+    console.log(`⏭️  Seek to: ${position}s`);
+  });
+}
+
+// =============================================================================
+// USAGE EXAMPLES
+// =============================================================================
+
+// For Next.js integration:
+// import { createVoiceAgentBridge } from './INTEGRATION_EXAMPLE';
+// const bridge = await createVoiceAgentBridge();
+
+// For testing:
+// import { testRealDataIntegration, demonstrateVoicePipeline } from './INTEGRATION_EXAMPLE';
+// await testRealDataIntegration();
+// await demonstrateVoicePipeline();
