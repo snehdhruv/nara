@@ -6,9 +6,11 @@
 export { AudioManager, AudioPipelineState } from './AudioManager';
 export { PlaybackController, PlaybackState } from './PlaybackController';
 export { VADProcessor, VADConfig, VADMetrics } from './VADProcessor';
+export { WakeWordService, WakeWordConfig, WakeWordDetection } from './WakeWordService';
 export { DeviceRouter, AudioDevice, DeviceConfiguration } from './DeviceRouter';
 export { TTSService, TTSConfig, TTSRequest, TTSResponse } from './TTSService';
 export { AudioPlayer, AudioPlayerConfig, PlaybackMetrics } from './AudioPlayer';
+export { VapiService, VapiConfig, VapiTranscription, VapiWakeWordDetection } from './VapiService';
 
 // Test utilities
 export { TTSTest, testTTS, quickTTSTest } from './TTSTest';

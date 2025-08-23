@@ -5,10 +5,12 @@
 
 import { EventEmitter } from 'events';
 import { VADProcessor } from './VADProcessor';
+import { WakeWordService, WakeWordConfig } from './WakeWordService';
 import { PlaybackController } from './PlaybackController';
 import { DeviceRouter } from './DeviceRouter';
 import { TTSService, TTSConfig } from './TTSService';
 import { AudioPlayer } from './AudioPlayer';
+import { VapiService, VapiConfig } from './VapiService';
 import { LLMService, LLMRequest, createLLMService } from '../interfaces/LLMInterface';
 import { SpotifyService, createSpotifyService } from '../interfaces/SpotifyInterface';
 
@@ -26,16 +28,18 @@ export interface AudioPipelineState {
 
 export class AudioManager extends EventEmitter {
   private vad: VADProcessor;
+  private wakeWord: WakeWordService;
   private playback: PlaybackController;
   private router: DeviceRouter;
   private tts: TTSService;
   private audioPlayer: AudioPlayer;
+  private vapi: VapiService;
   private llm: LLMService;
   private spotify: SpotifyService;
   private state: AudioPipelineState;
   private startTime: number = 0;
 
-  constructor(ttsConfig: TTSConfig) {
+  constructor(ttsConfig: TTSConfig, vapiConfig: VapiConfig, wakeWordConfig?: WakeWordConfig) {
     super();
 
     this.state = {
@@ -51,10 +55,12 @@ export class AudioManager extends EventEmitter {
     };
 
     this.vad = new VADProcessor();
+    this.wakeWord = new WakeWordService(wakeWordConfig);
     this.playback = new PlaybackController();
     this.router = new DeviceRouter();
     this.tts = new TTSService(ttsConfig);
     this.audioPlayer = new AudioPlayer();
+    this.vapi = new VapiService(vapiConfig);
 
     // Initialize placeholder services (other teams will replace)
     this.llm = createLLMService({
@@ -69,11 +75,11 @@ export class AudioManager extends EventEmitter {
     this.setupEventHandlers();
   }
 
-  private setupEventHandlers() {
-        // CRITICAL PATH: VAD triggers immediate Spotify pause
-    this.vad.on('speechStart', async () => {
+      private setupEventHandlers() {
+    // CRITICAL PATH: Vapi wake word detection triggers immediate Spotify pause
+    this.vapi.on('wakeWordDetected', async (detection) => {
       this.startTime = Date.now();
-      console.log('[AudioManager] Speech detected, pausing playback...');
+      console.log(`[AudioManager] 🎯 Vapi wake word detected: "${detection.phrase}" (${Math.round(detection.confidence * 100)}%)`);
 
       try {
         await this.playback.pause();
@@ -83,13 +89,20 @@ export class AudioManager extends EventEmitter {
         console.log(`[AudioManager] Playback paused in ${pauseLatency}ms`);
         this.emit('playbackPaused', { latency: pauseLatency });
 
-        // Start the full pipeline: STT → LLM → TTS
+        // Switch Vapi to command listening mode and start the pipeline
+        await this.vapi.startCommandListening();
         this.processVoiceInput();
 
       } catch (error) {
         console.error('[AudioManager] Failed to pause playback:', error);
         this.emit('playbackError', error);
       }
+    });
+
+    // Handle Vapi session end (return to wake word mode)
+    this.vapi.on('sessionEnded', async () => {
+      console.log('[AudioManager] Vapi session ended - returning to wake word mode');
+      await this.vapi.resetToWakeWordMode();
     });
 
     // TTS playback completion triggers resume
@@ -129,8 +142,10 @@ export class AudioManager extends EventEmitter {
       await this.router.initialize();
       await this.playback.initialize();
       await this.vad.initialize();
+      await this.wakeWord.initialize();
       await this.tts.initialize();
       await this.audioPlayer.initialize();
+      await this.vapi.initialize();
       await this.llm.initialize();
       await this.spotify.initialize();
 
@@ -153,8 +168,8 @@ export class AudioManager extends EventEmitter {
     try {
       console.log('[AudioManager] 🎤 Processing voice input...');
 
-      // STEP 1: STT (Placeholder - Vapi team will implement)
-      const userQuestion = await this.simulateSTT();
+      // STEP 1: STT via Vapi (REAL IMPLEMENTATION)
+      const userQuestion = await this.captureUserSpeech();
       console.log(`[AudioManager] 📝 STT Result: "${userQuestion}"`);
 
       // STEP 2: Get current book context from Spotify
@@ -209,39 +224,76 @@ export class AudioManager extends EventEmitter {
     }
   }
 
-  /**
-   * PLACEHOLDER: STT simulation for testing
-   * Vapi team will replace this with real speech-to-text
+      /**
+   * VAPI STT: Capture user speech (Vapi is already listening after wake word)
    */
-  private async simulateSTT(): Promise<string> {
-    // Simulate STT processing time
-    await new Promise(resolve => setTimeout(resolve, 800));
+  private async captureUserSpeech(): Promise<string> {
+    console.log('[AudioManager] 🎤 Waiting for Vapi command transcription...');
 
-    // Return a sample question for testing
-    const sampleQuestions = [
-      "Who is the main character?",
-      "What happened in the previous chapter?",
-      "Can you explain this concept?",
-      "What's the significance of this event?"
-    ];
+    try {
+      // Vapi is already listening in command mode after wake word detection
+      // Just wait for the final transcription
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          this.vapi.resetToWakeWordMode();
+          reject(new Error('Command timeout (10 seconds) - returning to wake word mode'));
+        }, 10000); // 10 second timeout
 
-    return sampleQuestions[Math.floor(Math.random() * sampleQuestions.length)];
+        this.vapi.once('transcriptionComplete', (transcription) => {
+          clearTimeout(timeout);
+
+          // Don't process wake words as commands
+          if (transcription.isWakeWord) {
+            reject(new Error('Received wake word instead of command'));
+            return;
+          }
+
+          resolve(transcription.text);
+        });
+
+        this.vapi.once('error', (error) => {
+          clearTimeout(timeout);
+          this.vapi.resetToWakeWordMode();
+          reject(error);
+        });
+      });
+
+    } catch (error) {
+      console.error('[AudioManager] Vapi command capture failed:', error);
+      // Return to wake word mode on error
+      await this.vapi.resetToWakeWordMode();
+      throw new Error(`Command capture failed: ${error}`);
+    }
   }
 
-  async startListening(): Promise<void> {
+      async startListening(): Promise<void> {
     if (this.state.isListening) return;
 
+    console.log('[AudioManager] 👂 Starting Vapi wake word listening for "Hey Nara"...');
+
     this.state.isListening = true;
-    await this.vad.start();
+    await this.vapi.startWakeWordListening();
     this.emit('listeningStarted');
   }
 
   async stopListening(): Promise<void> {
     if (!this.state.isListening) return;
 
+    console.log('[AudioManager] Stopping Vapi listening');
+
     this.state.isListening = false;
-    await this.vad.stop();
+    await this.vapi.stopListening();
     this.emit('listeningStopped');
+  }
+
+  // Manual wake word trigger for testing
+  triggerWakeWord(): void {
+    console.log('[AudioManager] Manual wake word trigger - simulating Vapi detection');
+    this.vapi.emit('wakeWordDetected', {
+      phrase: 'hey nara (manual)',
+      confidence: 1.0,
+      timestamp: Date.now()
+    });
   }
 
   getState(): AudioPipelineState {
