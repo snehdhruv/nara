@@ -13,7 +13,12 @@ import { noteTakerNode } from './nodes/noteTaker';
 // Create the graph
 const workflow = new StateGraph<GraphState>({
   channels: {
-    datasetPath: { value: null, default: () => "" },
+    transcriptData: { value: null, default: () => ({
+      source: { platform: "youtube" as const, title: "", duration_s: 0, rights: "", language: "en", captions_kind: "human" },
+      chapters: [],
+      segments: []
+    }) },
+    datasetPath: { value: null, default: () => undefined },
     audiobookId: { value: null, default: () => "default" },
     question: { value: null, default: () => "" },
     playbackChapterIdx: { value: null, default: () => 0 },

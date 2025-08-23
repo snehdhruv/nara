@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 
 import { runChapterQA, runNotes } from '../agents/langgraph/graph';
+import { CanonicalTranscript } from '../agents/langgraph/types';
+import { readFileSync } from 'fs';
 
 async function testCompletePipeline() {
   console.log('🧪 Testing Complete LangGraph QA Pipeline...\n');
+  
+  // Load transcript data from file (for testing)
+  const transcriptData = JSON.parse(readFileSync('./data/zero-to-one.json', 'utf-8')) as CanonicalTranscript;
+  console.log(`Loaded transcript: "${transcriptData.source.title}" with ${transcriptData.chapters.length} chapters\n`);
   
   try {
     // Test 1: Full QA Pipeline
@@ -12,7 +18,8 @@ async function testCompletePipeline() {
     console.log('Chapter: 1, Progress: 3\n');
     
     const result = await runChapterQA({
-      datasetPath: './data/zero-to-one.json',
+      transcriptData: transcriptData,
+      datasetPath: './data/zero-to-one.json', // Optional for summaries
       audiobookId: 'zero-to-one',
       question: 'What does Peter Thiel mean by going from zero to one?',
       playbackChapterIdx: 1,

@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createVoiceAgentBridge } from '../../../../main/audio/INTEGRATION_EXAMPLE';
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "../../../../convex/_generated/api";
+import { convertConvexToCanonical, validateConvexAudiobook } from '../../../../agents/langgraph/utils/convexAdapter';
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 // Create a single bridge instance to reuse
 let bridgeInstance: any = null;
@@ -19,9 +24,58 @@ async function getBridge() {
   return bridgeInstance;
 }
 
+// Get audiobook data from Convex for voice context
+async function getAudiobookForVoice(audiobookId: string, youtubeVideoId: string) {
+  try {
+    console.log(`[API] Fetching audiobook data from Convex: ${audiobookId} / ${youtubeVideoId}`);
+    
+    let audiobook = null;
+    
+    // Try to get by Convex ID first
+    if (audiobookId && audiobookId !== 'null') {
+      try {
+        audiobook = await convex.query(api.audiobooks.getAudiobook, {
+          audiobookId: audiobookId as any
+        });
+      } catch (error) {
+        console.log('[API] Book not found by Convex ID, trying YouTube ID...');
+      }
+    }
+    
+    // Try by YouTube video ID if Convex ID didn't work
+    if (!audiobook && youtubeVideoId && youtubeVideoId !== 'null') {
+      try {
+        audiobook = await convex.query(api.audiobooks.getAudiobookByYouTubeId, {
+          youtubeVideoId: youtubeVideoId
+        });
+      } catch (error) {
+        console.log('[API] Book not found by YouTube ID either');
+      }
+    }
+    
+    // Fallback to Zero to One if nothing found
+    if (!audiobook) {
+      console.log('[API] No audiobook found, falling back to Zero to One');
+      try {
+        audiobook = await convex.query(api.audiobooks.getAudiobookByYouTubeId, {
+          youtubeVideoId: "dz_4Mjyqbqk"
+        });
+      } catch (error) {
+        console.log('[API] Even Zero to One fallback failed');
+        return null;
+      }
+    }
+    
+    return audiobook;
+  } catch (error) {
+    console.error('[API] Failed to fetch audiobook from Convex:', error);
+    return null;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { question, action } = await request.json();
+    const { question, action, context } = await request.json();
     
     if (action === 'test-connection') {
       const bridge = await getBridge();
@@ -41,12 +95,51 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Get the current audiobook from Convex based on context
+      const currentAudiobook = await getAudiobookForVoice(
+        context?.audiobookId, 
+        context?.youtubeVideoId
+      );
+      
+      if (!currentAudiobook) {
+        return NextResponse.json(
+          { success: false, error: 'Audiobook not found' },
+          { status: 404 }
+        );
+      }
+      
+      console.log(`[API] Using audiobook: "${currentAudiobook.title}" by ${currentAudiobook.author}`);
+      console.log(`[API] Current position: ${context?.currentTime || 0}s`);
+
+      // Validate and convert Convex audiobook to CanonicalTranscript format
+      const validation = validateConvexAudiobook(currentAudiobook);
+      if (!validation.isValid) {
+        console.error('[API] Invalid audiobook data:', validation.errors);
+        return NextResponse.json(
+          { success: false, error: `Invalid audiobook data: ${validation.errors.join(', ')}` },
+          { status: 400 }
+        );
+      }
+
+      const transcriptData = convertConvexToCanonical(currentAudiobook);
+      console.log(`[API] Converted to CanonicalTranscript: ${transcriptData.chapters.length} chapters, ${transcriptData.segments.length} segments`);
+
       const bridge = await getBridge();
       const startTime = Date.now();
       
       console.log(`[API] Processing question with VoiceAgentBridge → LangGraph: "${question}"`);
       
-      const result = await bridge.processQuestion(question.trim());
+      // Use the new method that accepts dynamic transcript data
+      const result = await bridge.processQuestionWithData(
+        question.trim(), 
+        transcriptData,
+        {
+          audiobookId: currentAudiobook._id,
+          currentPosition_s: context?.currentTime || 0,
+          playbackChapterIdx: context?.currentChapter || 1,
+          userProgressIdx: 14 // Allow access to all chapters for now
+        }
+      );
       const totalTime = Date.now() - startTime;
       
       console.log(`[API] LangGraph answered in ${totalTime}ms`);

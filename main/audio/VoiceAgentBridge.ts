@@ -213,6 +213,111 @@ export class VoiceAgentBridge extends EventEmitter {
       };
 
       console.log(`[VoiceAgentBridge] Question processed successfully: ${interactionId}`);
+      return qaResult;
+
+    } catch (error: any) {
+      console.error(`[VoiceAgentBridge] Processing failed: ${error.message}`);
+      
+      // End interaction on error (resume background audio)
+      try {
+        await this.orchestrator.endInteraction(interactionId);
+      } catch (endError) {
+        console.error(`[VoiceAgentBridge] Failed to end interaction: ${endError}`);
+      }
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Process question with dynamic transcript data (new method)
+   */
+  async processQuestionWithData(text: string, transcriptData: any, context?: Partial<VoiceContext>): Promise<QAResult> {
+    const id = ++this.interactionId;
+    const interactionId = `voice_qa_${id}`;
+
+    console.log(`[VoiceAgentBridge] Processing question with dynamic data ${interactionId}: "${text}"`);
+
+    // Barge-in: cancel any in-flight operations
+    if (this.currentAbortController) {
+      this.currentAbortController.abort();
+    }
+    this.currentAbortController = new AbortController();
+
+    // Begin interaction (pause/duck audio)
+    await this.orchestrator.beginInteraction(interactionId);
+
+    try {
+      // Use provided context or fallback to instance context
+      const mergedContext = { ...this.opts.context, ...context };
+      
+      // Resolve current chapter and apply spoiler protection
+      const playbackIdx = mergedContext.playbackChapterIdx ?? 1;
+      
+      const allowedIdx = this.chapterResolver.allowedIdx(
+        playbackIdx, 
+        mergedContext.userProgressIdx
+      );
+
+      console.log(`[VoiceAgentBridge] Chapter resolution: playback=${playbackIdx}, allowed=${allowedIdx}`);
+
+      // Update orchestrator state
+      this.orchestrator.updateInteractionState(interactionId, 'qa', { question: text });
+
+      // Run LangGraph QA with dynamic transcript data
+      const t0 = performance.now();
+      const result = await this.opts.runner.ask({
+        transcriptData: transcriptData, // Use dynamic data instead of file path
+        audiobookId: mergedContext.audiobookId,
+        question: text,
+        playbackChapterIdx: allowedIdx,
+        userProgressIdx: mergedContext.userProgressIdx,
+        modeHint: mergedContext.modeHint ?? "auto",
+        tokenBudget: 180000,
+        signal: this.currentAbortController.signal
+      });
+
+      const latency = Math.round(performance.now() - t0);
+      console.log(`[VoiceAgentBridge] QA completed in ${latency}ms`);
+
+      // Clean markdown formatting for natural speech
+      const cleanText = result.answer_markdown
+        .replace(/\*\*/g, '') // Remove bold formatting
+        .replace(/\*/g, '') // Remove italic formatting
+        .replace(/#+\s*/g, '') // Remove header formatting
+        .replace(/^-\s*/gm, '') // Remove bullet points
+        .replace(/`/g, '') // Remove code formatting
+        .replace(/\n{2,}/g, '\n') // Replace multiple newlines with single
+        .trim();
+
+      console.log(`[VoiceAgentBridge] Cleaned response for TTS: "${cleanText}"`);
+
+      // Play TTS response with cleaned text
+      await this.orchestrator.playTTS(interactionId, cleanText, "narrator");
+
+      // Handle optional seek hint
+      if (result.playbackHint?.start_s != null) {
+        console.log(`[VoiceAgentBridge] Seek hint: ${result.playbackHint.start_s}s`);
+        // Delay seek until after TTS completes
+        this.orchestrator.once('ttsCompleted', () => {
+          if (result.playbackHint?.start_s != null) {
+            this.emit('seekRequested', result.playbackHint.start_s);
+          }
+        });
+      }
+
+      // End interaction (resume background audio)
+      await this.orchestrator.endInteraction(interactionId);
+
+      const qaResult: QAResult = {
+        markdown: cleanText, // Use cleaned text instead of raw markdown
+        citations: result.citations ?? [],
+        playbackHint: result.playbackHint,
+        latency_ms: latency,
+        interactionId
+      };
+
+      console.log(`[VoiceAgentBridge] Question processed successfully: ${interactionId}`);
       this.emit('questionProcessed', qaResult);
 
       return qaResult;

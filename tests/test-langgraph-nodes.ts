@@ -1,17 +1,23 @@
 #!/usr/bin/env node
 
-import { GraphState } from '../agents/langgraph/types';
+import { GraphState, CanonicalTranscript } from '../agents/langgraph/types';
 import { progressGateNode } from '../agents/langgraph/nodes/progressGate';
 import { chapterLoaderNode } from '../agents/langgraph/nodes/chapterLoader';
 import { budgetPlannerNode } from '../agents/langgraph/nodes/budgetPlanner';
 import { contextPackerNode } from '../agents/langgraph/nodes/contextPacker';
+import { readFileSync } from 'fs';
 
 async function testNodes() {
   console.log('Testing LangGraph Nodes...\n');
   
+  // Load transcript data from file (for testing)
+  const transcriptData = JSON.parse(readFileSync('./data/zero-to-one.json', 'utf-8')) as CanonicalTranscript;
+  console.log(`Loaded transcript: "${transcriptData.source.title}" with ${transcriptData.chapters.length} chapters`);
+  
   // Initial state
   let state: GraphState = {
-    datasetPath: './data/zero-to-one.json',
+    transcriptData: transcriptData,
+    datasetPath: './data/zero-to-one.json', // Optional for summaries
     audiobookId: 'zero-to-one',
     question: 'What does Peter Thiel mean by going from zero to one?',
     playbackChapterIdx: 1,

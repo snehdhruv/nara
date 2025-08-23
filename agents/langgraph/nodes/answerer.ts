@@ -38,9 +38,12 @@ export async function answererNode(state: GraphState): Promise<Partial<GraphStat
   
   const llm = getLLMClient();
   
-  // Load book title for system prompt
-  const transcriptData = JSON.parse(readFileSync(state.datasetPath, 'utf-8'));
-  const bookTitle = transcriptData.source.title;
+  if (!state.transcriptData) {
+    throw new Error('No transcript data available in state');
+  }
+  
+  // Get book title for system prompt from transcript data object
+  const bookTitle = state.transcriptData.source.title;
   
   const systemPrompt = SYSTEM_GLOBAL + '\n\n' + 
     SYSTEM_ANSWERER(bookTitle, state.chapter.idx, state.chapter.title);

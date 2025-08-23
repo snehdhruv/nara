@@ -7,7 +7,7 @@ import { runChapterQA } from '../graph';
 import { GraphInput } from '../types';
 
 export interface RunnerInput {
-  datasetPath: string;
+  transcriptData: any; // CanonicalTranscript data object
   audiobookId: string;
   question: string;
   playbackChapterIdx: number;
@@ -15,6 +15,7 @@ export interface RunnerInput {
   modeHint?: "auto" | "full" | "compressed" | "focused";
   tokenBudget?: number;
   signal?: AbortSignal;
+  datasetPath?: string; // Optional for backwards compatibility with summaries
 }
 
 export interface RunnerOutput {
@@ -66,14 +67,15 @@ export class LangGraphRunner {
 
     // Prepare GraphInput for LangGraph
     const graphInput: GraphInput = {
-      datasetPath: input.datasetPath,
+      transcriptData: input.transcriptData,
       audiobookId: input.audiobookId,
       question: input.question,
       playbackChapterIdx: input.playbackChapterIdx,
       userProgressIdx: input.userProgressIdx,
       modeHint: input.modeHint ?? "auto",
       tokenBudget: input.tokenBudget ?? 180000,
-      includePriorSummaries: true
+      includePriorSummaries: true,
+      datasetPath: input.datasetPath // Optional for summaries
     };
 
     try {
@@ -126,10 +128,10 @@ export class LangGraphRunner {
   /**
    * Quick test method to verify the runner is working
    */
-  async test(datasetPath: string): Promise<boolean> {
+  async test(transcriptData: any): Promise<boolean> {
     try {
       const testResult = await this.ask({
-        datasetPath,
+        transcriptData,
         audiobookId: 'test',
         question: 'What is the main concept?',
         playbackChapterIdx: 1,
@@ -162,8 +164,8 @@ export class LangGraphRunner {
   validateInput(input: RunnerInput): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
-    if (!input.datasetPath) {
-      errors.push('datasetPath is required');
+    if (!input.transcriptData) {
+      errors.push('transcriptData is required');
     }
 
     if (!input.audiobookId) {

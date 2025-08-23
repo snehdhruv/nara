@@ -39,14 +39,16 @@ export const CanonicalTranscript = z.object({
 
 // Graph state schemas
 export const GraphInput = z.object({
-  datasetPath: z.string(),
+  transcriptData: CanonicalTranscript, // Direct data object instead of file path
   audiobookId: z.string().default("default"),
   question: z.string(),
   playbackChapterIdx: z.number(),
   userProgressIdx: z.number().default(1),
   modeHint: z.enum(["auto", "full", "compressed", "focused"]).default("auto"),
   tokenBudget: z.number().default(180000),
-  includePriorSummaries: z.boolean().default(true)
+  includePriorSummaries: z.boolean().default(true),
+  // Optional: Keep datasetPath for backwards compatibility with file-based summaries
+  datasetPath: z.string().optional()
 });
 
 export const GraphState = z.object({

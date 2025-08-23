@@ -10,9 +10,12 @@ export async function contextPackerNode(state: GraphState): Promise<Partial<Grap
     throw new Error('Chapter not loaded');
   }
   
-  // Load book title from dataset
-  const transcriptData = JSON.parse(readFileSync(state.datasetPath, 'utf-8'));
-  const bookTitle = transcriptData.source.title;
+  if (!state.transcriptData) {
+    throw new Error('No transcript data available in state');
+  }
+  
+  // Get book title from transcript data object
+  const bookTitle = state.transcriptData.source.title;
   
   // Build chapter content based on mode
   let chapterBlock = '';

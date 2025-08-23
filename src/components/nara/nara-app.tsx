@@ -91,9 +91,12 @@ export function NaraApp() {
           action: 'ask-question',
           question: transcript,
           context: {
-            currentChapter: 1,
+            audiobookId: currentBook?.id || null, // Pass the actual audiobook being played
+            youtubeVideoId: currentBook?.youtubeVideoId || null, // Also pass YouTube ID
+            currentChapter: currentBook?.currentChapter || 1,
             currentTime: currentPosition,
-            audioPosition: currentPosition
+            audioPosition: currentPosition,
+            bookTitle: currentBook?.title || 'Unknown Book'
           }
         }),
         signal: abortControllerRef.current.signal

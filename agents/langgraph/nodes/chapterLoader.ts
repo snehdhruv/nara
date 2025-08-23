@@ -2,10 +2,14 @@ import { readFileSync, existsSync } from 'fs';
 import type { GraphState, CanonicalTranscript } from '../types';
 
 export async function chapterLoaderNode(state: GraphState): Promise<Partial<GraphState>> {
-  console.log('[ChapterLoader] Loading dataset from:', state.datasetPath);
+  console.log('[ChapterLoader] Loading dataset from transcript data object');
   
-  // Load canonical transcript
-  const transcriptData = JSON.parse(readFileSync(state.datasetPath, 'utf-8')) as CanonicalTranscript;
+  // Use transcript data from state (passed directly instead of reading from file)
+  const transcriptData = state.transcriptData;
+  
+  if (!transcriptData) {
+    throw new Error('[ChapterLoader] No transcript data provided in state');
+  }
   
   // Find the allowed chapter - data is 1-indexed, so we need to find by idx field
   const chapterIdx = state.allowedIdx ?? 0;
@@ -24,9 +28,9 @@ export async function chapterLoaderNode(state: GraphState): Promise<Partial<Grap
   
   console.log(`[ChapterLoader] Loaded chapter ${chapterIdx}: "${chapter.title}" with ${chapterSegments.length} segments`);
   
-  // Load prior summaries if requested
+  // Load prior summaries if requested and datasetPath is available
   let priorSummaries = undefined;
-  if (state.includePriorSummaries && chapterIdx > 0) {
+  if (state.includePriorSummaries && chapterIdx > 0 && state.datasetPath) {
     const summariesPath = state.datasetPath.replace('.json', '.summaries.json');
     if (existsSync(summariesPath)) {
       try {
