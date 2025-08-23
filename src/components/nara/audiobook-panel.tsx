@@ -133,97 +133,95 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
     return wordChunksWithTiming.findIndex(chunk => chunk.isActive);
   }, [wordChunksWithTiming]);
 
-  // Gentle auto-scroll to active word chunk (less aggressive)
-  const [userScrolledManually, setUserScrolledManually] = React.useState(false);
-  const scrollTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  // Auto-scroll system that follows the highlighted text
+  const [userHasScrolled, setUserHasScrolled] = React.useState(false);
+  const scrollResetTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const lastActiveChunkRef = React.useRef(-1);
+  const scrollInProgressRef = React.useRef(false);
 
-  // Track manual scrolling
+  // Track manual user scrolling
   React.useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
+    const container = scrollContainerRef.current;
+    if (!container) return;
 
-    const handleScroll = () => {
-      setUserScrolledManually(true);
-      
-      // Reset after 3 seconds of no scrolling
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
+    const handleUserScroll = () => {
+      // Only mark as user scroll if we're not currently auto-scrolling
+      if (!scrollInProgressRef.current) {
+        setUserHasScrolled(true);
+        
+        // Clear existing timeout
+        if (scrollResetTimeoutRef.current) {
+          clearTimeout(scrollResetTimeoutRef.current);
+        }
+        
+        // Resume auto-scroll after 4 seconds of no manual scrolling
+        scrollResetTimeoutRef.current = setTimeout(() => {
+          setUserHasScrolled(false);
+          console.log('[AutoScroll] Resuming auto-scroll after user inactivity');
+        }, 4000);
       }
-      scrollTimeoutRef.current = setTimeout(() => {
-        setUserScrolledManually(false);
-      }, 3000);
     };
 
-    scrollContainer.addEventListener('scroll', handleScroll);
+    container.addEventListener('scroll', handleUserScroll, { passive: true });
     return () => {
-      scrollContainer.removeEventListener('scroll', handleScroll);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
+      container.removeEventListener('scroll', handleUserScroll);
+      if (scrollResetTimeoutRef.current) {
+        clearTimeout(scrollResetTimeoutRef.current);
       }
     };
   }, []);
 
-  // Enhanced auto-scroll with React best practices
-  const autoScrollTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-  const isInitialRenderRef = React.useRef(true);
-  const lastScrolledChunkRef = React.useRef(-1);
-
+  // Smooth auto-scroll that follows active text
   React.useEffect(() => {
-    // Clear any pending auto-scroll
-    if (autoScrollTimeoutRef.current) {
-      clearTimeout(autoScrollTimeoutRef.current);
-    }
-
-    // Don't auto-scroll if user has manually scrolled recently or no active chunk
-    if (userScrolledManually || activeChunkIndex === -1 || !activeWordRef.current || !scrollContainerRef.current) {
+    // Don't auto-scroll if user recently scrolled manually or no active chunk
+    if (userHasScrolled || activeChunkIndex === -1 || !activeWordRef.current) {
       return;
     }
 
-    // Don't auto-scroll if we're on the same chunk (prevents jitter)
-    if (activeChunkIndex === lastScrolledChunkRef.current && !isInitialRenderRef.current) {
+    // Don't scroll if it's the same chunk we already scrolled to
+    if (activeChunkIndex === lastActiveChunkRef.current) {
       return;
     }
 
-    // Use requestAnimationFrame for smooth, frame-synchronized scrolling
-    const performScroll = () => {
+    const scrollToActive = () => {
       if (!activeWordRef.current || !scrollContainerRef.current) return;
 
-      const scrollBehavior = isInitialRenderRef.current ? 'instant' : 'smooth';
-      const blockPosition = isInitialRenderRef.current ? 'center' : 'nearest';
-
+      scrollInProgressRef.current = true;
+      
       try {
+        // Use scrollIntoView with center alignment for better visibility
         activeWordRef.current.scrollIntoView({
-          behavior: scrollBehavior as ScrollBehavior,
-          block: blockPosition as ScrollLogicalPosition,
+          behavior: 'smooth',
+          block: 'center',
           inline: 'nearest'
         });
         
-        lastScrolledChunkRef.current = activeChunkIndex;
-        isInitialRenderRef.current = false;
+        lastActiveChunkRef.current = activeChunkIndex;
+        console.log(`[AutoScroll] Following active text chunk ${activeChunkIndex + 1}`);
         
-        console.log(`[AutoScroll] Scrolled to chunk ${activeChunkIndex} (${scrollBehavior})`);
+        // Clear the scroll in progress flag after animation completes
+        setTimeout(() => {
+          scrollInProgressRef.current = false;
+        }, 1000);
+        
       } catch (error) {
-        console.warn('[AutoScroll] Scroll failed:', error);
+        console.warn('[AutoScroll] Failed to scroll to active text:', error);
+        scrollInProgressRef.current = false;
       }
     };
 
-    // Use requestAnimationFrame for better performance
-    autoScrollTimeoutRef.current = setTimeout(() => {
-      requestAnimationFrame(performScroll);
-    }, isInitialRenderRef.current ? 50 : 100); // Faster initial scroll
+    // Small delay to ensure DOM updates are complete
+    const timeoutId = setTimeout(scrollToActive, 150);
+    
+    return () => clearTimeout(timeoutId);
+  }, [activeChunkIndex, userHasScrolled]);
 
-    return () => {
-      if (autoScrollTimeoutRef.current) {
-        clearTimeout(autoScrollTimeoutRef.current);
-      }
-    };
-  }, [activeChunkIndex, userScrolledManually, wordChunksWithTiming.length]);
-
-  // Reset initial render flag when content changes
+  // Reset scroll tracking when content changes
   React.useEffect(() => {
-    isInitialRenderRef.current = true;
-    lastScrolledChunkRef.current = -1;
+    lastActiveChunkRef.current = -1;
+    setUserHasScrolled(false);
   }, [book.id]);
+
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-cream-200 relative">
@@ -239,17 +237,15 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
           
           {/* Audio playback status indicator */}
           <div className="mb-6 p-4 bg-wood-100 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2 text-sm text-wood-700">
-                <div className={`w-2 h-2 rounded-full transition-colors ${isPlaying ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                {isPlaying ? 'Playing' : 'Paused'}
-                <span className="ml-2 font-mono text-xs">
-                  {Math.floor(currentPosition / 60)}:{(Math.floor(currentPosition) % 60).toString().padStart(2, '0')}
-                </span>
-              </div>
+            <div className="flex items-center gap-2 text-sm text-wood-700 mb-2">
+              <div className={`w-2 h-2 rounded-full transition-colors ${isPlaying ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+              {isPlaying ? 'Playing' : 'Paused'}
+              <span className="ml-2 font-mono text-xs">
+                {Math.floor(currentPosition / 60)}:{(Math.floor(currentPosition) % 60).toString().padStart(2, '0')}
+              </span>
               {activeChunkIndex >= 0 && (
-                <span className="text-xs bg-green-100 px-2 py-1 rounded-full">
-                  Chunk {activeChunkIndex + 1} of {wordChunksWithTiming.length} ({wordChunksWithTiming[activeChunkIndex]?.wordCount || 0} words)
+                <span className="ml-auto text-xs text-wood-500">
+                  Following text
                 </span>
               )}
             </div>
@@ -313,22 +309,24 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
                         }
                       `}
                       animate={{
-                        scale: isActive ? 1.02 : 1,
+                        scale: isActive ? 1.2 : 1, // 20% size increase for emphasis
                         backgroundColor: isActive 
-                          ? 'rgba(254, 240, 138, 0.3)' // subtle yellow
+                          ? 'rgba(254, 240, 138, 0.4)' // slightly more visible yellow
                           : isPastActive
                             ? 'rgba(0, 0, 0, 0.02)'
                             : 'rgba(0, 0, 0, 0)',
                         borderLeftWidth: isActive ? 4 : 0,
-                        borderLeftColor: isActive ? '#FBBF24' : 'transparent'
+                        borderLeftColor: isActive ? '#FBBF24' : 'transparent',
+                        fontWeight: isActive ? 600 : 400 // Bold text when active for better emphasis
                       }}
                       transition={{ 
-                        duration: 0.4,
-                        ease: "easeInOut"
+                        duration: 0.3, // Faster transitions for more responsive feel
+                        ease: "easeInOut",
+                        scale: { type: "spring", stiffness: 300, damping: 25 } // Spring animation for scale
                       }}
                       whileHover={!isActive ? {
-                        backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                        scale: 1.01
+                        backgroundColor: 'rgba(0, 0, 0, 0.04)', // Slightly more visible on hover
+                        scale: 1.05 // More pronounced hover effect
                       } : {}}
                                           >
                         {chunkData.text}

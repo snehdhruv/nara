@@ -28,8 +28,8 @@ export interface RunnerOutput {
 export class LangGraphRunner {
   private runChapterQA: typeof runChapterQA;
 
-  constructor(runChapterQAFn: typeof runChapterQA) {
-    this.runChapterQA = runChapterQAFn;
+  constructor(runChapterQAFn?: typeof runChapterQA) {
+    this.runChapterQA = runChapterQAFn || runChapterQA;
   }
 
   async ask(input: RunnerInput): Promise<RunnerOutput> {
@@ -192,6 +192,83 @@ export class LangGraphRunner {
       isValid: errors.length === 0,
       errors
     };
+  }
+  
+  /**
+   * Generate actionable notes from conversation transcript using LangGraph
+   */
+  async generateNote(input: {
+    transcript: string;
+    context?: {
+      transcriptData?: any;
+      audiobookId?: string;
+      chapterIdx?: number;
+    };
+  }): Promise<string> {
+    try {
+      // Build the note generation prompt
+      const notePrompt = `Analyze the transcript below. Identify what the reader/user needs. Then extract a minimum of 1 and maximum of 3 bullet points that really highlight the actionable takeaways from this conversation. Remember keep this as minimum as possible but use up to 3 bullet points if you feel there is a lot of high level information to extract\n\n${input.transcript}\n\nRespond with a title that summarizes the conversation actionable bullet points. Nothing more`;
+      
+      // Use existing QA system with compressed mode for note generation
+      const result = await this.ask({
+        transcriptData: input.context?.transcriptData || {},
+        audiobookId: input.context?.audiobookId || 'note-gen',
+        question: notePrompt,
+        playbackChapterIdx: input.context?.chapterIdx || 1,
+        userProgressIdx: input.context?.chapterIdx || 1,
+        modeHint: 'compressed', // Use compressed for concise notes
+        tokenBudget: 10000 // Smaller budget for note generation
+      });
+      
+      // Extract and format the note from response
+      return this.formatAsNote(result.answer_markdown);
+      
+    } catch (error) {
+      console.error('[LangGraphRunner] Note generation failed:', error);
+      // Return simple fallback
+      return `Voice Discussion\n• ${input.transcript.substring(0, 100)}...`;
+    }
+  }
+  
+  /**
+   * Format LangGraph output as actionable note
+   */
+  private formatAsNote(markdown: string): string {
+    const lines = markdown.split('\n').filter(l => l.trim());
+    
+    // Extract title
+    let title = lines.find(l => !l.startsWith('•') && !l.startsWith('-') && !l.startsWith('*'));
+    if (title) {
+      title = title.replace(/^#+\s*/, '').trim();
+    } else {
+      title = 'Discussion Notes';
+    }
+    
+    // Extract bullets (max 3)
+    const bullets = lines
+      .filter(l => l.startsWith('•') || l.startsWith('-') || l.startsWith('*') || /^\d+\./.test(l))
+      .map(l => l.replace(/^[•\-*]\s*/, '').replace(/^\d+\.\s*/, '').trim())
+      .slice(0, 3);
+    
+    // Format
+    let formatted = title + '\n\n';
+    bullets.forEach(b => formatted += `• ${b}\n`);
+    
+    return formatted.trim();
+  }
+  
+  /**
+   * Extension method for note generation (for API compatibility)
+   */
+  async runWithNoteGeneration(input: {
+    prompt: string;
+    context?: any;
+    mode?: string;
+  }): Promise<string> {
+    return this.generateNote({
+      transcript: input.prompt,
+      context: input.context
+    });
   }
 }
 
