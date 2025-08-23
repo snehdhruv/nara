@@ -7,7 +7,7 @@ async function validateRealFunctionality() {
   
   // Test with a question that should have clear citations
   const result = await runChapterQA({
-    datasetPath: '/Users/snehdhruv/Documents/hackathons/dedalus/data/zero-to-one.json',
+    datasetPath: './data/zero-to-one.json',
     audiobookId: 'zero-to-one',
     question: 'What specific examples does Thiel give about startups?',
     playbackChapterIdx: 1,

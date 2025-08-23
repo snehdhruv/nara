@@ -11,6 +11,15 @@ import { useQuery, useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { SignedIn, SignedOut } from "@daveyplate/better-auth-ui";
 
+// Extend Window interface for audio modules
+declare global {
+  interface Window {
+    NaraAudioFactory?: {
+      createAudioPipeline: (config: any) => Promise<any>;
+    };
+  }
+}
+
 interface AudioState {
   isInitialized: boolean;
   isPlaying: boolean;
@@ -76,7 +85,7 @@ export default function VoiceApp() {
           <div className="max-w-md mx-auto text-center space-y-4">
             <p className="text-lg">Connect your Spotify account to start the voice audiobook experience</p>
             <a 
-              href="/test-spotify" 
+              href="/api/auth/signin/spotify" 
               className="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
             >
               🎵 Connect Spotify
@@ -96,7 +105,8 @@ function VoiceAppContent() {
   // Spotify integration
   const playbackState = useQuery(api.spotify.getUserPlaybackState);
   const getCurrentPlayback = useAction(api.spotify.getCurrentPlayback);
-  const getSpotifyAccount = useQuery(api.spotify.getSpotifyAccount);
+  const spotifyAccessTokenAction = useAction(api.spotify.getSpotifyAccessToken);
+  const controlSpotifyPlayback = useAction(api.spotify.controlSpotifyPlayback);
 
   // Audio state management
   const [audioState, setAudioState] = useState<AudioState>({
@@ -161,19 +171,6 @@ function VoiceAppContent() {
     };
   }, [getCurrentPlayback]);
 
-  // Update audio state when Spotify playback changes
-  useEffect(() => {
-    if (playbackState) {
-      setAudioState(prev => ({
-        ...prev,
-        isPlaying: playbackState.isPlaying,
-        currentTime: Math.floor(playbackState.progressMs / 1000),
-        duration: playbackState.track ? Math.floor(playbackState.track.durationMs / 1000) : 0,
-        currentChapter: getCurrentChapterFromTime(Math.floor(playbackState.progressMs / 1000))
-      }));
-    }
-  }, [playbackState, audiobook]);
-
   // Get current chapter based on time position
   const getCurrentChapterFromTime = useCallback((timeSeconds: number): number => {
     if (!audiobook) return 1;
@@ -184,53 +181,38 @@ function VoiceAppContent() {
     return chapter?.idx || 1;
   }, [audiobook]);
 
+  // Update audio state when Spotify playback changes
+  useEffect(() => {
+    if (playbackState) {
+      const progressMs = playbackState.progressMs || 0;
+      setAudioState(prev => ({
+        ...prev,
+        isPlaying: playbackState.isPlaying,
+        currentTime: Math.floor(progressMs / 1000),
+        duration: playbackState.track ? Math.floor(playbackState.track.durationMs / 1000) : 0,
+        currentChapter: getCurrentChapterFromTime(Math.floor(progressMs / 1000))
+      }));
+    }
+  }, [playbackState, audiobook, getCurrentChapterFromTime]);
+
   // Spotify Control Functions
   const pauseSpotify = async () => {
     try {
-      const response = await fetch('https://api.spotify.com/v1/me/player/pause', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${await getSpotifyAccessToken()}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Failed to pause Spotify');
-      }
+      await controlSpotifyPlayback({ action: "pause" });
       console.log('[VoiceApp] Spotify paused for voice interaction');
     } catch (error) {
       console.error('[VoiceApp] Failed to pause Spotify:', error);
-      setError('Failed to pause audiobook');
+      setError(`Failed to pause audiobook: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
   const resumeSpotify = async () => {
     try {
-      const response = await fetch('https://api.spotify.com/v1/me/player/play', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${await getSpotifyAccessToken()}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Failed to resume Spotify');
-      }
+      await controlSpotifyPlayback({ action: "play" });
       console.log('[VoiceApp] Spotify resumed after voice interaction');
     } catch (error) {
       console.error('[VoiceApp] Failed to resume Spotify:', error);
-      setError('Failed to resume audiobook');
-    }
-  };
-
-  const getSpotifyAccessToken = async (): Promise<string> => {
-    try {
-      if (getSpotifyAccount?.accessToken) {
-        return getSpotifyAccount.accessToken;
-      }
-      
-      throw new Error('No Spotify access token available - make sure you\'re connected to Spotify');
-    } catch (error) {
-      console.error('[VoiceApp] Failed to get Spotify access token:', error);
-      throw error;
+      setError(`Failed to resume audiobook: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -279,7 +261,7 @@ function VoiceAppContent() {
 
     } catch (error) {
       console.error('[VoiceApp] Audio initialization failed:', error);
-      setError(`Audio initialization failed: ${error.message}`);
+      setError(`Audio initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }, [isScriptsLoaded, audioState.isInitialized]);
 
@@ -394,7 +376,7 @@ function VoiceAppContent() {
       }
     } catch (error) {
       console.error('[VoiceApp] Question processing failed:', error);
-      setError(`Question processing failed: ${error.message}`);
+      setError(`Question processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setAudioState(prev => ({ ...prev, isProcessing: false }));
     }
@@ -421,19 +403,14 @@ function VoiceAppContent() {
     const chapter = audiobook?.chapters.find(ch => ch.idx === chapterIdx);
     if (chapter) {
       try {
-        const response = await fetch(`https://api.spotify.com/v1/me/player/seek?position_ms=${chapter.start_s * 1000}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${await getSpotifyAccessToken()}`
-          }
+        await controlSpotifyPlayback({ 
+          action: "play", 
+          positionMs: chapter.start_s * 1000 
         });
-        if (!response.ok) {
-          throw new Error('Failed to seek to chapter');
-        }
         console.log(`[VoiceApp] Jumped to Chapter ${chapterIdx}`);
       } catch (error) {
         console.error('[VoiceApp] Failed to jump to chapter:', error);
-        setError('Failed to jump to chapter');
+        setError(`Failed to jump to chapter: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
   };
@@ -446,7 +423,7 @@ function VoiceAppContent() {
       await audioManagerRef.current.startListening();
     } catch (error) {
       console.error('[VoiceApp] Failed to start listening:', error);
-      setError(`Failed to start listening: ${error.message}`);
+      setError(`Failed to start listening: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -528,7 +505,10 @@ function VoiceAppContent() {
                 🎤 Zero to One - Voice Experience
               </h1>
               <p className="text-slate-400 text-sm mt-1">
-                {playbackState?.track ? `${playbackState.track.name} • ${playbackState.track.artist}` : 'No Spotify playback detected'}
+                {playbackState?.track 
+                  ? `${playbackState.track.name} • ${playbackState.track.artist}` 
+                  : 'No audiobook or podcast detected - please play an audiobook or podcast on Spotify'
+                }
               </p>
             </div>
             
@@ -553,7 +533,7 @@ function VoiceAppContent() {
           <div className="w-1/3 p-6 border-r border-white/10">
             
             {/* Spotify Playback Info */}
-            {playbackState?.track && (
+            {playbackState?.track ? (
               <div className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
                 <div className="flex items-center gap-3 mb-3">
                   {playbackState.track.imageUrl && (
@@ -576,19 +556,30 @@ function VoiceAppContent() {
                     <div 
                       className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-1000"
                       style={{ 
-                        width: `${playbackState.track.durationMs > 0 ? (playbackState.progressMs / playbackState.track.durationMs) * 100 : 0}%` 
+                        width: `${playbackState.track.durationMs > 0 ? ((playbackState.progressMs || 0) / playbackState.track.durationMs) * 100 : 0}%` 
                       }}
                     />
                   </div>
                   <div className="flex justify-between text-xs text-slate-400 mt-1">
-                    <span>{formatTime(playbackState.progressMs)}</span>
+                    <span>{formatTime(playbackState.progressMs || 0)}</span>
                     <span>{formatTime(playbackState.track.durationMs)}</span>
                   </div>
                 </div>
               </div>
-            )}
-
-            {/* Chapter Information */}
+            ) : (
+              <div className="mb-6 p-4 bg-yellow-900/20 rounded-lg border border-yellow-500/20">
+                <div className="text-center">
+                  <h3 className="font-semibold text-yellow-400 mb-2">🎧 No Audiobook/Podcast Detected</h3>
+                  <p className="text-sm text-slate-300 mb-3">
+                    Please start playing an audiobook or podcast episode on Spotify to use voice features.
+                  </p>
+                  <div className="text-xs text-slate-400 space-y-1">
+                    <p>✅ Supported: Audiobooks, Podcast episodes, Audio shows</p>
+                    <p>❌ Not supported: Music, Songs, Regular albums</p>
+                  </div>
+                </div>
+              </div>
+            )}            {/* Chapter Information */}
             {currentChapterInfo && (
               <div className="mb-6 p-4 bg-blue-900/20 rounded-lg border border-blue-500/20">
                 <h3 className="font-semibold text-blue-400 mb-2">

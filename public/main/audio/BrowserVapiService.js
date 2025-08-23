@@ -94,13 +94,8 @@ class BrowserVapiService extends EventTarget {
           assistantId: this.config.assistantId,
           transport: {
             provider: 'vapi.websocket'
-          },
-          // Override assistant voice configuration
-          voice: this.config.voice || {
-            provider: 'cartesia',
-            voiceId: 'a0e99841-438c-4a64-b679-ae501e7d6091',  // Sonic (male)
-            model: 'sonic-english'
           }
+          // Voice is configured on the assistant, not in the call creation
         })
       });
 

@@ -73,7 +73,7 @@ export class VapiService extends EventEmitter {
     this.config = {
       ...config,
       audioQuality: {
-        sampleRate: 24000, // Higher quality than default 16kHz
+        sampleRate: 16000, // 16kHz PCM standard
         bitrate: 128, // Good quality bitrate
         echoCancellation: true,
         noiseSuppression: true,
@@ -192,7 +192,7 @@ export class VapiService extends EventEmitter {
             audioFormat: {
               format: 'pcm_s16le',
               container: 'raw',
-              sampleRate: this.config.audioQuality?.sampleRate || 24000,
+              sampleRate: this.config.audioQuality?.sampleRate || 16000,
               channels: this.config.audioQuality?.channelCount || 1,
               bitrate: this.config.audioQuality?.bitrate || 128
             },
@@ -582,7 +582,7 @@ export class VapiService extends EventEmitter {
 
   private calculateOptimalChunkSize(): number {
     // Calculate optimal chunk size based on sample rate for minimal latency
-    const sampleRate = this.config.audioQuality?.sampleRate || 24000;
+    const sampleRate = this.config.audioQuality?.sampleRate || 16000;
 
     if (sampleRate >= 48000) return 50; // 50ms for high sample rates
     if (sampleRate >= 24000) return 75; // 75ms for medium sample rates
@@ -867,27 +867,27 @@ export class VapiService extends EventEmitter {
 
   async stop(): Promise<void> {
     console.log('[VapiService] Stopping all audio processing...');
-    
+
     // Stop any active session
     await this.stopListening();
-    
+
     // Stop media recorder if active
     if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
       this.mediaRecorder.stop();
     }
-    
+
     // Close websocket connection
     if (this.websocket) {
       this.websocket.close();
       this.websocket = null;
     }
-    
+
     // Stop audio stream
     if (this.audioStream) {
       this.audioStream.getTracks().forEach(track => track.stop());
       this.audioStream = null;
     }
-    
+
     this.isConnected = false;
     this.emit('stopped');
   }

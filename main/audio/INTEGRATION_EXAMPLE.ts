@@ -34,7 +34,7 @@ export async function createVoiceAgentBridge(): Promise<VoiceAgentBridge> {
   // 4. Setup voice context for Zero to One audiobook
   const context: VoiceContext = {
     audiobookId: 'zero-to-one',
-    datasetPath: '/Users/snehdhruv/Documents/hackathons/dedalus/data/zero-to-one.json',
+    datasetPath: './data/zero-to-one.json',
     currentPosition_s: 0, // Start of audiobook
     playbackChapterIdx: 1, // Currently on Chapter 1
     userProgressIdx: 5, // User has listened through Chapter 5 (allow spoilers up to Ch 5)

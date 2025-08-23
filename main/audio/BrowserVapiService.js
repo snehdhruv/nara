@@ -11,7 +11,7 @@ class BrowserVapiService extends EventTarget {
     this.config = {
       ...config,
       audioQuality: {
-        sampleRate: 24000,
+        sampleRate: 16000,
         bitrate: 128,
         echoCancellation: true,
         noiseSuppression: true,
@@ -313,6 +313,11 @@ class BrowserVapiService extends EventTarget {
 
         if (this.isAssistantSpeaking && size > 100) {
           this.playAudioData(data);
+
+          // Emit audioReceived event for TTS synthesis compatibility
+          this.dispatchEvent(new CustomEvent('audioReceived', {
+            detail: { audioData: data }
+          }));
         }
         return;
       }
@@ -365,8 +370,8 @@ class BrowserVapiService extends EventTarget {
     try {
       // Initialize playback audio context if needed
       if (!this.playbackAudioContext) {
-        // Use higher sample rate for better quality and compatibility
-        this.playbackAudioContext = new AudioContext({ sampleRate: 48000 });
+        // Use 16kHz PCM for consistency with input
+        this.playbackAudioContext = new AudioContext({ sampleRate: 16000 });
         this.nextPlayTime = this.playbackAudioContext.currentTime;
       }
 
@@ -409,7 +414,7 @@ class BrowserVapiService extends EventTarget {
       // Process all available chunks at once for smoother playback
       while (this.audioChunkBuffer.length > 0) {
         const arrayBuffer = this.audioChunkBuffer.shift();
-        
+
         if (arrayBuffer && arrayBuffer.byteLength > 0) {
           await this.playPCMAudio(arrayBuffer);
         }
@@ -453,8 +458,8 @@ class BrowserVapiService extends EventTarget {
       const playbackData = this.audioAccumulator.slice(0, minChunkSize);
       this.audioAccumulator = this.audioAccumulator.slice(minChunkSize);
 
-      // Create AudioBuffer with proper sample rate (match Vapi's output)
-      const audioBuffer = this.playbackAudioContext.createBuffer(1, playbackData.length, 24000);
+      // Create AudioBuffer with proper sample rate (16kHz PCM)
+      const audioBuffer = this.playbackAudioContext.createBuffer(1, playbackData.length, 16000);
       audioBuffer.getChannelData(0).set(playbackData);
 
       // Create gain node for smooth volume transitions
@@ -470,7 +475,7 @@ class BrowserVapiService extends EventTarget {
       // Improved scheduling to prevent gaps
       const currentTime = this.playbackAudioContext.currentTime;
       const playTime = Math.max(currentTime + 0.005, this.nextPlayTime);
-      
+
       source.start(playTime);
       this.nextPlayTime = playTime + audioBuffer.duration;
 
@@ -536,6 +541,91 @@ class BrowserVapiService extends EventTarget {
       audioQuality: this.config.audioQuality,
       voiceEnhancement: this.config.voiceEnhancement
     };
+  }
+
+  /**
+   * Synthesize text to speech using Vapi TTS
+   * This method provides compatibility with BrowserTTSService interface
+   */
+  async synthesize(text, options = {}) {
+    console.log(`[BrowserVapiService] Synthesizing TTS: "${text.substring(0, 50)}..."`);
+
+    try {
+      // If we have an active Vapi connection, we can send text for TTS
+      if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+        // Send text message to Vapi for TTS synthesis
+        const message = {
+          type: 'add-message',
+          message: {
+            role: 'assistant',
+            content: text
+          }
+        };
+
+        this.websocket.send(JSON.stringify(message));
+
+        // Dispatch synthesis started event for compatibility
+        this.dispatchEvent(new CustomEvent('synthesisStarted', {
+          detail: { text, options }
+        }));
+
+        // Return a promise that resolves when audio is received
+        return new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('TTS synthesis timeout'));
+          }, 10000); // 10 second timeout
+
+          // Listen for audio data
+          const audioHandler = (event) => {
+            if (event.detail && event.detail.audioData) {
+              clearTimeout(timeout);
+              this.removeEventListener('audioReceived', audioHandler);
+
+              // Dispatch synthesis complete event
+              this.dispatchEvent(new CustomEvent('synthesisComplete', {
+                detail: { text, audioData: event.detail.audioData }
+              }));
+
+              resolve(event.detail.audioData);
+            }
+          };
+
+          this.addEventListener('audioReceived', audioHandler);
+        });
+      } else {
+        throw new Error('Vapi connection not available for TTS');
+      }
+
+    } catch (error) {
+      console.error('[BrowserVapiService] TTS synthesis failed:', error);
+
+      // Dispatch error event for compatibility
+      this.dispatchEvent(new CustomEvent('error', {
+        detail: error
+      }));
+
+      throw error;
+    }
+  }
+
+  /**
+   * Send a text message to Vapi assistant for TTS response
+   */
+  async sendMessage(text) {
+    if (!this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
+      throw new Error('Vapi connection not available');
+    }
+
+    const message = {
+      type: 'add-message',
+      message: {
+        role: 'user',
+        content: text
+      }
+    };
+
+    console.log(`[BrowserVapiService] Sending message: "${text}"`);
+    this.websocket.send(JSON.stringify(message));
   }
 }
 
