@@ -40,6 +40,7 @@ class BrowserVapiService extends EventTarget {
     this.audioChunkBuffer = [];
     this.nextPlayTime = 0;
     this.isPlayingAudio = false;
+    this.audioAccumulator = new Float32Array(0); // Accumulate small chunks
   }
 
   /**
@@ -364,8 +365,14 @@ class BrowserVapiService extends EventTarget {
     try {
       // Initialize playback audio context if needed
       if (!this.playbackAudioContext) {
-        this.playbackAudioContext = new AudioContext({ sampleRate: 24000 });
+        // Use higher sample rate for better quality and compatibility
+        this.playbackAudioContext = new AudioContext({ sampleRate: 48000 });
         this.nextPlayTime = this.playbackAudioContext.currentTime;
+      }
+
+      // Resume context if suspended (required for some browsers)
+      if (this.playbackAudioContext.state === 'suspended') {
+        await this.playbackAudioContext.resume();
       }
 
       // Convert to ArrayBuffer
@@ -399,23 +406,16 @@ class BrowserVapiService extends EventTarget {
     this.isPlayingAudio = true;
 
     try {
-      const chunksToProcess = this.audioChunkBuffer.splice(0, Math.min(3, this.audioChunkBuffer.length));
-
-      for (const arrayBuffer of chunksToProcess) {
-        if (arrayBuffer.byteLength > 0) {
+      // Process all available chunks at once for smoother playback
+      while (this.audioChunkBuffer.length > 0) {
+        const arrayBuffer = this.audioChunkBuffer.shift();
+        
+        if (arrayBuffer && arrayBuffer.byteLength > 0) {
           await this.playPCMAudio(arrayBuffer);
         }
       }
 
-      // Continue processing if more chunks available
-      if (this.audioChunkBuffer.length > 0) {
-        setTimeout(() => {
-          this.isPlayingAudio = false;
-          this.processAudioBuffer();
-        }, 50);
-      } else {
-        this.isPlayingAudio = false;
-      }
+      this.isPlayingAudio = false;
 
     } catch (error) {
       this.isPlayingAudio = false;
@@ -424,31 +424,62 @@ class BrowserVapiService extends EventTarget {
   }
 
   /**
-   * Play PCM audio using Web Audio API
+   * Play PCM audio using Web Audio API with accumulation
    */
   async playPCMAudio(arrayBuffer) {
     try {
-      // Convert PCM data to AudioBuffer
+      // Convert PCM data to Float32Array
       const int16Array = new Int16Array(arrayBuffer);
       const float32Array = new Float32Array(int16Array.length);
 
-      // Convert Int16 PCM to Float32
+      // Convert Int16 PCM to Float32 with better precision
       for (let i = 0; i < int16Array.length; i++) {
         float32Array[i] = int16Array[i] / 32768.0;
       }
 
-      // Create AudioBuffer
-      const audioBuffer = this.playbackAudioContext.createBuffer(1, float32Array.length, 24000);
-      audioBuffer.getChannelData(0).set(float32Array);
+      // Accumulate small chunks to reduce choppiness
+      const newAccumulator = new Float32Array(this.audioAccumulator.length + float32Array.length);
+      newAccumulator.set(this.audioAccumulator);
+      newAccumulator.set(float32Array, this.audioAccumulator.length);
+      this.audioAccumulator = newAccumulator;
 
-      // Schedule playback
+      // Only play when we have enough data (reduce fragmentation)
+      const minChunkSize = 2048; // ~85ms at 24kHz
+      if (this.audioAccumulator.length < minChunkSize) {
+        return; // Wait for more data
+      }
+
+      // Take accumulated data for playback
+      const playbackData = this.audioAccumulator.slice(0, minChunkSize);
+      this.audioAccumulator = this.audioAccumulator.slice(minChunkSize);
+
+      // Create AudioBuffer with proper sample rate (match Vapi's output)
+      const audioBuffer = this.playbackAudioContext.createBuffer(1, playbackData.length, 24000);
+      audioBuffer.getChannelData(0).set(playbackData);
+
+      // Create gain node for smooth volume transitions
+      const gainNode = this.playbackAudioContext.createGain();
+      gainNode.gain.value = 1.0;
+      gainNode.connect(this.playbackAudioContext.destination);
+
+      // Schedule playback with better timing
       const source = this.playbackAudioContext.createBufferSource();
       source.buffer = audioBuffer;
-      source.connect(this.playbackAudioContext.destination);
+      source.connect(gainNode);
 
-      const playTime = Math.max(this.playbackAudioContext.currentTime, this.nextPlayTime);
+      // Improved scheduling to prevent gaps
+      const currentTime = this.playbackAudioContext.currentTime;
+      const playTime = Math.max(currentTime + 0.005, this.nextPlayTime);
+      
       source.start(playTime);
       this.nextPlayTime = playTime + audioBuffer.duration;
+
+      // Add very small fade to prevent clicks (shorter for less latency)
+      const fadeTime = 0.005; // 5ms fade
+      gainNode.gain.setValueAtTime(0, playTime);
+      gainNode.gain.linearRampToValueAtTime(1, playTime + fadeTime);
+      gainNode.gain.setValueAtTime(1, playTime + audioBuffer.duration - fadeTime);
+      gainNode.gain.linearRampToValueAtTime(0, playTime + audioBuffer.duration);
 
     } catch (error) {
       console.error('[BrowserVapiService] PCM playback failed:', error);
@@ -465,6 +496,7 @@ class BrowserVapiService extends EventTarget {
     this.audioChunkBuffer = [];
     this.isPlayingAudio = false;
     this.isAssistantSpeaking = false;
+    this.audioAccumulator = new Float32Array(0); // Reset accumulator
     this.nextPlayTime = this.playbackAudioContext ? this.playbackAudioContext.currentTime : 0;
 
     // Cleanup audio processing
