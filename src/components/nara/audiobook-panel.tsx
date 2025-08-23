@@ -15,18 +15,19 @@ interface WordWithTiming {
   isActive: boolean;
 }
 
-interface SentenceTiming {
+interface WordChunkTiming {
   text: string;
   startTime: number;
   endTime: number;
   isActive: boolean;
   paragraphIndex: number;
+  wordCount: number;
 }
 
 // Cache for word timing calculations
 const wordTimingCache = new Map<string, WordWithTiming[]>();
-// Cache for sentence timing calculations (better performance)
-const sentenceTimingCache = new Map<string, SentenceTiming[]>();
+// Cache for word chunk timing calculations (10 words per chunk)
+const wordChunkTimingCache = new Map<string, WordChunkTiming[]>();
 
 export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
   book,
@@ -37,73 +38,67 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
   const currentParagraphRef = React.useRef<HTMLParagraphElement>(null);
   const activeWordRef = React.useRef<HTMLSpanElement>(null);
 
-  // Parse content into sentences with timing information for better performance
-  const sentencesWithTiming = React.useMemo(() => {
+  // Parse content into 10-word chunks with timing information for optimal animation
+  const wordChunksWithTiming = React.useMemo(() => {
     if (!book.content || book.content.length === 0) return [];
     
     // Create cache key from book content
     const contentHash = book.id + '_' + JSON.stringify(book.content).slice(0, 100);
     
-    // Check cache first for sentences
-    let cachedSentences = sentenceTimingCache.get(contentHash);
-    if (!cachedSentences) {
-      console.log('[AudiobookPanel] Computing sentence timings for first time...');
-      const sentences: SentenceTiming[] = [];
+    // Check cache first for word chunks
+    let cachedWordChunks = wordChunkTimingCache.get(contentHash);
+    if (!cachedWordChunks) {
+      console.log('[AudiobookPanel] Computing 10-word chunk timings for first time...');
+      const wordChunks: WordChunkTiming[] = [];
       
       book.content.forEach((paragraph, pIndex) => {
         const text = paragraph.text;
         const duration = paragraph.endTime - paragraph.startTime;
         
-        // Split into sentences using a more robust approach
-        const sentenceParts = text.split(/([.!?]+\s+)/).filter(part => part.trim().length > 0);
-        const completeSentences: string[] = [];
-        let currentSentence = '';
+        // Split into words and group into chunks of 10
+        const words = text.split(/\s+/).filter(word => word.trim().length > 0);
+        const chunks: string[] = [];
         
-        sentenceParts.forEach((part) => {
-          currentSentence += part;
-          // If this part ends with sentence ending punctuation, complete the sentence
-          if (/[.!?]+\s*$/.test(part.trim())) {
-            completeSentences.push(currentSentence.trim());
-            currentSentence = '';
-          }
-        });
-        
-        // Add remaining text as a sentence if any
-        if (currentSentence.trim()) {
-          completeSentences.push(currentSentence.trim());
+        for (let i = 0; i < words.length; i += 10) {
+          const chunk = words.slice(i, i + 10).join(' ');
+          chunks.push(chunk);
         }
         
-        // If no sentences found, treat entire paragraph as one sentence
-        if (completeSentences.length === 0) {
-          completeSentences.push(text);
+        // If no chunks found, treat entire paragraph as one chunk
+        if (chunks.length === 0) {
+          chunks.push(text);
         }
         
-        // Distribute time across sentences
-        const sentenceDuration = duration / completeSentences.length;
+        // Distribute time across word chunks based on their word count
+        const totalWords = words.length;
         let currentTime = paragraph.startTime;
         
-        completeSentences.forEach((sentence) => {
-          sentences.push({
-            text: sentence,
+        chunks.forEach((chunk) => {
+          const wordsInChunk = chunk.split(/\s+/).filter(w => w.trim().length > 0).length;
+          const chunkDuration = (wordsInChunk / totalWords) * duration;
+          
+          wordChunks.push({
+            text: chunk,
             startTime: currentTime,
-            endTime: currentTime + sentenceDuration,
+            endTime: currentTime + chunkDuration,
             isActive: false,
-            paragraphIndex: pIndex
+            paragraphIndex: pIndex,
+            wordCount: wordsInChunk
           });
-          currentTime += sentenceDuration;
+          currentTime += chunkDuration;
         });
       });
       
       // Cache the computed timings
-      cachedSentences = sentences;
-      sentenceTimingCache.set(contentHash, cachedSentences);
-      console.log('[AudiobookPanel] Cached sentence timings for', sentences.length, 'sentences');
+      cachedWordChunks = wordChunks;
+      wordChunkTimingCache.set(contentHash, cachedWordChunks);
+      console.log('[AudiobookPanel] Cached word chunk timings for', wordChunks.length, 'chunks');
     }
     
     // Update active state based on current position (fast operation)
-    return cachedSentences.map(sentence => ({
-      ...sentence,
-      isActive: currentPosition >= sentence.startTime && currentPosition < sentence.endTime
+    return cachedWordChunks.map(chunk => ({
+      ...chunk,
+      isActive: currentPosition >= chunk.startTime && currentPosition < chunk.endTime
     }));
   }, [book.content, book.id, currentPosition]);
 
@@ -133,12 +128,12 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
     return closest;
   }, [book.content, currentPosition]);
 
-  // Find the currently active sentence
-  const activeSentenceIndex = React.useMemo(() => {
-    return sentencesWithTiming.findIndex(sentence => sentence.isActive);
-  }, [sentencesWithTiming]);
+  // Find the currently active word chunk
+  const activeChunkIndex = React.useMemo(() => {
+    return wordChunksWithTiming.findIndex(chunk => chunk.isActive);
+  }, [wordChunksWithTiming]);
 
-  // Gentle auto-scroll to active sentence (less aggressive)
+  // Gentle auto-scroll to active word chunk (less aggressive)
   const [userScrolledManually, setUserScrolledManually] = React.useState(false);
   const scrollTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -168,16 +163,16 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
     };
   }, []);
 
-  // Auto-scroll to active sentence only if user hasn't manually scrolled
+  // Auto-scroll to active word chunk only if user hasn't manually scrolled
   React.useEffect(() => {
-    if (!userScrolledManually && activeWordRef.current && scrollContainerRef.current && activeSentenceIndex !== -1) {
+    if (!userScrolledManually && activeWordRef.current && scrollContainerRef.current && activeChunkIndex !== -1) {
       activeWordRef.current.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
         inline: 'nearest'
       });
     }
-  }, [activeSentenceIndex, userScrolledManually]);
+  }, [activeChunkIndex, userScrolledManually]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-cream-200 relative">
@@ -201,20 +196,20 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
                   {Math.floor(currentPosition / 60)}:{(Math.floor(currentPosition) % 60).toString().padStart(2, '0')}
                 </span>
               </div>
-              {activeSentenceIndex >= 0 && (
+              {activeChunkIndex >= 0 && (
                 <span className="text-xs bg-green-100 px-2 py-1 rounded-full">
-                  Sentence {activeSentenceIndex + 1} of {sentencesWithTiming.length}
+                  Chunk {activeChunkIndex + 1} of {wordChunksWithTiming.length} ({wordChunksWithTiming[activeChunkIndex]?.wordCount || 0} words)
                 </span>
               )}
             </div>
             
             {/* Reading progress bar */}
-            {sentencesWithTiming.length > 0 && (
+            {wordChunksWithTiming.length > 0 && (
               <div className="w-full bg-wood-200 rounded-full h-2">
                 <div 
                   className="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full transition-all duration-300 ease-out"
                   style={{
-                    width: `${Math.max(0, Math.min(100, (activeSentenceIndex / Math.max(1, sentencesWithTiming.length - 1)) * 100))}%`
+                    width: `${Math.max(0, Math.min(100, (activeChunkIndex / Math.max(1, wordChunksWithTiming.length - 1)) * 100))}%`
                   }}
                 >
                   <div className="h-full w-2 bg-green-200 rounded-full ml-auto animate-pulse"></div>
@@ -225,11 +220,11 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
           
           {book.content && book.content.length > 0 ? (
             <div className="text-lg leading-relaxed text-wood-800 space-y-4">
-              {/* Render sentence-by-sentence with smooth highlighting */}
-              <div className="sentence-highlighted-content">
-                {sentencesWithTiming.map((sentenceData, index) => {
-                  const isActive = index === activeSentenceIndex;
-                  const isPastActive = index < activeSentenceIndex;
+              {/* Render word chunks with smooth highlighting (10 words at a time) */}
+              <div className="word-chunk-highlighted-content">
+                {wordChunksWithTiming.map((chunkData, index) => {
+                  const isActive = index === activeChunkIndex;
+                  const isPastActive = index < activeChunkIndex;
                   
                   return (
                     <motion.p
@@ -262,9 +257,9 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
                         backgroundColor: 'rgba(0, 0, 0, 0.02)',
                         scale: 1.01
                       } : {}}
-                    >
-                      {sentenceData.text}
-                    </motion.p>
+                                          >
+                        {chunkData.text}
+                      </motion.p>
                   );
                 })}
               </div>
@@ -274,13 +269,13 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
                 <div className="mt-8 p-4 bg-gray-100 rounded-lg text-sm">
                   <div className="font-medium text-gray-700 mb-2">Debug Info:</div>
                   <div>Current Position: {currentPosition.toFixed(2)}s</div>
-                  <div>Active Sentence Index: {activeSentenceIndex}</div>
-                  <div>Total Sentences: {sentencesWithTiming.length}</div>
+                  <div>Active Chunk Index: {activeChunkIndex}</div>
+                  <div>Total Chunks: {wordChunksWithTiming.length}</div>
                   <div>Current Paragraph: {currentParagraphIndex + 1} of {book.content?.length || 0}</div>
-                  {activeSentenceIndex >= 0 && (
+                  {activeChunkIndex >= 0 && (
                     <div>
-                      Active Sentence: "{sentencesWithTiming[activeSentenceIndex]?.text.substring(0, 50)}..." 
-                      ({sentencesWithTiming[activeSentenceIndex]?.startTime.toFixed(2)}s - {sentencesWithTiming[activeSentenceIndex]?.endTime.toFixed(2)}s)
+                      Active Chunk ({wordChunksWithTiming[activeChunkIndex]?.wordCount || 0} words): "{wordChunksWithTiming[activeChunkIndex]?.text.substring(0, 50)}..." 
+                      ({wordChunksWithTiming[activeChunkIndex]?.startTime.toFixed(2)}s - {wordChunksWithTiming[activeChunkIndex]?.endTime.toFixed(2)}s)
                     </div>
                   )}
                 </div>
