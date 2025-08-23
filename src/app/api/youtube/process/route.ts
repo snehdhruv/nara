@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     
     // Save the processed audiobook to Convex
     const { ConvexHttpClient } = require("convex/browser");
-    const { api } = require("../../../../convex/_generated/api");
+    const { api } = require("../../../../../convex/_generated/api");
     
     try {
       const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);

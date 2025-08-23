@@ -27,12 +27,11 @@ export async function GET(request: NextRequest) {
 
     console.log('[YouTube Search API] Searching for:', query);
 
-    // Check if we have a YouTube API key
+    // Get YouTube API key
     const youtubeApiKey = process.env.YOUTUBE_API_KEY;
     
     if (!youtubeApiKey) {
-      console.log('[YouTube Search API] No YouTube API key, using fallback search');
-      return fallbackSearch(query, maxResults);
+      throw new Error('YouTube API key not configured. Please add YOUTUBE_API_KEY to environment variables.');
     }
 
     try {
@@ -45,11 +44,8 @@ export async function GET(request: NextRequest) {
       const searchResponse = await fetch(searchUrl);
       
       if (!searchResponse.ok) {
-        if (searchResponse.status === 403) {
-          console.log('[YouTube Search API] API quota exceeded, using fallback');
-          return fallbackSearch(query, maxResults);
-        }
-        throw new Error(`YouTube API error: ${searchResponse.status}`);
+        const errorText = await searchResponse.text();
+        throw new Error(`YouTube API error: ${searchResponse.status} - ${errorText}`);
       }
 
       const searchData = await searchResponse.json();
@@ -123,8 +119,7 @@ export async function GET(request: NextRequest) {
 
     } catch (apiError) {
       console.error('[YouTube Search API] API call failed:', apiError);
-      console.log('[YouTube Search API] Falling back to hardcoded search');
-      return fallbackSearch(query, maxResults);
+      throw apiError;
     }
 
   } catch (error) {
@@ -136,87 +131,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Fallback search with expanded hardcoded results
-function fallbackSearch(query: string, maxResults: number) {
-  console.log('[YouTube Search API] Using fallback search for:', query);
-  
-  const fallbackResults: YouTubeSearchResult[] = [
-    {
-      videoId: "dz_4Mjyqbqk",
-      title: "Zero to One By Peter Thiel #audiobooks",
-      channel: "Year of Inspiration", 
-      duration: "4:42:42",
-      thumbnailUrl: "https://i.ytimg.com/vi/dz_4Mjyqbqk/maxresdefault.jpg",
-      description: "Complete audiobook of Zero to One by Peter Thiel",
-      hasClosedCaptions: true,
-      publishedAt: "2023-01-01T00:00:00Z"
-    },
-    {
-      videoId: "XQ8a8NmDrFg",
-      title: "The Lean Startup by Eric Ries (Audiobook)",
-      channel: "Business AudioBooks",
-      duration: "8:45:12", 
-      thumbnailUrl: "https://i.ytimg.com/vi/XQ8a8NmDrFg/maxresdefault.jpg",
-      description: "Full audiobook - The Lean Startup methodology",
-      hasClosedCaptions: true,
-      publishedAt: "2023-01-01T00:00:00Z"
-    },
-    {
-      videoId: "U3nT2KDAGOc",
-      title: "Good to Great by Jim Collins - Full Audiobook",
-      channel: "Leadership Books",
-      duration: "9:12:34",
-      thumbnailUrl: "https://i.ytimg.com/vi/U3nT2KDAGOc/maxresdefault.jpg", 
-      description: "Why some companies make the leap and others don't",
-      hasClosedCaptions: true,
-      publishedAt: "2023-01-01T00:00:00Z"
-    },
-    // Add Shrek and other popular content for testing
-    {
-      videoId: "GZpcwKQ--M8",
-      title: "Shrek (2001) - Full Movie Audiobook Experience",
-      channel: "Movie Audio Books",
-      duration: "1:30:15",
-      thumbnailUrl: "https://i.ytimg.com/vi/GZpcwKQ--M8/maxresdefault.jpg",
-      description: "Experience the beloved story of Shrek in audiobook format",
-      hasClosedCaptions: true,
-      publishedAt: "2023-01-01T00:00:00Z"
-    },
-    {
-      videoId: "UF8uR6Z6KLc", 
-      title: "Steve Jobs Stanford Commencement Speech",
-      channel: "Stanford",
-      duration: "15:04",
-      thumbnailUrl: "https://i.ytimg.com/vi/UF8uR6Z6KLc/maxresdefault.jpg",
-      description: "Steve Jobs' 2005 Stanford Commencement Address",
-      hasClosedCaptions: true,
-      publishedAt: "2005-06-14T00:00:00Z"
-    },
-    {
-      videoId: "Th8JoIan4dg",
-      title: "The Art of War by Sun Tzu - Complete Audiobook",
-      channel: "Classic Wisdom",
-      duration: "6:45:30",
-      thumbnailUrl: "https://i.ytimg.com/vi/Th8JoIan4dg/maxresdefault.jpg",
-      description: "Ancient Chinese military treatise by Sun Tzu",
-      hasClosedCaptions: true,
-      publishedAt: "2023-01-01T00:00:00Z"
-    }
-  ];
 
-  // Filter results based on query
-  const filtered = fallbackResults.filter(video => 
-    video.title.toLowerCase().includes(query.toLowerCase()) ||
-    video.channel.toLowerCase().includes(query.toLowerCase()) ||
-    video.description.toLowerCase().includes(query.toLowerCase())
-  ).slice(0, maxResults);
-
-  return NextResponse.json({
-    success: true,
-    results: filtered,
-    message: `Found ${filtered.length} results (using fallback data)`
-  });
-}
 
 // Helper function to format YouTube duration (PT15M4S -> 15:04)
 function formatDuration(duration: string): string {
