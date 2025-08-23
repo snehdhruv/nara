@@ -52,13 +52,20 @@ class NaraAudioFactory {
    * Create a complete audio pipeline
    */
   static async createAudioPipeline(config = {}) {
+    // Check if this is Vapi-only mode (no TTS API key provided)
+    const isVapiOnly = !config.ttsApiKey;
+    
     const mergedConfig = {
       ...NARA_AUDIO_CONFIG,
       ...config,
       vapi: { ...NARA_AUDIO_CONFIG.vapi, ...config.vapi },
-      tts: { ...NARA_AUDIO_CONFIG.tts, ...config.tts },
       audioPlayer: { ...NARA_AUDIO_CONFIG.audioPlayer, ...config.audioPlayer }
     };
+
+    // Only include TTS config if not in Vapi-only mode
+    if (!isVapiOnly) {
+      mergedConfig.tts = { ...NARA_AUDIO_CONFIG.tts, ...config.tts };
+    }
 
     // Validate required configuration
     if (!config.vapiApiKey || !config.vapiAssistantId) {

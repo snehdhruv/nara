@@ -27,14 +27,17 @@ class BrowserAudioManager extends EventTarget {
         },
         ...config.vapi
       },
-      tts: {
-        apiKey: config.ttsApiKey || '',
-        voiceId: config.ttsVoiceId || '',
-        model: 'eleven_turbo_v2',
-        stability: 0.75,
-        similarityBoost: 0.8,
-        ...config.tts
-      }
+      // Only create TTS config if TTS API key provided (otherwise use Vapi TTS)
+      ...(config.ttsApiKey ? {
+        tts: {
+          apiKey: config.ttsApiKey || '',
+          voiceId: config.ttsVoiceId || '',
+          model: 'eleven_turbo_v2',
+          stability: 0.75,
+          similarityBoost: 0.8,
+          ...config.tts
+        }
+      } : {})
     };
 
     this.state = {
@@ -75,11 +78,13 @@ class BrowserAudioManager extends EventTarget {
       this.setupVapiEventHandlers();
       await this.vapiService.initialize();
 
-      // Initialize TTS service
-      if (typeof BrowserTTSService !== 'undefined') {
+      // Initialize TTS service (only if config provided - otherwise use Vapi TTS)
+      if (typeof BrowserTTSService !== 'undefined' && this.config.tts && this.config.tts.apiKey) {
         this.ttsService = new BrowserTTSService(this.config.tts);
         this.setupTTSEventHandlers();
         await this.ttsService.initialize();
+      } else {
+        console.log('[BrowserAudioManager] Using Vapi TTS (no separate TTS service)');
       }
 
       // Initialize Audio Player
@@ -260,7 +265,9 @@ class BrowserAudioManager extends EventTarget {
       const audioData = await this.ttsService.synthesize(text, options);
 
       if (this.audioPlayer) {
-        await this.audioPlayer.play(audioData);
+        // Extract the AudioBuffer from the TTS result
+        const audioBuffer = audioData.audioBuffer || audioData;
+        await this.audioPlayer.play(audioBuffer);
       } else {
         console.warn('[BrowserAudioManager] Audio player not available');
       }

@@ -20,7 +20,7 @@ export const AUDIO_CONFIG = {
     },
     // Enhanced audio quality settings
     audioQuality: {
-      sampleRate: 24000,                        // High quality sample rate
+      sampleRate: 16000,                        // Optimal 16kHz for voice recognition
       bitrate: 128,                            // Good quality bitrate
       echoCancellation: true,                  // Cancel echo
       noiseSuppression: true,                  // Suppress background noise

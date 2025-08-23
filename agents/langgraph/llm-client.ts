@@ -38,9 +38,9 @@ class DedalusClient implements LLMClient {
           'Authorization': `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: 'anthropic/claude-3-opus-20240229', // Claude Opus via Dedalus
+          model: 'anthropic/claude-3-haiku-20240307', // Claude Haiku - fast & conversational
           messages: formattedMessages,
-          max_tokens: 4096,
+          max_tokens: 150, // Much shorter for conversational responses
           temperature: 0.7
         }),
       });

@@ -5,8 +5,8 @@ import { betterAuthComponent } from "./auth";
 import { createAuth } from "../src/lib/auth";
 import { Id } from "./_generated/dataModel";
 
-// Get user's Spotify account info using Better Auth's auth.api
-export const getSpotifyAccount = query({
+// Get user's Spotify account info - ACTION (not query) since it calls external APIs
+export const getSpotifyAccount = action({
   args: {},
   handler: async (ctx) => {
     const user = await betterAuthComponent.getAuthUser(ctx);
@@ -16,24 +16,30 @@ export const getSpotifyAccount = query({
 
     // Use Better Auth's auth.api.getAccessToken method
     const auth = createAuth(ctx);
-    const accessTokenData = await auth.api.getAccessToken({
-      body: {
-        providerId: "spotify",
-        userId: user.userId || "", // Handle null/undefined userId
-      },
-    });
+    
+    try {
+      const accessTokenData = await auth.api.getAccessToken({
+        body: {
+          providerId: "spotify",
+          userId: user.userId || "", // Handle null/undefined userId
+        },
+      });
 
-    if (!accessTokenData) {
-      throw new Error("No Spotify account linked");
+      if (!accessTokenData) {
+        throw new Error("No Spotify account linked");
+      }
+
+      return {
+        userId: user.userId,
+        accessToken: accessTokenData.accessToken,
+        expiresAt: accessTokenData.accessTokenExpiresAt,
+        scopes: accessTokenData.scopes,
+        idToken: accessTokenData.idToken,
+      };
+    } catch (error) {
+      console.error("Error getting Spotify access token:", error);
+      throw new Error("Failed to get Spotify access token");
     }
-
-    return {
-      userId: user.userId,
-      accessToken: accessTokenData.accessToken,
-      expiresAt: accessTokenData.accessTokenExpiresAt,
-      scopes: accessTokenData.scopes,
-      idToken: accessTokenData.idToken,
-    };
   },
 });
 
@@ -47,7 +53,7 @@ export const getCurrentPlayback = action({
     }
 
     // Get the user's Spotify access token from the account
-    const spotifyAccount = await ctx.runQuery(api.spotify.getSpotifyAccount);
+    const spotifyAccount = await ctx.runAction(api.spotify.getSpotifyAccount, {});
     
     if (!spotifyAccount?.accessToken) {
       // For now, return the user info to debug
@@ -184,5 +190,81 @@ export const getListeningHistory = query({
       .withIndex("by_user", (q) => q.eq("userId", user.userId as Id<"users">))
       .order("desc")
       .take(limit);
+  },
+});
+
+// Debug action to test authentication flow
+export const debugAuth = action({
+  args: {},
+  handler: async (ctx) => {
+    try {
+      console.log("🔍 Starting auth debug...");
+      
+      // Check if user is authenticated
+      const user = await betterAuthComponent.getAuthUser(ctx);
+      console.log("📱 User from betterAuthComponent:", user);
+      
+      if (!user) {
+        return {
+          success: false,
+          error: "No authenticated user",
+          user: null,
+        };
+      }
+
+      // Try to create auth instance
+      const auth = createAuth(ctx);
+      console.log("🔐 Auth instance created");
+      
+      // Try to get access token
+      try {
+        const accessTokenData = await auth.api.getAccessToken({
+          body: {
+            providerId: "spotify",
+            userId: user.userId || "",
+          },
+        });
+        
+        console.log("🎵 Spotify access token data:", {
+          hasToken: !!accessTokenData?.accessToken,
+          expiresAt: accessTokenData?.accessTokenExpiresAt,
+          scopes: accessTokenData?.scopes,
+        });
+
+        return {
+          success: true,
+          user: {
+            id: user.userId,
+            email: user.email,
+            name: user.name,
+          },
+          spotify: {
+            hasToken: !!accessTokenData?.accessToken,
+            tokenLength: accessTokenData?.accessToken?.length,
+            expiresAt: accessTokenData?.accessTokenExpiresAt,
+            scopes: accessTokenData?.scopes,
+          },
+        };
+      } catch (tokenError) {
+        console.error("❌ Error getting access token:", tokenError);
+        return {
+          success: false,
+          error: "Failed to get Spotify access token",
+          details: String(tokenError),
+          user: {
+            id: user.userId,
+            email: user.email,
+            name: user.name,
+          },
+        };
+      }
+    } catch (error) {
+      console.error("💥 Debug auth error:", error);
+      return {
+        success: false,
+        error: "Auth debug failed",
+        details: String(error),
+      };
+    }
   },
 });
