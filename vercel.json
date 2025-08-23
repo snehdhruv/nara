@@ -1,13 +1,7 @@
 {
   "functions": {
     "src/app/api/**/*.ts": {
-      "runtime": "@vercel/node",
       "maxDuration": 300
-    }
-  },
-  "build": {
-    "env": {
-      "PYTHON_VERSION": "3.9"
     }
   }
 }
