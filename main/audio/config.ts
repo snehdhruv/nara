@@ -9,8 +9,8 @@ import { VapiConfig, TTSConfig } from './index';
 export const AUDIO_CONFIG = {
   // Vapi Configuration (Wake Word + STT)
   vapi: {
-    apiKey: '765f8644-1464-4b36-a4fe-c660e15ba313',           // Replace with your Vapi API key
-    assistantId: '73c59df7-34d0-4e5a-89b0-d0668982c8cc',      // Nara Agent (End-to-End)
+    apiKey: process.env.VAPI_API_KEY || '',           // Use environment variable
+    assistantId: process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID || '',      // Use environment variable
     transcriptionModel: 'nova-2' as const,      // Fast and accurate
     language: 'en-US',
     wakeWord: {
@@ -38,8 +38,8 @@ export const AUDIO_CONFIG = {
 
   // ElevenLabs Configuration (TTS)
   elevenlabs: {
-    apiKey: 'sk_536c3f9ad29e9e6e4f0b4aee762afa6d8db7d750d7f64587',     // Replace with your ElevenLabs API key
-    voiceId: 'XfWTl5ev8ylYnkKBEqnB',     // Replace with your narrator voice ID
+    apiKey: process.env.ELEVENLABS_API_KEY || '',     // Use environment variable
+    voiceId: process.env.NEXT_PUBLIC_TTS_VOICE_ID || 'XfWTl5ev8ylYnkKBEqnB',     // Use environment variable
     model: 'eleven_turbo_v2' as const,          // Fastest for real-time
     stability: 0.75,                            // Voice consistency
     similarityBoost: 0.8,                      // Voice similarity to original

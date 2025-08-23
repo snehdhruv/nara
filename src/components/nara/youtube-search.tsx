@@ -93,15 +93,15 @@ export const YouTubeSearch: React.FC<YouTubeSearchProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f6f2] p-8">
+    <div className="min-h-screen bg-background p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-semibold text-[#5d534f] mb-2">
+            <h1 className="text-3xl font-semibold text-foreground mb-2">
               Add YouTube Audiobook
             </h1>
-            <p className="text-[#8a817c]">
+            <p className="text-muted-foreground">
               Search for audiobooks on YouTube to add to your library
             </p>
           </div>
@@ -109,7 +109,7 @@ export const YouTubeSearch: React.FC<YouTubeSearchProps> = ({
             variant="light"
             onPress={onCancel}
             startContent={<Icon icon="lucide:x" width={16} />}
-            className="text-[#8a817c]"
+            className="text-muted-foreground hover:text-foreground"
           >
             Cancel
           </Button>
@@ -123,17 +123,17 @@ export const YouTubeSearch: React.FC<YouTubeSearchProps> = ({
               value={searchQuery}
               onValueChange={setSearchQuery}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              startContent={<Icon icon="lucide:search" className="text-[#8a817c]" width={18} />}
+              startContent={<Icon icon="lucide:search" className="text-muted-foreground" width={18} />}
               classNames={{
                 base: "flex-1",
-                inputWrapper: "bg-white border-[#d4b9a8] hover:border-[#8B7355]"
+                inputWrapper: "bg-card border-border hover:border-primary"
               }}
             />
             <Button
               onPress={handleSearch}
               isLoading={isSearching}
               color="primary"
-              className="bg-[#8B7355] hover:bg-[#7A6348] px-6"
+              className="px-6"
             >
               {isSearching ? 'Searching...' : 'Search'}
             </Button>
@@ -143,7 +143,7 @@ export const YouTubeSearch: React.FC<YouTubeSearchProps> = ({
         {/* Search Results */}
         {searchResults.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-xl font-medium text-[#5d534f] mb-4">
+            <h2 className="text-xl font-medium text-foreground mb-4">
               Search Results ({searchResults.length})
             </h2>
             
@@ -152,7 +152,7 @@ export const YouTubeSearch: React.FC<YouTubeSearchProps> = ({
                 key={video.videoId}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow-sm border border-[#d4b9a8] overflow-hidden"
+                className="bg-card rounded-lg shadow-sm border border-border hover:border-primary/50 overflow-hidden transition-colors"
               >
                 <Card className="shadow-none border-none">
                   <CardBody className="p-0">
@@ -164,29 +164,29 @@ export const YouTubeSearch: React.FC<YouTubeSearchProps> = ({
                           alt={video.title}
                           className="w-40 h-24 object-cover rounded-md"
                         />
-                        <div className="text-xs text-center mt-1 text-[#8a817c]">
+                        <div className="text-xs text-center mt-1 text-muted-foreground">
                           {video.duration}
                         </div>
                       </div>
                       
                       {/* Video Info */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-medium text-[#5d534f] mb-2 line-clamp-2">
+                        <h3 className="text-lg font-medium text-foreground mb-2 line-clamp-2">
                           {video.title}
                         </h3>
                         <div className="flex items-center gap-2 mb-2">
-                          <p className="text-sm text-[#8a817c]">
+                          <p className="text-sm text-muted-foreground">
                             {video.channel}
                           </p>
                           {video.hasClosedCaptions && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-accent text-accent-foreground rounded-full">
                               <Icon icon="lucide:closed-captioning" width={12} />
                               CC
                             </span>
                           )}
                         </div>
                         {video.description && (
-                          <p className="text-sm text-[#8a817c] line-clamp-2">
+                          <p className="text-sm text-muted-foreground line-clamp-2">
                             {video.description}
                           </p>
                         )}
@@ -199,7 +199,6 @@ export const YouTubeSearch: React.FC<YouTubeSearchProps> = ({
                           isLoading={isProcessing === video.videoId}
                           isDisabled={!!isProcessing}
                           color="primary"
-                          className="bg-[#8B7355] hover:bg-[#7A6348]"
                           startContent={
                             !isProcessing ? (
                               <Icon icon="lucide:plus" width={16} />
@@ -220,8 +219,8 @@ export const YouTubeSearch: React.FC<YouTubeSearchProps> = ({
         {/* Empty State */}
         {!isSearching && searchResults.length === 0 && searchQuery && (
           <div className="text-center py-12">
-            <Icon icon="lucide:search-x" className="mx-auto mb-4 text-[#8a817c]" width={48} />
-            <p className="text-[#8a817c]">
+            <Icon icon="lucide:search-x" className="mx-auto mb-4 text-muted-foreground" width={48} />
+            <p className="text-muted-foreground">
               No audiobooks found. Try a different search term.
             </p>
           </div>
@@ -230,11 +229,11 @@ export const YouTubeSearch: React.FC<YouTubeSearchProps> = ({
         {/* Initial State */}
         {!searchQuery && searchResults.length === 0 && (
           <div className="text-center py-12">
-            <Icon icon="lucide:youtube" className="mx-auto mb-4 text-[#8a817c]" width={48} />
-            <p className="text-[#8a817c] mb-4">
+            <Icon icon="lucide:youtube" className="mx-auto mb-4 text-muted-foreground" width={48} />
+            <p className="text-muted-foreground mb-4">
               Search YouTube for audiobooks to add to your library
             </p>
-            <p className="text-sm text-[#8a817c]">
+            <p className="text-sm text-muted-foreground">
               Try searching for popular business books, self-help audiobooks, or educational content
             </p>
           </div>

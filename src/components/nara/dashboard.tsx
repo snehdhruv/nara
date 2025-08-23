@@ -4,6 +4,8 @@ import { Icon } from "@iconify/react";
 import { motion } from "framer-motion";
 import { useAvailableBooks } from "@/hooks/nara/use-available-books";
 import { YouTubeSearch } from "./youtube-search";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useTheme } from "next-themes";
 
 interface DashboardProps {
   onSelectBook: (bookId: string) => void;
@@ -17,12 +19,19 @@ interface BookInfo {
   progress?: number;
   narrator: string;
   lastPosition: number;
+  duration?: string;
+  genre?: string;
+  rating?: number;
+  publishedYear?: number;
+  description?: string;
+  tags?: string[];
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ onSelectBook }) => {
   const { books, recentBooks, refetch } = useAvailableBooks();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [showYouTubeSearch, setShowYouTubeSearch] = React.useState(false);
+  const { theme } = useTheme();
   
   // Filter books based on search query
   const filteredBooks = React.useMemo(() => {
@@ -86,29 +95,68 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectBook }) => {
     );
   }
   
+  // Get theme-aware colors
+  const getThemeClasses = () => {
+    switch (theme) {
+      case 'minimalist':
+        return {
+          container: 'bg-background text-foreground',
+          sidebar: 'bg-card border-border',
+          header: 'bg-card/50 border-border'
+        }
+      case 'rich':
+        return {
+          container: 'bg-background text-foreground',
+          sidebar: 'bg-card border-border',
+          header: 'bg-card/50 border-border'
+        }
+      case 'tech':
+        return {
+          container: 'bg-background text-foreground',
+          sidebar: 'bg-card border-border',
+          header: 'bg-card/50 border-border'
+        }
+      case 'dark':
+        return {
+          container: 'bg-background text-foreground',
+          sidebar: 'bg-card border-border',
+          header: 'bg-card/50 border-border'
+        }
+      default:
+        return {
+          container: 'bg-[#f8f6f2] text-[#5d534f]',
+          sidebar: 'bg-gradient-to-b from-[#e6d7ce] to-[#d4b9a8] border-[#d4b9a8]',
+          header: 'bg-gradient-to-r from-[#f0ede8] via-[#f8f6f2] to-[#f0ede8] border-[#d4b9a8]'
+        }
+    }
+  }
+
+  const themeClasses = getThemeClasses()
+
   return (
-    <div className="min-h-screen max-h-screen overflow-hidden flex bg-[#f8f6f2] text-[#5d534f]">
+    <div className={`min-h-screen max-h-screen overflow-hidden flex ${themeClasses.container}`}>
       {/* Sidebar with wood texture - added min-width and max-width */}
-      <div className="h-screen min-w-[12rem] max-w-[15vw] w-48 border-r border-[#d4b9a8] bg-gradient-to-b from-[#e6d7ce] to-[#d4b9a8] p-4 md:p-6 flex flex-col"
-           style={{
-             backgroundImage: `
-               linear-gradient(to bottom, #e6d7ce, #d4b9a8),
-               repeating-linear-gradient(
-                 120deg,
-                 rgba(255,255,255,0.1) 0px,
-                 rgba(0,0,0,0.05) 4px,
-                 rgba(255,255,255,0.05) 6px,
-                 rgba(0,0,0,0.02) 10px
-               )
-             `
-           }}
+      <div 
+        className={`h-screen min-w-[12rem] max-w-[15vw] w-48 border-r ${themeClasses.sidebar} p-4 md:p-6 flex flex-col`}
+        style={theme === 'light' ? {
+          backgroundImage: `
+            linear-gradient(to bottom, #e6d7ce, #d4b9a8),
+            repeating-linear-gradient(
+              120deg,
+              rgba(255,255,255,0.1) 0px,
+              rgba(0,0,0,0.05) 4px,
+              rgba(255,255,255,0.05) 6px,
+              rgba(0,0,0,0.02) 10px
+            )
+          `
+        } : {}}
       >
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-8">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
               <Icon icon="lucide:book-open" className="text-primary" width={16} />
             </div>
-            <h1 className="text-xl font-semibold text-[#5d534f]">Nara</h1>
+            <h1 className="text-xl font-semibold">Nara</h1>
           </div>
           
           <nav className="space-y-2">
@@ -120,12 +168,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectBook }) => {
           </nav>
         </div>
         
-        <div className="mt-auto pt-6 border-t border-[#e8e4df]">
+        <div className="mt-auto pt-6 border-t border-border">
           <h3 className="text-sm font-medium mb-3">Recently Opened</h3>
           {recentBooks.slice(0, 1).map(book => (
             <div 
               key={book.id}
-              className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#e8e4df] cursor-pointer"
+              className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
               onClick={() => onSelectBook(book.id)}
               data-testid="book-item"
             >
@@ -136,7 +184,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectBook }) => {
               />
               <div className="flex-1 min-w-0">
                 <h4 className="text-xs font-medium truncate">{book.title}</h4>
-                <p className="text-xs text-[#8a817c] truncate">{book.author}</p>
+                <p className="text-xs text-muted-foreground truncate">{book.author}</p>
               </div>
             </div>
           ))}
@@ -151,9 +199,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectBook }) => {
         `
       }}>
         {/* Header - added min-height and flex-shrink-0 */}
-        <header className="sticky top-0 z-10 bg-gradient-to-r from-[#f0ede8] via-[#f8f6f2] to-[#f0ede8] border-b border-[#d4b9a8] px-4 md:px-8 py-4 shadow-sm flex-shrink-0 min-h-[4rem]">
+        <header className={`sticky top-0 z-10 ${themeClasses.header} border-b px-4 md:px-8 py-4 shadow-sm flex-shrink-0 min-h-[4rem]`}>
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-semibold text-[#5d534f]">My Learning Space</h1>
+            <h1 className="text-2xl font-semibold">My Learning Space</h1>
             
             <div className="flex items-center gap-4">
               <div className="relative w-64">
@@ -163,8 +211,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectBook }) => {
                   onValueChange={setSearchQuery}
                   startContent={<Icon icon="lucide:search" className="text-default-400" width={16} />}
                   classNames={{
-                    base: "bg-[#f0ede8]",
-                    inputWrapper: "bg-[#f0ede8] border-none"
+                    base: "bg-background/50",
+                    inputWrapper: "bg-background/50 border border-border"
                   }}
                 />
                 {searchQuery && (
@@ -183,17 +231,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectBook }) => {
               <Button
                 onPress={() => setShowYouTubeSearch(true)}
                 color="primary"
-                className="bg-[#8B7355] hover:bg-[#7A6348]"
                 startContent={<Icon icon="lucide:youtube" width={16} />}
               >
                 Add YouTube
               </Button>
               
+              <ThemeToggle />
+              
               <Button
                 isIconOnly
                 variant="light"
                 aria-label="User profile"
-                className="bg-[#f0ede8]"
+                className="bg-background/50 border border-border"
               >
                 <Icon icon="lucide:user" width={18} />
               </Button>
@@ -230,8 +279,8 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, isActive }) => {
     <div 
       className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors
         ${isActive 
-          ? 'bg-[#e8e4df] text-[#5d534f] font-medium' 
-          : 'text-[#8a817c] hover:bg-[#e8e4df]/50'}`}
+          ? 'bg-primary/10 text-foreground font-medium' 
+          : 'text-muted-foreground hover:bg-accent/50'}`}
     >
       <Icon icon={icon} width={18} />
       <span className="text-sm">{label}</span>
@@ -372,7 +421,39 @@ const BookShelf: React.FC<BookShelfProps> = ({
                   
                   <div className="mt-4 w-[clamp(100px,14vw,200px)] text-center">
                     <h3 className="text-sm font-medium line-clamp-2 leading-tight">{book.title}</h3>
-                    <p className="text-xs text-[#8a817c] line-clamp-1 mt-1">{book.author}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-1 mt-1">{book.author}</p>
+                    
+                    {/* Enhanced metadata */}
+                    <div className="mt-2 space-y-1">
+                      {book.duration && (
+                        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                          <Icon icon="lucide:clock" width={12} />
+                          <span>{book.duration}</span>
+                        </div>
+                      )}
+                      
+                      {book.rating && (
+                        <div className="flex items-center justify-center gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Icon
+                              key={i}
+                              icon={i < Math.floor(book.rating!) ? "lucide:star" : "lucide:star"}
+                              width={10}
+                              className={i < Math.floor(book.rating!) ? "text-yellow-400" : "text-gray-300"}
+                            />
+                          ))}
+                          <span className="text-xs text-muted-foreground ml-1">
+                            {book.rating.toFixed(1)}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {book.genre && (
+                        <div className="inline-flex px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                          {book.genre}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               ))}

@@ -129,6 +129,42 @@ export const updateAudiobook = mutation({
   },
 });
 
+// Update cover URL for an audiobook
+export const updateCover = mutation({
+  args: {
+    audiobookId: v.id("audiobooks"),
+    coverUrl: v.string(),
+  },
+  handler: async (ctx, { audiobookId, coverUrl }) => {
+    const audiobook = await ctx.db.get(audiobookId);
+    if (!audiobook) {
+      throw new Error("Audiobook not found");
+    }
+    
+    await ctx.db.patch(audiobookId, {
+      coverUrl,
+      updatedAt: Date.now(),
+    });
+    
+    return { success: true, coverUrl };
+  },
+});
+
+// Get audiobooks that need cover updates (no coverUrl or default covers)
+export const getAudiobooksNeedingCovers = query({
+  args: {},
+  handler: async (ctx) => {
+    const audiobooks = await ctx.db
+      .query("audiobooks")
+      .collect();
+    
+    return audiobooks.filter(book => 
+      !book.coverUrl || 
+      book.coverUrl.includes('img.heroui.chat/image/book?w=400&h=600&u=default')
+    );
+  },
+});
+
 // Delete an audiobook
 export const deleteAudiobook = mutation({
   args: { audiobookId: v.id("audiobooks") },

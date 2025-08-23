@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs';
-
-const execAsync = promisify(exec);
+import { ingestVideo } from '../../../../lib/tools/ingest-youtube/src/index';
+import { transcribeYouTubeVideo } from '../../../../lib/tools/asr-youtube/src/index';
+import { generateCoverUrl } from '../../../../lib/utils/cover-generator';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,9 +18,8 @@ export async function POST(request: NextRequest) {
 
     console.log('[YouTube Process API] Processing video:', videoId);
 
-    // Use the ingest-youtube tool to process the video
-    const ingestYouTubePath = path.join(process.cwd(), 'tools/ingest-youtube');
-    let outputPath = path.join(ingestYouTubePath, 'out');
+    // Set up output directory
+    const outputPath = path.join(process.cwd(), 'src/lib/tools/ingest-youtube/out');
     
     // Ensure output directory exists
     if (!fs.existsSync(outputPath)) {
@@ -30,96 +28,139 @@ export async function POST(request: NextRequest) {
 
     console.log('[YouTube Process API] Running ingest-youtube tool...');
     
-    // Run the ingest-youtube tool
+    let processedData;
+    
+    // Try using the ingest-youtube tool first
     try {
-      const { stdout, stderr } = await execAsync(
-        `cd "${ingestYouTubePath}" && npm run dev fetch -- --url "https://www.youtube.com/watch?v=${videoId}" --lang en --fallback-auto --out ./out`,
-        { 
-          timeout: 600000, // 10 minute timeout
-          env: { 
-            ...process.env, 
-            OPENAI_API_KEY: process.env.OPENAI_API_KEY 
-          }
-        }
-      );
+      const result = await ingestVideo({
+        urlOrId: videoId,
+        lang: 'en',
+        fallbackAuto: true,
+        outputDir: outputPath
+      });
       
-      console.log('[YouTube Process API] ingest-youtube stdout:', stdout);
-      if (stderr) console.log('[YouTube Process API] ingest-youtube stderr:', stderr);
+      processedData = result;
+      console.log('[YouTube Process API] Successfully processed with ingest-youtube');
       
-    } catch (execError) {
-      console.error('[YouTube Process API] ingest-youtube execution error:', execError);
+    } catch (ingestError) {
+      console.error('[YouTube Process API] ingest-youtube failed:', ingestError);
       
       // Fall back to ASR tool if ingest-youtube fails
       console.log('[YouTube Process API] Falling back to ASR tool...');
       
-      const asrYouTubePath = path.join(process.cwd(), 'tools/asr-youtube');
-      const asrOutputPath = path.join(asrYouTubePath, 'out');
+      const asrOutputPath = path.join(process.cwd(), 'src/lib/tools/asr-youtube/out');
       
       if (!fs.existsSync(asrOutputPath)) {
         fs.mkdirSync(asrOutputPath, { recursive: true });
       }
       
       try {
-        const { stdout: asrStdout, stderr: asrStderr } = await execAsync(
-          `cd "${asrYouTubePath}" && npm run transcribe -- --url "https://www.youtube.com/watch?v=${videoId}" --lang en --out ./out`,
-          { 
-            timeout: 600000, // 10 minute timeout for ASR
-            env: { 
-              ...process.env, 
-              OPENAI_API_KEY: process.env.OPENAI_API_KEY 
-            }
-          }
-        );
+        const asrResult = await transcribeYouTubeVideo({
+          url: `https://www.youtube.com/watch?v=${videoId}`,
+          lang: 'en',
+          out: asrOutputPath
+        });
         
-        console.log('[YouTube Process API] ASR stdout:', asrStdout);
-        if (asrStderr) console.log('[YouTube Process API] ASR stderr:', asrStderr);
+        console.log('[YouTube Process API] Successfully processed with ASR tool');
         
-        // Update output path to ASR output
-        outputPath = asrOutputPath;
+        // Read the generated JSON file from ASR
+        const asrOutputFile = path.join(asrOutputPath, `${videoId}.json`);
+        
+        if (!fs.existsSync(asrOutputFile)) {
+          throw new Error(`ASR output file not found: ${asrOutputFile}`);
+        }
+
+        const rawAsrData = fs.readFileSync(asrOutputFile, 'utf8');
+        processedData = JSON.parse(rawAsrData);
         
       } catch (asrError) {
         console.error('[YouTube Process API] ASR tool also failed:', asrError);
-        throw new Error('Both ingest-youtube and ASR tools failed');
+        throw new Error('Both ingest-youtube and ASR tools failed: ' + (asrError instanceof Error ? asrError.message : 'Unknown error'));
       }
     }
-
-    // Read the generated JSON file
-    const outputFile = path.join(outputPath, `${videoId}.json`);
-    
-    if (!fs.existsSync(outputFile)) {
-      throw new Error(`Output file not found: ${outputFile}`);
-    }
-
-    const rawData = fs.readFileSync(outputFile, 'utf8');
-    const processedData = JSON.parse(rawData);
     
     // Transform the tool output format to our audiobook format
-    const audioBookData = {
-      id: videoId,
-      youtubeVideoId: videoId,
-      title: title || processedData.source.title,
-      author: channel || processedData.source.channel,
-      duration: processedData.source.duration_s,
-      coverUrl: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-      narrator: channel || processedData.source.channel,
-      currentChapter: 1,
-      chapterTitle: processedData.chapters?.[0]?.title || 'Chapter 1',
+    let audioBookData;
+    
+    if (processedData.source) {
+      // This is from ingest-youtube tool
+      const bookTitle = title || processedData.source.title;
+      const bookAuthor = channel || processedData.source.channel;
       
-      // Use real chapters from the tool
-      chapters: processedData.chapters?.map(ch => ({
-        idx: ch.idx,
-        title: ch.title,
-        start_s: ch.start_s,
-        end_s: ch.end_s
-      })) || [],
+      // Generate a proper cover URL using the cover generator
+      const coverUrl = await generateCoverUrl({
+        title: bookTitle,
+        author: bookAuthor,
+        youtubeVideoId: videoId
+      });
       
-      // Use real paragraphs as content (transform format)
-      content: processedData.paragraphs?.slice(0, 100).map((para) => ({
-        text: para.text,
-        startTime: para.start_s,
-        endTime: para.end_s
-      })) || []
-    };
+      audioBookData = {
+        id: videoId,
+        youtubeVideoId: videoId,
+        title: bookTitle,
+        author: bookAuthor,
+        duration: processedData.source.duration_s,
+        coverUrl,
+        narrator: bookAuthor,
+        currentChapter: 1,
+        chapterTitle: processedData.chapters?.[0]?.title || 'Chapter 1',
+        description: `${processedData.source.title} by ${processedData.source.channel}`,
+        
+        // Use real chapters from the tool
+        chapters: processedData.chapters?.map((ch: { idx: any; title: any; start_s: any; end_s: any; }) => ({
+          idx: ch.idx,
+          title: ch.title,
+          start_s: ch.start_s,
+          end_s: ch.end_s
+        })) || [],
+        
+        // Use real paragraphs as content (transform format)
+        content: processedData.paragraphs?.slice(0, 100).map((para: { text: any; start_s: any; end_s: any; }) => ({
+          text: para.text,
+          startTime: para.start_s,
+          endTime: para.end_s
+        })) || []
+      };
+    } else {
+      // This is from ASR tool (has videoMeta instead of source)
+      const bookTitle = title || processedData.videoMeta?.title;
+      const bookAuthor = channel || processedData.videoMeta?.channel;
+      
+      // Generate a proper cover URL using the cover generator
+      const coverUrl = await generateCoverUrl({
+        title: bookTitle,
+        author: bookAuthor,
+        youtubeVideoId: videoId
+      });
+      
+      audioBookData = {
+        id: videoId,
+        youtubeVideoId: videoId,
+        title: bookTitle,
+        author: bookAuthor,
+        duration: processedData.videoMeta?.duration_s,
+        coverUrl,
+        narrator: bookAuthor,
+        currentChapter: 1,
+        chapterTitle: processedData.chapters?.[0]?.title || 'Chapter 1',
+        description: `${processedData.videoMeta?.title} by ${processedData.videoMeta?.channel}`,
+        
+        // Use real chapters from the tool
+        chapters: processedData.chapters?.map((ch: { idx: any; title: any; start_s: any; end_s: any; }) => ({
+          idx: ch.idx,
+          title: ch.title,
+          start_s: ch.start_s,
+          end_s: ch.end_s
+        })) || [],
+        
+        // Use real paragraphs as content (transform format)
+        content: processedData.paragraphs?.slice(0, 100).map((para: { text: any; start_s: any; end_s: any; }) => ({
+          text: para.text,
+          startTime: para.start_s,
+          endTime: para.end_s
+        })) || []
+      };
+    }
 
     console.log('[YouTube Process API] Successfully processed video:', videoId);
     
