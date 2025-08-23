@@ -1,26 +1,21 @@
-"use client"
 import { SpotifyPlaybackTracker } from "@/components/spotify-playback-tracker";
-import { Authenticated, Unauthenticated } from "convex/react";
-import { authClient } from "@/lib/auth-client";
+import { SignedIn, SignedOut } from "@daveyplate/better-auth-ui";
+import { RedirectButton } from "./RedirectButton";
 
 export default function HomePage() {
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Nara - Music Discovery</h1>
       
-      <Unauthenticated>
+      <SignedOut>
         <div className="space-y-4">
           <p>Connect your Spotify account to get started:</p>
-          <button
-            onClick={() => authClient.signIn.social({ provider: "spotify" })}
-            className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600"
-          >
-            Connect Spotify
-          </button>
+          <RedirectButton/>
         </div>
-      </Unauthenticated>
+      </SignedOut>
 
-      <Authenticated>
+      <SignedIn>
         <div className="space-y-6">
           <SpotifyPlaybackTracker />
           
@@ -29,7 +24,7 @@ export default function HomePage() {
             <p>Play something on Spotify to see it here!</p>
           </div>
         </div>
-      </Authenticated>
+      </SignedIn>
     </div>
   );
 }
