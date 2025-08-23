@@ -175,8 +175,20 @@ export class VoiceAgentBridge extends EventEmitter {
       const latency = Math.round(performance.now() - t0);
       console.log(`[VoiceAgentBridge] QA completed in ${latency}ms`);
 
-      // Play TTS response
-      await this.orchestrator.playTTS(interactionId, result.answer_markdown, "narrator");
+      // Clean markdown formatting for natural speech
+      const cleanText = result.answer_markdown
+        .replace(/\*\*/g, '') // Remove bold formatting
+        .replace(/\*/g, '') // Remove italic formatting
+        .replace(/#+\s*/g, '') // Remove header formatting
+        .replace(/^-\s*/gm, '') // Remove bullet points
+        .replace(/`/g, '') // Remove code formatting
+        .replace(/\n{2,}/g, '\n') // Replace multiple newlines with single
+        .trim();
+
+      console.log(`[VoiceAgentBridge] Cleaned response for TTS: "${cleanText}"`);
+
+      // Play TTS response with cleaned text
+      await this.orchestrator.playTTS(interactionId, cleanText, "narrator");
 
       // Handle optional seek hint
       if (result.playbackHint?.start_s != null) {
@@ -193,7 +205,7 @@ export class VoiceAgentBridge extends EventEmitter {
       await this.orchestrator.endInteraction(interactionId);
 
       const qaResult: QAResult = {
-        markdown: result.answer_markdown,
+        markdown: cleanText, // Use cleaned text instead of raw markdown
         citations: result.citations ?? [],
         playbackHint: result.playbackHint,
         latency_ms: latency,

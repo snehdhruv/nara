@@ -239,17 +239,19 @@ export function NaraApp() {
           return;
         }
         
+        // IMMEDIATELY pause audiobook when button is pressed (instant response)
+        if (isPlaying) {
+          pause();
+          console.log('[Voice Agent] IMMEDIATELY paused audiobook for voice interaction');
+        }
+        
         // Start listening
         setIsListening(true);
         setIsVoiceAgentActive(true);
         console.log('[Voice Agent] Started listening...');
         
-        // Mute audiobook for voice interaction (maintain playback position)
-        if (currentAudioRef.current === 'audiobook' || isPlaying) {
-          currentAudioRef.current = 'audiobook';
-          muteAudiobook();
-          console.log('[Voice Agent] Muted audiobook for voice listening');
-        }
+        // Set audio state
+        currentAudioRef.current = 'audiobook';
         
         // Initialize voice service if not already done
         if (!vapiServiceRef.current) {
