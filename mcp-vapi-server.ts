@@ -2,13 +2,13 @@
 
 /**
  * Nara Vapi MCP Server
- * 
+ *
  * Exposes Vapi audio functionality as an MCP (Model Context Protocol) server
  * This allows other systems to route all audio processing through Vapi
- * 
+ *
  * Features:
  * - Speech-to-Text (STT) via Vapi
- * - Text-to-Speech (TTS) via ElevenLabs  
+ * - Text-to-Speech (TTS) via ElevenLabs
  * - Audio pipeline management
  * - Real-time transcription streaming
  * - Wake word detection
@@ -57,7 +57,7 @@ class VapiMCPServer {
     // Handle Vapi transcription events
     this.vapiService.on('transcription', (transcription) => {
       this.currentTranscript = transcription.text;
-      
+
       // Emit transcription event that MCP clients can listen to
       this.server.notification({
         method: 'vapi/transcription',
@@ -80,7 +80,7 @@ class VapiMCPServer {
 
     this.vapiService.on('speechEnded', () => {
       this.server.notification({
-        method: 'vapi/speechEnded', 
+        method: 'vapi/speechEnded',
         params: { timestamp: Date.now() }
       });
     });
@@ -210,22 +210,22 @@ class VapiMCPServer {
         switch (name) {
           case 'vapi_start_listening':
             return await this.handleStartListening(args);
-          
+
           case 'vapi_stop_listening':
             return await this.handleStopListening();
-          
+
           case 'vapi_get_transcript':
             return await this.handleGetTranscript();
-          
+
           case 'vapi_synthesize_speech':
             return await this.handleSynthesizeSpeech(args);
-          
+
           case 'vapi_get_status':
             return await this.handleGetStatus();
-          
+
           case 'vapi_configure_assistant':
             return await this.handleConfigureAssistant(args);
-          
+
           default:
             throw new Error(`Unknown tool: ${name}`);
         }
@@ -245,7 +245,7 @@ class VapiMCPServer {
 
   private async handleStartListening(args: any) {
     const mode = args.mode || 'continuous';
-    
+
     if (this.isListening) {
       return {
         content: [
@@ -273,7 +273,7 @@ class VapiMCPServer {
       }
 
       this.isListening = true;
-      
+
       return {
         content: [
           {
@@ -302,7 +302,7 @@ class VapiMCPServer {
     try {
       await this.vapiService.stopListening();
       this.isListening = false;
-      
+
       return {
         content: [
           {
@@ -329,7 +329,7 @@ class VapiMCPServer {
 
   private async handleSynthesizeSpeech(args: any) {
     const { text, voice_id, model } = args;
-    
+
     if (!text) {
       throw new Error('Text is required for speech synthesis');
     }
@@ -375,19 +375,19 @@ class VapiMCPServer {
 
   private async handleConfigureAssistant(args: any) {
     const { assistant_id, wake_word_enabled, wake_word_phrase } = args;
-    
+
     // Update configuration (this would typically persist to config file)
     if (assistant_id) {
       AUDIO_CONFIG.vapi.assistantId = assistant_id;
     }
-    
+
     if (wake_word_enabled !== undefined) {
       if (!AUDIO_CONFIG.vapi.wakeWord) {
         AUDIO_CONFIG.vapi.wakeWord = { enabled: false, phrase: 'Hey Nara', sensitivity: 0.7 };
       }
       AUDIO_CONFIG.vapi.wakeWord.enabled = wake_word_enabled;
     }
-    
+
     if (wake_word_phrase) {
       if (!AUDIO_CONFIG.vapi.wakeWord) {
         AUDIO_CONFIG.vapi.wakeWord = { enabled: true, phrase: wake_word_phrase, sensitivity: 0.7 };

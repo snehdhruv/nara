@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nara Audiobook Copilot - End-to-End Test</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .title {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.ready { background: #51cf66; }
+        .status-dot.listening { background: #339af0; }
+        .status-dot.processing { background: #ffd43b; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        .status-text {
+            color: white;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            min-width: 140px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+        }
+
+        .btn.danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #fa5252 100%);
+        }
+
+        .conversation-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-height: 200px;
+        }
+
+        .conversation-title {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 18px;
+            border-radius: 12px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .message.user {
+            background: rgba(102, 126, 234, 0.3);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.assistant {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            margin-right: auto;
+        }
+
+        .message-label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .log-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .log-entry {
+            color: #e0e0e0;
+            margin-bottom: 5px;
+            line-height: 1.4;
+        }
+
+        .log-entry.error { color: #ff6b6b; }
+        .log-entry.success { color: #51cf66; }
+        .log-entry.info { color: #339af0; }
+
+        .suggestions {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .suggestions-title {
+            color: white;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+
+        .suggestion {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .suggestion:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .config-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🎧 Nara Audiobook Copilot</h1>
+            <p class="subtitle">End-to-End Speech Conversation Test</p>
+        </div>
+
+        <div class="config-info">
+            <strong>Assistant:</strong> Nara Agent (73c59df7-34d0-4e5a-89b0-d0668982c8cc)<br>
+            <strong>Model:</strong> GPT-4o (OpenAI)<br>
+            <strong>Voice:</strong> Vapi TTS - Elliot<br>
+            <strong>Transcriber:</strong> Azure STT (en-US)
+        </div>
+
+        <div class="status-card">
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <div class="status-text" id="statusText">Ready to start</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn primary" id="startBtn" onclick="startConversation()">Start Conversation</button>
+            <button class="btn danger" id="stopBtn" onclick="stopConversation()" disabled>Stop Conversation</button>
+        </div>
+
+        <div class="conversation-card">
+            <div class="conversation-title">
+                💬 Conversation
+            </div>
+            <div id="conversationArea">
+                <div style="color: rgba(255,255,255,0.6); text-align: center; padding: 40px;">
+                    Start a conversation to see messages here...
+                </div>
+            </div>
+        </div>
+
+        <div class="suggestions">
+            <div class="suggestions-title">💡 Try asking Nara:</div>
+            <div class="suggestion" onclick="speakSuggestion(this)">"What happened in the last chapter?"</div>
+            <div class="suggestion" onclick="speakSuggestion(this)">"Who is the main character?"</div>
+            <div class="suggestion" onclick="speakSuggestion(this)">"What are the main themes so far?"</div>
+            <div class="suggestion" onclick="speakSuggestion(this)">"Can you summarize this chapter?"</div>
+            <div class="suggestion" onclick="speakSuggestion(this)">"What do you think about the author's writing style?"</div>
+        </div>
+
+        <div class="log-container">
+            <div id="debugLog"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            vapi: {
+                apiKey: '765f8644-1464-4b36-a4fe-c660e15ba313',
+                assistantId: '73c59df7-34d0-4e5a-89b0-d0668982c8cc'
+            }
+        };
+
+        // State
+        let websocket = null;
+        let isListening = false;
+        let mediaRecorder = null;
+        let audioStream = null;
+        let streamAudioContext = null;
+        let audioProcessor = null;
+        let audioSource = null;
+
+        // DOM elements
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const conversationArea = document.getElementById('conversationArea');
+        const debugLog = document.getElementById('debugLog');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            debugLog.appendChild(logEntry);
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function updateStatus(status, text) {
+            statusDot.className = `status-dot ${status}`;
+            statusText.textContent = text;
+        }
+
+        function addMessage(text, sender) {
+            if (conversationArea.children[0]?.style?.color) {
+                conversationArea.innerHTML = '';
+            }
+
+            const message = document.createElement('div');
+            message.className = `message ${sender}`;
+
+            const label = document.createElement('div');
+            label.className = 'message-label';
+            label.textContent = sender === 'user' ? 'You' : 'Nara';
+
+            const content = document.createElement('div');
+            content.textContent = text;
+
+            message.appendChild(label);
+            message.appendChild(content);
+            conversationArea.appendChild(message);
+            conversationArea.scrollTop = conversationArea.scrollHeight;
+        }
+
+        async function startConversation() {
+            try {
+                log('🎤 Starting Nara conversation...', 'info');
+                updateStatus('processing', 'Starting conversation...');
+
+                // Request microphone access
+                log('1. Requesting microphone access...', 'info');
+                audioStream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        sampleRate: 16000,
+                        channelCount: 1,
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    }
+                });
+                log('✅ Microphone access granted', 'success');
+
+                // Create Vapi call
+                log('2. Creating Vapi call...', 'info');
+                const response = await fetch('https://api.vapi.ai/call', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${CONFIG.vapi.apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        assistantId: CONFIG.vapi.assistantId,
+                        transport: {
+                            provider: 'vapi.websocket'
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to create call: ${response.status}`);
+                }
+
+                const callData = await response.json();
+                log(`✅ Call created: ${callData.id}`, 'success');
+
+                // Connect to WebSocket
+                log('3. Connecting to Vapi WebSocket...', 'info');
+                websocket = new WebSocket(callData.transport.websocketCallUrl);
+
+                websocket.onopen = () => {
+                    log('✅ WebSocket connected', 'success');
+                    updateStatus('ready', 'Connected - Starting audio...');
+                    startAudioStreaming();
+                };
+
+                websocket.onmessage = (event) => {
+                    handleVapiMessage(event.data);
+                };
+
+                websocket.onerror = (error) => {
+                    log(`❌ WebSocket error: ${error}`, 'error');
+                    updateStatus('error', 'Connection error');
+                };
+
+                websocket.onclose = (event) => {
+                    log(`🔌 WebSocket closed: ${event.code}`, 'info');
+                    updateStatus('ready', 'Conversation ended');
+                    stopConversation();
+                };
+
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                isListening = true;
+
+            } catch (error) {
+                log(`❌ Failed to start conversation: ${error.message}`, 'error');
+                updateStatus('error', 'Failed to start');
+            }
+        }
+
+        function startAudioStreaming() {
+            try {
+                // Create audio context with 16kHz sample rate
+                streamAudioContext = new AudioContext({ sampleRate: 16000 });
+                audioSource = streamAudioContext.createMediaStreamSource(audioStream);
+
+                // Create script processor for real-time audio processing
+                audioProcessor = streamAudioContext.createScriptProcessor(4096, 1, 1);
+
+                audioProcessor.onaudioprocess = (event) => {
+                    if (websocket && websocket.readyState === WebSocket.OPEN) {
+                        const inputBuffer = event.inputBuffer.getChannelData(0);
+
+                        // Convert Float32Array to Int16Array (PCM)
+                        const pcmBuffer = new Int16Array(inputBuffer.length);
+                        for (let i = 0; i < inputBuffer.length; i++) {
+                            pcmBuffer[i] = Math.max(-32768, Math.min(32767, inputBuffer[i] * 32768));
+                        }
+
+                        // Send PCM data to Vapi
+                        try {
+                            websocket.send(pcmBuffer.buffer);
+                        } catch (error) {
+                            console.error('Failed to send audio data:', error);
+                        }
+                    }
+                };
+
+                // Connect audio nodes
+                audioSource.connect(audioProcessor);
+                audioProcessor.connect(streamAudioContext.destination);
+
+                log('🎵 Audio streaming started', 'success');
+                updateStatus('listening', 'Listening - Speak now!');
+
+            } catch (error) {
+                log(`❌ Failed to start audio streaming: ${error.message}`, 'error');
+            }
+        }
+
+        let isAssistantSpeaking = false;
+
+        function handleVapiMessage(data) {
+            try {
+                // Check if this is binary data (audio from Vapi)
+                if (data instanceof ArrayBuffer || data instanceof Blob) {
+                    const size = data.byteLength || data.size || 0;
+                    log(`🎵 Received audio data: ${size} bytes (assistant speaking: ${isAssistantSpeaking})`, 'info');
+
+                    // Only play audio when the assistant is actually speaking
+                    if (isAssistantSpeaking && size > 100) {
+                        playAudioData(data);
+                    } else if (size > 0) {
+                        log(`⏭️ Skipping small audio chunk: ${size} bytes`, 'info');
+                    }
+                    return;
+                }
+
+                const message = JSON.parse(data);
+
+                // Log raw messages (truncated)
+                const logMessage = JSON.stringify(message).substring(0, 100);
+                log(`📥 ${logMessage}${JSON.stringify(message).length > 100 ? '...' : ''}`, 'info');
+
+                switch (message.type) {
+                    case 'transcript':
+                        if (message.role === 'user' && message.transcriptType === 'final') {
+                            log(`📝 USER: "${message.transcript}"`, 'success');
+                            addMessage(message.transcript, 'user');
+                        } else if (message.role === 'assistant') {
+                            log(`🤖 NARA: "${message.transcript}"`, 'success');
+                            addMessage(message.transcript, 'assistant');
+                        }
+                        break;
+
+                    case 'speech-update':
+                        if (message.role === 'user') {
+                            if (message.status === 'started') {
+                                log('🗣️ Speech detected', 'info');
+                                updateStatus('processing', 'Processing speech...');
+                            } else if (message.status === 'stopped') {
+                                log('🤐 Speech ended', 'info');
+                                updateStatus('listening', 'Listening...');
+                            }
+                        } else if (message.role === 'assistant') {
+                            if (message.status === 'started') {
+                                isAssistantSpeaking = true;
+                                log('🎙️ Nara speaking...', 'success');
+                                updateStatus('processing', 'Nara is responding...');
+                            } else if (message.status === 'stopped') {
+                                isAssistantSpeaking = false;
+                                log('🔇 Nara finished speaking', 'success');
+                                updateStatus('listening', 'Listening...');
+                            }
+                        }
+                        break;
+
+                    case 'status-update':
+                        log(`📊 Status: ${message.status}`, 'info');
+                        break;
+
+                    case 'conversation-update':
+                        // Log conversation updates to see what's happening
+                        log(`💬 Conversation updated (${message.conversation?.length || 0} messages)`, 'info');
+                        break;
+
+                    case 'model-output':
+                        // Log model output to see AI responses
+                        if (message.output) {
+                            log(`🧠 AI Output: "${message.output.substring(0, 50)}..."`, 'info');
+                        }
+                        break;
+
+                    case 'voice-input':
+                        log(`🎤 Voice input processed: "${message.input}"`, 'success');
+                        break;
+
+                    case 'user-interrupted':
+                        log('⚠️ User interrupted assistant', 'info');
+                        break;
+
+                    case 'error':
+                        log(`❌ Vapi error: ${message.error}`, 'error');
+                        break;
+
+                    default:
+                        log(`❓ Unknown message type: ${message.type}`, 'info');
+                        // Log the full message for debugging
+                        console.log('Full unknown message:', message);
+                        break;
+                }
+
+            } catch (error) {
+                log(`❌ Failed to parse message: ${error.message}`, 'error');
+            }
+        }
+
+                        // Improved audio playback with buffering
+        let audioContext = null;
+        let audioQueue = [];
+        let isPlayingAudio = false;
+        let audioBufferQueue = [];
+        let nextPlayTime = 0;
+        let audioChunkBuffer = [];
+
+        async function playAudioData(audioData) {
+            try {
+                // Initialize audio context if needed
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    nextPlayTime = audioContext.currentTime;
+                }
+
+                // Convert ArrayBuffer to proper format
+                let arrayBuffer;
+                if (audioData instanceof ArrayBuffer) {
+                    arrayBuffer = audioData;
+                } else if (audioData instanceof Blob) {
+                    arrayBuffer = await audioData.arrayBuffer();
+                } else {
+                    log('❌ Unknown audio data format', 'error');
+                    return;
+                }
+
+                // Add to buffer for smoother playback
+                audioChunkBuffer.push(arrayBuffer);
+
+                // Process buffered chunks
+                if (!isPlayingAudio) {
+                    processAudioBuffer();
+                }
+
+            } catch (error) {
+                log(`❌ Failed to play audio: ${error.message}`, 'error');
+            }
+        }
+
+        async function processAudioBuffer() {
+            if (audioChunkBuffer.length === 0 || isPlayingAudio) {
+                return;
+            }
+
+            isPlayingAudio = true;
+
+            try {
+                // Combine multiple small chunks for smoother playback
+                const chunksToProcess = audioChunkBuffer.splice(0, Math.min(3, audioChunkBuffer.length));
+
+                for (const arrayBuffer of chunksToProcess) {
+                    if (arrayBuffer.byteLength > 0) {
+                        try {
+                            await playPCMAudioBuffered(arrayBuffer);
+                        } catch (error) {
+                            try {
+                                await playEncodedAudio(arrayBuffer);
+                            } catch (e) {
+                                log(`⚠️ Skipping problematic audio chunk: ${error.message}`, 'info');
+                            }
+                        }
+                    }
+                }
+
+                // Continue processing if there are more chunks
+                if (audioChunkBuffer.length > 0) {
+                    setTimeout(() => {
+                        isPlayingAudio = false;
+                        processAudioBuffer();
+                    }, 50); // Small delay to prevent overwhelming
+                } else {
+                    isPlayingAudio = false;
+                }
+
+            } catch (error) {
+                isPlayingAudio = false;
+                log(`❌ Audio processing error: ${error.message}`, 'error');
+            }
+        }
+
+        async function playPCMAudioBuffered(arrayBuffer) {
+            try {
+                // Convert PCM data to AudioBuffer
+                const int16Array = new Int16Array(arrayBuffer);
+                const float32Array = new Float32Array(int16Array.length);
+
+                // Convert Int16 PCM to Float32 for Web Audio API
+                for (let i = 0; i < int16Array.length; i++) {
+                    float32Array[i] = int16Array[i] / 32768.0;
+                }
+
+                // Create AudioBuffer with proper sample rate
+                const audioBuffer = audioContext.createBuffer(1, float32Array.length, 24000); // Try 24kHz for Vapi
+                audioBuffer.getChannelData(0).set(float32Array);
+
+                // Schedule playback to avoid gaps
+                const source = audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(audioContext.destination);
+
+                // Schedule at the right time for continuous playback
+                const playTime = Math.max(audioContext.currentTime, nextPlayTime);
+                source.start(playTime);
+
+                // Update next play time
+                nextPlayTime = playTime + audioBuffer.duration;
+
+                log(`🔊 Playing audio chunk: ${arrayBuffer.byteLength} bytes`, 'success');
+
+            } catch (error) {
+                throw new Error(`PCM playback failed: ${error.message}`);
+            }
+        }
+
+        async function playEncodedAudio(arrayBuffer) {
+            try {
+                // Try to decode as encoded audio (MP3, WAV, etc.)
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+                const source = audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(audioContext.destination);
+
+                // Schedule playback
+                const playTime = Math.max(audioContext.currentTime, nextPlayTime);
+                source.start(playTime);
+                nextPlayTime = playTime + audioBuffer.duration;
+
+                log('🔊 Playing encoded audio from Nara...', 'success');
+
+            } catch (error) {
+                throw new Error(`Encoded audio playback failed: ${error.message}`);
+            }
+        }
+
+        // Reset audio state when conversation ends
+        function resetAudioState() {
+            audioChunkBuffer = [];
+            isPlayingAudio = false;
+            nextPlayTime = audioContext ? audioContext.currentTime : 0;
+        }
+
+        function stopConversation() {
+            log('🛑 Stopping conversation...', 'info');
+
+            // Reset audio state
+            resetAudioState();
+            isAssistantSpeaking = false;
+
+            if (audioProcessor) {
+                audioProcessor.disconnect();
+                audioProcessor = null;
+            }
+
+            if (audioSource) {
+                audioSource.disconnect();
+                audioSource = null;
+            }
+
+            if (streamAudioContext) {
+                streamAudioContext.close();
+                streamAudioContext = null;
+            }
+
+            if (audioStream) {
+                audioStream.getTracks().forEach(track => track.stop());
+                audioStream = null;
+            }
+
+            if (websocket) {
+                websocket.close();
+                websocket = null;
+            }
+
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            isListening = false;
+
+            updateStatus('ready', 'Ready to start');
+            log('✅ Conversation stopped', 'success');
+        }
+
+        function speakSuggestion(element) {
+            const text = element.textContent.replace(/"/g, '');
+            log(`💡 Suggested: ${text}`, 'info');
+
+            // Add as user message
+            addMessage(text, 'user');
+
+            // You could also use speech synthesis to actually speak it
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Initialize
+        log('🚀 Nara Audiobook Copilot ready!', 'success');
+        log('💡 Click "Start Conversation" to begin talking with Nara', 'info');
+    </script>
+</body>
+</html>

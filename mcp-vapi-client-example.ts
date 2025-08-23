@@ -2,7 +2,7 @@
 
 /**
  * Example MCP Client for Nara Vapi Server
- * 
+ *
  * This demonstrates how to connect to and use the Vapi MCP server
  * to route all audio processing through Vapi
  */
@@ -51,7 +51,7 @@ class VapiMCPClient {
     // Handle real-time transcription
     this.client.setNotificationHandler('vapi/transcription', (params) => {
       console.log(`📝 Transcription: "${params.text}" (${params.isFinal ? 'final' : 'partial'})`);
-      
+
       // You can route this to your AI system here
       if (params.isFinal) {
         this.handleFinalTranscript(params.text);
@@ -80,10 +80,10 @@ class VapiMCPClient {
 
   private async handleFinalTranscript(text: string): Promise<void> {
     console.log(`🧠 Processing final transcript: "${text}"`);
-    
+
     // Example: Route to your AI system (replace with your actual AI integration)
     const aiResponse = await this.getAIResponse(text);
-    
+
     // Synthesize AI response using Vapi's TTS
     await this.synthesizeSpeech(aiResponse);
   }
@@ -96,7 +96,7 @@ class VapiMCPClient {
       "This part of the book explores important themes.",
       "The author's writing style really shines here."
     ];
-    
+
     return mockResponses[Math.floor(Math.random() * mockResponses.length)];
   }
 
@@ -112,7 +112,7 @@ class VapiMCPClient {
       },
       { timeout: 10000 }
     );
-    
+
     console.log('✅', result.content[0].text);
   }
 
@@ -127,7 +127,7 @@ class VapiMCPClient {
       },
       { timeout: 5000 }
     );
-    
+
     console.log('⏹️', result.content[0].text);
   }
 
@@ -142,7 +142,7 @@ class VapiMCPClient {
       },
       { timeout: 5000 }
     );
-    
+
     return result.content[0].text;
   }
 
@@ -157,7 +157,7 @@ class VapiMCPClient {
       },
       { timeout: 15000 }
     );
-    
+
     console.log('🗣️', result.content[0].text);
   }
 
@@ -172,7 +172,7 @@ class VapiMCPClient {
       },
       { timeout: 5000 }
     );
-    
+
     return JSON.parse(result.content[0].text);
   }
 
@@ -191,7 +191,7 @@ class VapiMCPClient {
       },
       { timeout: 5000 }
     );
-    
+
     console.log('⚙️', result.content[0].text);
   }
 
@@ -206,23 +206,23 @@ class VapiMCPClient {
 // Example usage
 async function main() {
   const client = new VapiMCPClient();
-  
+
   try {
     // Connect to MCP server
     await client.connect();
-    
+
     // Get initial status
     const status = await client.getStatus();
     console.log('📊 Initial status:', status);
-    
+
     // Start listening for speech
     await client.startListening('continuous');
-    
+
     // The client will now receive real-time transcription notifications
     // and automatically process them through your AI system
-    
+
     console.log('🎧 Listening for speech... Press Ctrl+C to stop');
-    
+
     // Keep the process running
     process.on('SIGINT', async () => {
       console.log('\n🛑 Shutting down...');
@@ -230,12 +230,12 @@ async function main() {
       await client.disconnect();
       process.exit(0);
     });
-    
+
     // Example: Test TTS after 5 seconds
     setTimeout(async () => {
       await client.synthesizeSpeech("Hello! This is a test of the Nara Vapi MCP server.");
     }, 5000);
-    
+
   } catch (error) {
     console.error('❌ Error:', error);
     await client.disconnect();

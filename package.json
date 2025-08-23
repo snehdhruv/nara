@@ -11,7 +11,9 @@
     "postinstall": "electron-builder install-app-deps",
     "mcp:server": "tsx mcp-vapi-server.ts",
     "mcp:client": "tsx mcp-vapi-client-example.ts",
-    "mcp:build": "tsc mcp-vapi-server.ts --outDir dist --target es2020 --module commonjs"
+    "mcp:build": "tsc mcp-vapi-server.ts --outDir dist --target es2020 --module commonjs",
+    "nara:start": "tsx nara-end-to-end.ts",
+    "check:assistant": "node check-vapi-assistant.js"
   },
   "dependencies": {
     "@convex-dev/auth": "^0.0.88",
@@ -32,11 +34,11 @@
     "electron-builder": "^24.13.3",
     "next": "^14.2.4",
     "nextron": "^9.5.0",
-    "tsx": "^4.7.0",
-    "typescript": "^5.7.3",
     "postcss": "^8.4.38",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tailwindcss": "^3.4.3"
+    "tailwindcss": "^3.4.3",
+    "tsx": "^4.20.4",
+    "typescript": "^5.7.3"
   }
 }
