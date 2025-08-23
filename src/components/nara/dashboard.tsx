@@ -3,6 +3,7 @@ import { Button, Input, Tabs, Tab } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { motion } from "framer-motion";
 import { useAvailableBooks } from "@/hooks/nara/use-available-books";
+import { YouTubeSearch } from "./youtube-search";
 
 interface DashboardProps {
   onSelectBook: (bookId: string) => void;
@@ -19,8 +20,9 @@ interface BookInfo {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ onSelectBook }) => {
-  const { books, recentBooks } = useAvailableBooks();
+  const { books, recentBooks, refetch } = useAvailableBooks();
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [showYouTubeSearch, setShowYouTubeSearch] = React.useState(false);
   
   // Filter books based on search query
   const filteredBooks = React.useMemo(() => {
@@ -37,6 +39,52 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectBook }) => {
   const currentlyReading = recentBooks.slice(0, 3);
   const nextUpBooks = books.slice(0, 6);
   const finishedBooks = books.slice(6, 12);
+  
+  const handleYouTubeVideoSelect = async (videoId: string, metadata: any) => {
+    console.log('[Dashboard] YouTube video selected:', videoId, metadata);
+    
+    try {
+      // Add the audiobook to the books collection
+      const response = await fetch('/api/books', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audiobook: metadata })
+      });
+      
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to add book');
+      }
+      
+      console.log('[Dashboard] Successfully added YouTube audiobook to collection', data);
+      
+      // Close the search modal first
+      setShowYouTubeSearch(false);
+      
+      // Refresh the books list to include the new audiobook
+      await refetch();
+      
+      // Wait a moment for state to update, then select the book
+      setTimeout(() => {
+        if (data.book?.id) {
+          onSelectBook(data.book.id);
+        }
+      }, 100);
+    } catch (error) {
+      console.error('[Dashboard] Failed to add YouTube audiobook:', error);
+      alert(`Failed to add audiobook: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+  
+  // Show YouTube search overlay
+  if (showYouTubeSearch) {
+    return (
+      <YouTubeSearch
+        onVideoSelect={handleYouTubeVideoSelect}
+        onCancel={() => setShowYouTubeSearch(false)}
+      />
+    );
+  }
   
   return (
     <div className="min-h-screen max-h-screen overflow-hidden flex bg-[#f8f6f2] text-[#5d534f]">
@@ -79,6 +127,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectBook }) => {
               key={book.id}
               className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#e8e4df] cursor-pointer"
               onClick={() => onSelectBook(book.id)}
+              data-testid="book-item"
             >
               <img 
                 src={book.coverUrl} 
@@ -130,6 +179,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectBook }) => {
                   </Button>
                 )}
               </div>
+              
+              <Button
+                onPress={() => setShowYouTubeSearch(true)}
+                color="primary"
+                className="bg-[#8B7355] hover:bg-[#7A6348]"
+                startContent={<Icon icon="lucide:youtube" width={16} />}
+              >
+                Add YouTube
+              </Button>
               
               <Button
                 isIconOnly

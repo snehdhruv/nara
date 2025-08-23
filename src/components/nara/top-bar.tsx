@@ -77,6 +77,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             className="h-12 w-12 rounded-full bg-gray-900 text-white hover:bg-gray-800"
             onPress={togglePlayback}
             aria-label={isPlaying ? "Pause" : "Play"}
+            data-testid={isPlaying ? "pause-button" : "play-button"}
           >
             <Icon icon={isPlaying ? "lucide:pause" : "lucide:play"} width={20} />
           </Button>
@@ -94,7 +95,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* Progress section */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <span className="text-sm text-gray-600 font-mono tabular-nums flex-shrink-0">
+          <span className="text-sm text-gray-600 font-mono tabular-nums flex-shrink-0" data-testid="current-time">
             {formatTime(currentPosition)}
           </span>
           

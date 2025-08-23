@@ -51,13 +51,25 @@ export async function POST(request: NextRequest) {
       
       console.log(`[API] LangGraph answered in ${totalTime}ms`);
       
+      // Clean markdown formatting for natural speech
+      const cleanText = result.markdown
+        .replace(/\*\*/g, '') // Remove bold formatting
+        .replace(/\*/g, '') // Remove italic formatting
+        .replace(/#+\s*/g, '') // Remove header formatting
+        .replace(/^-\s*/gm, '') // Remove bullet points
+        .replace(/`/g, '') // Remove code formatting
+        .replace(/\n{2,}/g, '\n') // Replace multiple newlines with single
+        .trim();
+      
+      console.log(`[API] Cleaned response for TTS: "${cleanText}"`);
+      
       // Generate TTS for the response using 11labs via TTS API
       const baseUrl = request.url.replace('/voice-qa', '');
       const ttsResponse = await fetch(`${baseUrl}/tts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: result.markdown
+          text: cleanText
         })
       });
 
@@ -78,7 +90,7 @@ export async function POST(request: NextRequest) {
         success: true,
         result: {
           question,
-          answer: result.markdown,
+          answer: cleanText, // Return cleaned text instead of markdown
           citations: result.citations,
           playbackHint: result.playbackHint,
           latency: result.latency_ms,

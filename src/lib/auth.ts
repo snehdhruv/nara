@@ -19,21 +19,22 @@ export const createAuth = (ctx: GenericCtx) =>
       requireEmailVerification: false,
     },
 
-    socialProviders: {
-        spotify: {
-            clientId: process.env.AUTH_SPOTIFY_ID as string, 
-            clientSecret: process.env.AUTH_SPOTIFY_SECRET as string,
-            scope: [
-                "user-read-email",
-                "user-read-private", 
-                "user-read-playback-state",
-                "user-read-currently-playing",
-                "user-read-playback-position",
-                "user-read-recently-played",
-                "streaming"
-            ]
-        }
-    },
+    // Removed Spotify auth - using YouTube-based content instead
+    // socialProviders: {
+    //     spotify: {
+    //         clientId: process.env.AUTH_SPOTIFY_ID as string, 
+    //         clientSecret: process.env.AUTH_SPOTIFY_SECRET as string,
+    //         scope: [
+    //             "user-read-email",
+    //             "user-read-private", 
+    //             "user-read-playback-state",
+    //             "user-read-currently-playing",
+    //             "user-read-playback-position",
+    //             "user-read-recently-played",
+    //             "streaming"
+    //         ]
+    //     }
+    // },
 
     plugins: [
       // The Convex plugin is required

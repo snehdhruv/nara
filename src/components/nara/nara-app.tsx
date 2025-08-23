@@ -15,7 +15,18 @@ export function NaraApp() {
   const [selectedBookId, setSelectedBookId] = React.useState<string | null>(null);
   const [isVoiceAgentActive, setIsVoiceAgentActive] = React.useState(false);
   const [isListening, setIsListening] = React.useState(false);
-  const [isMuted, setIsMuted] = React.useState(false);
+  
+  // Audio state management refs to prevent race conditions
+  const currentAudioRef = React.useRef<'audiobook' | 'tts' | null>(null);
+  const ttsAudioRef = React.useRef<HTMLAudioElement | null>(null);
+  const isInterruptedRef = React.useRef(false);
+  
+  // Voice interaction refs to prevent multiple LLM query race conditions
+  const currentQueryRef = React.useRef<string | null>(null);
+  const processingQueryRef = React.useRef<boolean>(false);
+  const abortControllerRef = React.useRef<AbortController | null>(null);
+  const queryQueueRef = React.useRef<string[]>([]);
+  const vapiServiceRef = React.useRef<any>(null);
   
   const { 
     currentBook, 
@@ -27,7 +38,11 @@ export function NaraApp() {
     setPlaybackSpeed, 
     playbackSpeed,
     loading: bookLoading,
-    error: bookError 
+    error: bookError,
+    isAudioMuted,
+    muteAudiobook,
+    unmuteAudiobook,
+    toggleMute
   } = useAudiobook({ bookId: selectedBookId || undefined });
   
   const { 
@@ -36,6 +51,96 @@ export function NaraApp() {
     loading: notesLoading,
     error: notesError 
   } = useNotes({ bookId: selectedBookId || undefined });
+
+  // Process voice query with race condition prevention
+  const processVoiceQuery = async (transcript: string): Promise<void> => {
+    // Prevent multiple queries from processing simultaneously
+    if (processingQueryRef.current) {
+      console.log('[Voice Agent] Query already in progress, queueing:', transcript);
+      queryQueueRef.current.push(transcript);
+      return;
+    }
+
+    // Cancel any ongoing query
+    if (abortControllerRef.current) {
+      console.log('[Voice Agent] Aborting previous query');
+      abortControllerRef.current.abort();
+    }
+
+    processingQueryRef.current = true;
+    currentQueryRef.current = transcript;
+    abortControllerRef.current = new AbortController();
+
+    try {
+      console.log(`[Voice Agent] Processing query: "${transcript}"`);
+      
+      // Stop Vapi listening (but keep connection for next interaction)
+      if (vapiServiceRef.current) {
+        vapiServiceRef.current.stopConversation();
+      }
+      
+      // Process through VoiceAgentBridge which handles LangGraph → 11labs TTS pipeline
+      const response = await fetch('/api/voice-qa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'ask-question',
+          question: transcript,
+          context: {
+            currentChapter: 1,
+            currentTime: currentPosition,
+            audioPosition: currentPosition
+          }
+        }),
+        signal: abortControllerRef.current.signal
+      });
+
+      const data = await response.json();
+      
+      // Check if this query was aborted
+      if (abortControllerRef.current?.signal.aborted) {
+        console.log('[Voice Agent] Query was aborted');
+        return;
+      }
+      
+      if (data.success) {
+        console.log('[Voice Agent] LangGraph response received:', data.result);
+        
+        // Create note from the interaction (answer is already cleaned by API)
+        await createNoteFromVoiceInteraction(transcript, data.result.answer);
+        
+        // Play TTS audio from 11labs via LangGraph response
+        if (data.result.audioBuffer) {
+          console.log('[Voice Agent] Playing 11labs TTS response from LangGraph');
+          await playTTSAudio(data.result.audioBuffer);
+        }
+        
+        // Handle playback hints from LangGraph if provided
+        if (data.result.playbackHint) {
+          console.log('[Voice Agent] Seek hint:', data.result.playbackHint);
+          // TODO: Implement seek to playback hint position
+        }
+      }
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error('[Voice Agent] VoiceAgentBridge processing failed:', error);
+      }
+    } finally {
+      processingQueryRef.current = false;
+      currentQueryRef.current = null;
+      abortControllerRef.current = null;
+      
+      setIsListening(false);
+      setIsVoiceAgentActive(false);
+      
+      // Process next query in queue if any
+      const nextQuery = queryQueueRef.current.shift();
+      if (nextQuery) {
+        console.log('[Voice Agent] Processing queued query:', nextQuery);
+        setTimeout(() => processVoiceQuery(nextQuery), 100);
+      }
+    }
+  };
 
   // Initialize voice service using full VoiceAgentBridge orchestration
   const initializeVoiceService = async () => {
@@ -75,57 +180,8 @@ export function NaraApp() {
         const transcript = event.detail;
         console.log(`[Voice Agent] STT transcript: "${transcript}"`);
         
-        // Stop Vapi listening (but keep connection for next interaction)
-        vapiService.stopConversation();
-        
-        // Process through VoiceAgentBridge which handles LangGraph → 11labs TTS pipeline
-        try {
-          const response = await fetch('/api/voice-qa', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'ask-question',
-              question: transcript,
-              context: {
-                currentChapter: 1, // TODO: Get from current audiobook state
-                currentTime: currentPosition,
-                audioPosition: currentPosition
-              }
-            })
-          });
-
-          const data = await response.json();
-          if (data.success) {
-            console.log('[Voice Agent] LangGraph response received:', data.result);
-            
-            // Create note from the interaction
-            await createNoteFromVoiceInteraction(transcript, data.result.answer);
-            
-            // Play TTS audio from 11labs via LangGraph response
-            if (data.result.audioBuffer) {
-              console.log('[Voice Agent] Playing 11labs TTS response from LangGraph');
-              await playTTSAudio(data.result.audioBuffer);
-            }
-            
-            // Handle playback hints from LangGraph if provided
-            if (data.result.playbackHint) {
-              console.log('[Voice Agent] Seek hint:', data.result.playbackHint);
-              // TODO: Implement seek to playback hint position
-            }
-            
-            // Resume audiobook after TTS completes
-            if (!isMuted) {
-              setTimeout(() => play(), 500);
-            }
-            
-            setIsListening(false);
-            setIsVoiceAgentActive(false);
-          }
-        } catch (error) {
-          console.error('[Voice Agent] VoiceAgentBridge processing failed:', error);
-          setIsListening(false);
-          setIsVoiceAgentActive(false);
-        }
+        // Process with race condition prevention
+        await processVoiceQuery(transcript);
       });
 
       vapiService.addEventListener('conversationStopped', () => {
@@ -134,7 +190,8 @@ export function NaraApp() {
         setIsVoiceAgentActive(false);
       });
 
-      window.vapiService = vapiService;
+      vapiServiceRef.current = vapiService;
+      window.vapiService = vapiService; // Keep for backward compatibility
       console.log('[Voice Agent] VoiceAgentBridge orchestration ready');
       
     } catch (error) {
@@ -173,10 +230,14 @@ export function NaraApp() {
     }
   };
 
-  // Play TTS audio from base64 encoded buffer
+  // Play TTS audio from base64 encoded buffer with proper state management
   const playTTSAudio = async (base64AudioBuffer: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       try {
+        // Stop any current audio and set TTS as active
+        stopCurrentAudio();
+        currentAudioRef.current = 'tts';
+        
         // Convert base64 to blob
         const binaryData = atob(base64AudioBuffer);
         const bytes = new Uint8Array(binaryData.length);
@@ -187,6 +248,7 @@ export function NaraApp() {
         const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
+        ttsAudioRef.current = audio;
         
         // Configure audio playback
         audio.volume = 0.9;
@@ -195,12 +257,25 @@ export function NaraApp() {
         audio.addEventListener('ended', () => {
           console.log('[Voice Agent] LangGraph TTS playback completed');
           URL.revokeObjectURL(audioUrl);
+          ttsAudioRef.current = null;
+          currentAudioRef.current = null;
+          
+          // Resume audiobook if not interrupted
+          if (!isInterruptedRef.current) {
+            setTimeout(() => {
+              currentAudioRef.current = 'audiobook';
+              unmuteAudiobook();
+            }, 500);
+          }
+          isInterruptedRef.current = false;
           resolve();
         });
         
         audio.addEventListener('error', (error) => {
           console.error('[Voice Agent] TTS audio playback error:', error);
           URL.revokeObjectURL(audioUrl);
+          ttsAudioRef.current = null;
+          currentAudioRef.current = null;
           reject(error);
         });
         
@@ -210,42 +285,73 @@ export function NaraApp() {
         
       } catch (error) {
         console.error('[Voice Agent] TTS audio setup failed:', error);
+        currentAudioRef.current = null;
         reject(error);
       }
     });
+  };
+  
+  // Stop current audio to prevent race conditions
+  const stopCurrentAudio = () => {
+    if (currentAudioRef.current === 'audiobook' && isPlaying) {
+      muteAudiobook(); // Mute instead of pausing to maintain position
+      console.log('[Audio State] Muted audiobook for new audio');
+    }
+    
+    if (currentAudioRef.current === 'tts' && ttsAudioRef.current) {
+      ttsAudioRef.current.pause();
+      ttsAudioRef.current = null;
+      console.log('[Audio State] Stopped TTS for new audio');
+    }
   };
 
   const handleNarratorActivate = async () => {
     try {
       if (isListening) {
-        // Stop listening
+        // Stop listening and cancel any ongoing queries
         setIsListening(false);
         setIsVoiceAgentActive(false);
         console.log('[Voice Agent] Stopped listening');
         
+        // Cancel ongoing query if any
+        if (abortControllerRef.current) {
+          console.log('[Voice Agent] Aborting ongoing query');
+          abortControllerRef.current.abort();
+        }
+        
+        // Clear query queue
+        queryQueueRef.current = [];
+        
         // Stop the voice service
-        if (window.vapiService) {
-          window.vapiService.stopConversation();
+        if (vapiServiceRef.current) {
+          vapiServiceRef.current.stopConversation();
         }
       } else {
+        // Prevent starting if already processing a query
+        if (processingQueryRef.current) {
+          console.log('[Voice Agent] Query in progress, cannot start listening');
+          return;
+        }
+        
         // Start listening
         setIsListening(true);
         setIsVoiceAgentActive(true);
         console.log('[Voice Agent] Started listening...');
         
-        // Pause current audiobook if active and not muted
-        if (isPlaying && !isMuted) {
-          pause();
-          console.log('[Voice Agent] Paused audiobook for voice listening');
+        // Mute audiobook for voice interaction (maintain playback position)
+        if (currentAudioRef.current === 'audiobook' || isPlaying) {
+          currentAudioRef.current = 'audiobook';
+          muteAudiobook();
+          console.log('[Voice Agent] Muted audiobook for voice listening');
         }
         
         // Initialize voice service if not already done
-        if (!window.vapiService) {
+        if (!vapiServiceRef.current) {
           await initializeVoiceService();
         }
         
         // Start listening (this enables STT through Vapi, VoiceAgentBridge handles the rest)
-        await window.vapiService.startConversation();
+        await vapiServiceRef.current.startConversation();
       }
     } catch (error) {
       console.error('[Voice Agent] Activation failed:', error);
@@ -255,15 +361,36 @@ export function NaraApp() {
   };
 
   const handleMuteToggle = () => {
-    setIsMuted(!isMuted);
-    console.log(`[Audio] ${!isMuted ? 'Muted' : 'Unmuted'}`);
-    // TODO: Connect to actual mute functionality when audio team provides interface
+    toggleMute();
+    console.log(`[Audio] ${!isAudioMuted ? 'Muted' : 'Unmuted'} audiobook`);
   };
 
 
   React.useEffect(() => {
     // VoiceAgentBridge handles all voice interactions end-to-end
     // No additional setup needed for frontend
+    
+    // Cleanup function to prevent race conditions
+    return () => {
+      // Cancel ongoing queries
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      
+      // Clear query queue
+      queryQueueRef.current = [];
+      
+      // Stop voice service
+      if (vapiServiceRef.current) {
+        vapiServiceRef.current.stopConversation();
+      }
+      
+      // Stop TTS audio
+      if (ttsAudioRef.current) {
+        ttsAudioRef.current.pause();
+        ttsAudioRef.current = null;
+      }
+    };
   }, []);
 
   // Handle book selection from dashboard
@@ -414,16 +541,16 @@ export function NaraApp() {
             size="lg" 
             className={`
               rounded-full shadow-xl h-14 w-14 min-w-14 border-none transition-all duration-300 hover:scale-105
-              ${isMuted 
+              ${isAudioMuted 
                 ? 'bg-red-500 hover:bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]' 
                 : 'bg-gray-600 hover:bg-gray-700 text-white hover:shadow-xl'
               }
             `}
             onPress={handleMuteToggle}
-            aria-label={isMuted ? "Unmute" : "Mute"}
+            aria-label={isAudioMuted ? "Unmute" : "Mute"}
           >
             <Icon 
-              icon={isMuted ? "lucide:mic-off" : "lucide:mic"} 
+              icon={isAudioMuted ? "lucide:volume-x" : "lucide:volume-2"} 
               width={20} 
               className="text-white"
             />

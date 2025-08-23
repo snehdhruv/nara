@@ -1,105 +1,104 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "../../../../../convex/_generated/api";
 
-// Load the actual Zero to One audiobook data
-function loadZeroToOneData() {
-  try {
-    const filePath = join(process.cwd(), 'data', 'zero-to-one.json');
-    const fileContent = readFileSync(filePath, 'utf8');
-    return JSON.parse(fileContent);
-  } catch (error) {
-    console.error('[API] Failed to load Zero to One data:', error);
-    return null;
-  }
-}
-
-// Generate sample timed content for chapters (since we don't have actual transcript data)
-function generateTimedContent(chapterData: any) {
-  const content = [];
-  
-  // Generate sample content based on chapter title and duration
-  const sampleTexts = [
-    `This is Chapter ${chapterData.idx}: ${chapterData.title}. In this chapter, we'll explore key concepts that build upon Peter Thiel's framework for innovation and monopoly thinking.`,
-    "The ideas presented here challenge conventional wisdom about competition and market dynamics, offering a fresh perspective on how successful businesses are built.",
-    "As Thiel explains, the goal isn't to compete in existing markets, but to create new markets where you can establish lasting competitive advantages.",
-    "This chapter delves into the practical applications of zero-to-one thinking in real-world business scenarios."
-  ];
-  
-  const chapterDuration = chapterData.end_s - chapterData.start_s;
-  const segmentDuration = chapterDuration / sampleTexts.length;
-  
-  sampleTexts.forEach((text: string, index: number) => {
-    const startTime = chapterData.start_s + (index * segmentDuration);
-    const endTime = startTime + segmentDuration;
-    
-    content.push({
-      text: text,
-      startTime: Math.floor(startTime),
-      endTime: Math.floor(endTime)
-    });
-  });
-  
-  return content;
-}
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id: bookId } = await params;
+    console.log('[API] Getting book from Convex:', bookId);
     
-    if (id !== 'zero-to-one') {
+    // Get or create a demo user for testing
+    let demoUserId;
+    try {
+      const users = await convex.query(api.seed.getFirstUser, {});
+      if (users && users.length > 0) {
+        demoUserId = users[0]._id;
+      } else {
+        demoUserId = await convex.mutation(api.seed.createSeedUser, {
+          name: "Demo User",
+          email: "demo@nara.com"
+        });
+      }
+    } catch (error) {
+      console.log('[API] Using fallback - skip progress tracking');
+      demoUserId = null;
+    }
+    
+    // Handle special slug case for "zero-to-one"
+    let audiobook = null;
+    if (bookId === "zero-to-one") {
+      try {
+        audiobook = await convex.query(api.audiobooks.getAudiobookByYouTubeId, {
+          youtubeVideoId: "dz_4Mjyqbqk"
+        });
+      } catch (error) {
+        console.log('[API] Zero to One book not found by YouTube ID');
+      }
+    } else {
+      // Try to get audiobook by Convex ID first
+      try {
+        audiobook = await convex.query(api.audiobooks.getAudiobook, {
+          audiobookId: bookId as any
+        });
+      } catch (error) {
+        console.log('[API] Book not found by Convex ID, trying YouTube ID...');
+      }
+      
+      // If not found by ID, try by YouTube video ID
+      if (!audiobook) {
+        try {
+          audiobook = await convex.query(api.audiobooks.getAudiobookByYouTubeId, {
+            youtubeVideoId: bookId
+          });
+        } catch (error) {
+          console.log('[API] Book not found by YouTube ID either');
+        }
+      }
+    }
+    
+    if (!audiobook) {
+      console.log('[API] Book not found:', bookId);
       return NextResponse.json(
         { success: false, error: 'Book not found' },
         { status: 404 }
       );
     }
     
-    // Load the actual audiobook data
-    const zeroToOneData = loadZeroToOneData();
-    if (!zeroToOneData) {
-      return NextResponse.json(
-        { success: false, error: 'Failed to load audiobook data' },
-        { status: 500 }
-      );
+    // Get user progress for this audiobook
+    let progress = null;
+    if (demoUserId) {
+      try {
+        progress = await convex.query(api.progress.getProgress, {
+          userId: demoUserId,
+          audiobookId: audiobook._id
+        });
+      } catch (error) {
+        console.log('[API] No progress found for user, using defaults');
+      }
     }
-    
-    // Get current chapter (default to first chapter)
-    const currentChapterIdx = 1;
-    const currentChapter = zeroToOneData.chapters.find((ch: any) => ch.idx === currentChapterIdx);
-    
-    if (!currentChapter) {
-      return NextResponse.json(
-        { success: false, error: 'Chapter not found' },
-        { status: 404 }
-      );
-    }
-    
-    // Generate timed content for the current chapter
-    const timedContent = generateTimedContent(currentChapter);
     
     const book = {
-      id: "zero-to-one",
-      title: zeroToOneData.source.title,
-      author: "Peter Thiel",
-      narrator: "Blake Masters",
-      coverUrl: "https://img.heroui.chat/image/book?w=400&h=600&u=zero-to-one",
-      duration: zeroToOneData.source.duration_s,
-      currentChapter: currentChapterIdx,
-      chapterTitle: currentChapter.title,
-      progress: 0.23, // Will be retrieved from user progress later
-      lastPosition: 1420, // Will be retrieved from user progress later
-      youtubeVideoId: zeroToOneData.source.video_id,
-      content: timedContent,
-      chapters: zeroToOneData.chapters.map((ch: any) => ({
-        idx: ch.idx,
-        title: ch.title,
-        start_s: ch.start_s,
-        end_s: ch.end_s
-      }))
+      id: audiobook._id,
+      title: audiobook.title,
+      author: audiobook.author,
+      narrator: audiobook.narrator || audiobook.author,
+      coverUrl: audiobook.coverUrl || "https://img.heroui.chat/image/book?w=400&h=600&u=default",
+      duration: audiobook.duration,
+      currentChapter: progress?.currentChapter || 1,
+      chapterTitle: audiobook.chapters?.[0]?.title || "Chapter 1",
+      progress: progress?.progress || 0,
+      lastPosition: progress?.lastPosition || 0,
+      youtubeVideoId: audiobook.youtubeVideoId,
+      content: audiobook.content || [],
+      chapters: audiobook.chapters || []
     };
+    
+    console.log('[API] Found audiobook:', book.title);
     
     return NextResponse.json({
       success: true,
@@ -120,57 +119,78 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const body = await request.json();
+    const { id: bookId } = await params;
+    const updates = await request.json();
     
-    if (id !== 'zero-to-one') {
+    console.log(`[API] Updating book progress in Convex: ${bookId}`, updates);
+    
+    // Get or create a demo user for testing
+    let demoUserId;
+    try {
+      const users = await convex.query(api.seed.getFirstUser, {});
+      if (users && users.length > 0) {
+        demoUserId = users[0]._id;
+      } else {
+        demoUserId = await convex.mutation(api.seed.createSeedUser, {
+          name: "Demo User",
+          email: "demo@nara.com"
+        });
+      }
+    } catch (error) {
+      console.log('[API] Using fallback - skip progress tracking');
+      demoUserId = null;
+    }
+    
+    // Handle special slug case for "zero-to-one" in PUT as well
+    let audiobook = null;
+    if (bookId === "zero-to-one") {
+      try {
+        audiobook = await convex.query(api.audiobooks.getAudiobookByYouTubeId, {
+          youtubeVideoId: "dz_4Mjyqbqk"
+        });
+      } catch (error) {
+        console.log('[API] Zero to One book not found by YouTube ID');
+      }
+    } else {
+      try {
+        audiobook = await convex.query(api.audiobooks.getAudiobook, {
+          audiobookId: bookId as any
+        });
+      } catch (error) {
+        // Try by YouTube ID
+        try {
+          audiobook = await convex.query(api.audiobooks.getAudiobookByYouTubeId, {
+            youtubeVideoId: bookId
+          });
+        } catch (error2) {
+          console.log('[API] Book not found by YouTube ID either');
+        }
+      }
+    }
+    
+    if (!audiobook) {
       return NextResponse.json(
         { success: false, error: 'Book not found' },
         { status: 404 }
       );
     }
     
-    // In a real implementation, this would update the user's progress in Convex
-    // For now, we'll just validate the data and return success
-    
-    const updates: any = {};
-    
-    if ('progress' in body) {
-      updates.progress = Math.max(0, Math.min(1, body.progress));
+    // Update progress in Convex
+    if (demoUserId && ('progress' in updates || 'lastPosition' in updates || 'currentChapter' in updates)) {
+      await convex.mutation(api.progress.updateProgress, {
+        userId: demoUserId,
+        audiobookId: audiobook._id,
+        progress: updates.progress !== undefined ? Math.max(0, Math.min(1, updates.progress)) : undefined,
+        lastPosition: updates.lastPosition !== undefined ? Math.max(0, updates.lastPosition) : 0,
+        currentChapter: updates.currentChapter,
+      });
     }
     
-    if ('lastPosition' in body) {
-      updates.lastPosition = Math.max(0, body.lastPosition);
-    }
-    
-    if ('currentChapter' in body) {
-      updates.currentChapter = body.currentChapter;
-    }
-    
-    console.log(`[API] Updated book ${id}:`, updates);
-    
-    // Load updated book data
-    const zeroToOneData = loadZeroToOneData();
-    if (!zeroToOneData) {
-      return NextResponse.json(
-        { success: false, error: 'Failed to load audiobook data' },
-        { status: 500 }
-      );
-    }
-    
-    const book = {
-      id: "zero-to-one",
-      title: zeroToOneData.source.title,
-      author: "Peter Thiel",
-      narrator: "Blake Masters",
-      duration: zeroToOneData.source.duration_s,
-      youtubeVideoId: zeroToOneData.source.video_id,
-      ...updates
-    };
+    console.log(`[API] Successfully updated book progress in Convex: ${bookId}`);
     
     return NextResponse.json({
       success: true,
-      book
+      message: 'Progress updated successfully'
     });
     
   } catch (error) {

@@ -28,10 +28,14 @@ export const useYouTubePlayer = ({
   const [player, setPlayer] = useState<YouTubePlayer | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(startTime);
+  const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const timeUpdateInterval = useRef<NodeJS.Timeout | null>(null);
   const playerContainerId = useRef(`youtube-player-${Date.now()}`);
+  const queuedPlayAction = useRef<'play' | 'pause' | null>(null);
+  const playerRef = useRef<YouTubePlayer | null>(null);
+  const startTimeRef = useRef(startTime);
+  const hasInitializedPosition = useRef(false);
 
   // YouTube Player States
   const PLAYER_STATES = {
@@ -46,7 +50,20 @@ export const useYouTubePlayer = ({
   // Initialize YouTube player
   const initializePlayer = useCallback(() => {
     if (!videoId || !window.YT || !window.YT.Player) {
+      console.log('[useYouTubePlayer] Missing requirements:', { videoId, YT: !!window.YT, Player: !!(window.YT && window.YT.Player) });
       return;
+    }
+
+    // Clean up existing player instance
+    if (playerRef.current) {
+      console.log('[useYouTubePlayer] Cleaning up existing player before creating new one');
+      try {
+        playerRef.current.destroy();
+      } catch (error) {
+        console.warn('[useYouTubePlayer] Error destroying player:', error);
+      }
+      playerRef.current = null;
+      setIsReady(false);
     }
 
     // Create container div if it doesn't exist
@@ -76,13 +93,33 @@ export const useYouTubePlayer = ({
         onReady: (event: any) => {
           console.log('[useYouTubePlayer] Player ready');
           const player = event.target;
+          playerRef.current = player;
           setPlayer(player);
           setIsReady(true);
-          setDuration(player.getDuration());
           
-          // Seek to start time if specified
-          if (startTime > 0) {
-            player.seekTo(startTime, true);
+          // Get duration and log it
+          const videoDuration = player.getDuration();
+          console.log('[useYouTubePlayer] Video duration:', videoDuration);
+          setDuration(videoDuration);
+          
+          // Seek to start time if specified and not already initialized
+          const targetStartTime = startTimeRef.current;
+          if (targetStartTime > 0 && !hasInitializedPosition.current) {
+            console.log('[useYouTubePlayer] Seeking to start time:', targetStartTime);
+            player.seekTo(targetStartTime, true);
+            setCurrentTime(targetStartTime);
+            hasInitializedPosition.current = true;
+          }
+          
+          // Execute any queued play action
+          if (queuedPlayAction.current === 'play') {
+            console.log('[useYouTubePlayer] Executing queued play action');
+            player.playVideo();
+            queuedPlayAction.current = null;
+          } else if (queuedPlayAction.current === 'pause') {
+            console.log('[useYouTubePlayer] Executing queued pause action');
+            player.pauseVideo();
+            queuedPlayAction.current = null;
           }
         },
         onStateChange: (event: any) => {
@@ -97,8 +134,10 @@ export const useYouTubePlayer = ({
           
           // Start or stop time tracking based on state
           if (state === PLAYER_STATES.PLAYING) {
+            console.log('[useYouTubePlayer] Starting time tracking for PLAYING state');
             startTimeTracking();
           } else {
+            console.log('[useYouTubePlayer] Stopping time tracking for state:', state);
             stopTimeTracking();
           }
         }
@@ -113,16 +152,31 @@ export const useYouTubePlayer = ({
     }
 
     timeUpdateInterval.current = setInterval(() => {
-      if (player) {
-        const time = player.getCurrentTime();
-        setCurrentTime(time);
-        
-        if (onTimeUpdate) {
-          onTimeUpdate(time);
+      if (playerRef.current && playerRef.current.getCurrentTime) {
+        try {
+          const time = playerRef.current.getCurrentTime();
+          const roundedTime = Math.floor(time); // Round to avoid floating point comparison issues
+          
+          // Use setState callback to get the latest currentTime value
+          setCurrentTime(prevTime => {
+            const prevRounded = Math.floor(prevTime);
+            if (roundedTime !== prevRounded) {
+              console.log('[useYouTubePlayer] Time update:', time);
+              
+              if (onTimeUpdate) {
+                onTimeUpdate(time);
+              }
+              
+              return time;
+            }
+            return prevTime;
+          });
+        } catch (error) {
+          console.error('[useYouTubePlayer] Error getting current time:', error);
         }
       }
-    }, 100); // Update every 100ms for smooth synchronization
-  }, [player, onTimeUpdate]);
+    }, 1000); // Update every second for performance
+  }, [onTimeUpdate]);
 
   // Stop tracking playback time
   const stopTimeTracking = useCallback(() => {
@@ -134,28 +188,40 @@ export const useYouTubePlayer = ({
 
   // Play video
   const play = useCallback(() => {
-    if (player && isReady) {
-      console.log('[useYouTubePlayer] Playing');
-      player.playVideo();
+    console.log('[useYouTubePlayer] Play called. Player:', !!playerRef.current, 'Ready:', isReady);
+    if (playerRef.current && isReady) {
+      console.log('[useYouTubePlayer] Calling playVideo()');
+      playerRef.current.playVideo();
+      
+      // Log player state after calling play
+      setTimeout(() => {
+        if (playerRef.current && playerRef.current.getPlayerState) {
+          const state = playerRef.current.getPlayerState();
+          console.log('[useYouTubePlayer] Player state after play:', state);
+        }
+      }, 100);
+    } else {
+      console.log('[useYouTubePlayer] Queueing play action for when player is ready');
+      queuedPlayAction.current = 'play';
     }
-  }, [player, isReady]);
+  }, [isReady]);
 
   // Pause video
   const pause = useCallback(() => {
-    if (player && isReady) {
+    if (playerRef.current && isReady) {
       console.log('[useYouTubePlayer] Pausing');
-      player.pauseVideo();
+      playerRef.current.pauseVideo();
     }
-  }, [player, isReady]);
+  }, [isReady]);
 
   // Seek to specific time
   const seekTo = useCallback((time: number) => {
-    if (player && isReady) {
+    if (playerRef.current && isReady) {
       console.log('[useYouTubePlayer] Seeking to:', time);
-      player.seekTo(time, true);
+      playerRef.current.seekTo(time, true);
       setCurrentTime(time);
     }
-  }, [player, isReady]);
+  }, [isReady]);
 
   // Toggle playback
   const togglePlayback = useCallback(() => {
@@ -168,23 +234,23 @@ export const useYouTubePlayer = ({
 
   // Mute/unmute
   const mute = useCallback(() => {
-    if (player && isReady) {
-      player.mute();
+    if (playerRef.current && isReady) {
+      playerRef.current.mute();
     }
-  }, [player, isReady]);
+  }, [isReady]);
 
   const unmute = useCallback(() => {
-    if (player && isReady) {
-      player.unMute();
+    if (playerRef.current && isReady) {
+      playerRef.current.unMute();
     }
-  }, [player, isReady]);
+  }, [isReady]);
 
   // Set volume (0-100)
   const setVolume = useCallback((volume: number) => {
-    if (player && isReady) {
-      player.setVolume(Math.max(0, Math.min(100, volume)));
+    if (playerRef.current && isReady) {
+      playerRef.current.setVolume(Math.max(0, Math.min(100, volume)));
     }
-  }, [player, isReady]);
+  }, [isReady]);
 
   // Initialize player when YouTube API is ready
   useEffect(() => {
@@ -212,7 +278,30 @@ export const useYouTubePlayer = ({
     return () => {
       stopTimeTracking();
     };
-  }, [videoId, initializePlayer, stopTimeTracking]);
+  }, [videoId, startTime, initializePlayer, stopTimeTracking]);
+
+  // Update startTimeRef when startTime prop changes
+  useEffect(() => {
+    startTimeRef.current = startTime;
+    
+    // Always set currentTime to startTime immediately for display
+    if (startTime > 0) {
+      console.log('[useYouTubePlayer] Setting currentTime to startTime:', startTime);
+      setCurrentTime(startTime);
+    }
+    
+    // If player is ready and we haven't initialized position yet, seek now
+    if (playerRef.current && isReady && startTime > 0 && !hasInitializedPosition.current) {
+      console.log('[useYouTubePlayer] Late startTime update, seeking to:', startTime);
+      playerRef.current.seekTo(startTime, true);
+      hasInitializedPosition.current = true;
+    }
+  }, [startTime, isReady]);
+
+  // Reset initialization flag when videoId changes
+  useEffect(() => {
+    hasInitializedPosition.current = false;
+  }, [videoId]);
 
   // Cleanup on unmount
   useEffect(() => {

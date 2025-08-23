@@ -11,15 +11,17 @@ export const useAudiobook = (props?: UseAudiobookProps) => {
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAudioMuted, setIsAudioMuted] = useState(false);
   
-  // YouTube player integration (only initialize after book is loaded)
+  // YouTube player integration - key ensures re-creation when book changes
   const {
     isPlaying,
     currentTime: currentPosition,
     play,
     pause,
     seekTo: seekToTime,
-    togglePlayback
+    togglePlayback,
+    setVolume
   } = useYouTubePlayer({
     videoId: currentBook?.youtubeVideoId,
     startTime: currentBook?.lastPosition || 0,
@@ -36,11 +38,17 @@ export const useAudiobook = (props?: UseAudiobookProps) => {
     const loadBook = async () => {
       try {
         setLoading(true);
-        const bookId = props?.bookId || 'zero-to-one';
+        const bookId = props?.bookId;
+        if (!bookId) {
+          console.log('[useAudiobook] No bookId provided, skipping load');
+          setLoading(false);
+          return;
+        }
         const response = await fetch(`/api/books/${bookId}`);
         const data = await response.json();
         
         if (data.success) {
+          console.log('[useAudiobook] Book loaded with lastPosition:', data.book.lastPosition);
           setCurrentBook(data.book);
           // YouTube player will handle initial position via startTime
         } else {
@@ -92,6 +100,27 @@ export const useAudiobook = (props?: UseAudiobookProps) => {
       }
     }
   };
+
+  // Mute/unmute audiobook for voice interactions
+  const muteAudiobook = () => {
+    setIsAudioMuted(true);
+    setVolume(0); // YouTube volume is 0-100
+    console.log('[useAudiobook] Audiobook muted for voice interaction');
+  };
+
+  const unmuteAudiobook = () => {
+    setIsAudioMuted(false);
+    setVolume(100); // YouTube volume is 0-100
+    console.log('[useAudiobook] Audiobook unmuted');
+  };
+
+  const toggleMute = () => {
+    if (isAudioMuted) {
+      unmuteAudiobook();
+    } else {
+      muteAudiobook();
+    }
+  };
   
   return {
     currentBook,
@@ -105,6 +134,10 @@ export const useAudiobook = (props?: UseAudiobookProps) => {
     loading,
     error,
     seekTo,
-    skipToChapter
+    skipToChapter,
+    isAudioMuted,
+    muteAudiobook,
+    unmuteAudiobook,
+    toggleMute
   };
 };

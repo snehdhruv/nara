@@ -37,7 +37,7 @@ export async function createVoiceAgentBridge(): Promise<VoiceAgentBridge> {
     datasetPath: './data/zero-to-one.json',
     currentPosition_s: 0, // Start of audiobook
     playbackChapterIdx: 1, // Currently on Chapter 1
-    userProgressIdx: 5, // User has listened through Chapter 5 (allow spoilers up to Ch 5)
+    userProgressIdx: 14, // Allow access to entire audiobook (all 14 chapters)
     modeHint: 'auto' // Let system decide packing strategy
   };
 

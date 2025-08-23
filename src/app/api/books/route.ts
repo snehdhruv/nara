@@ -1,18 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "../../../../convex/_generated/api";
 
-// Load the actual Zero to One audiobook data
-function loadZeroToOneData() {
-  try {
-    const filePath = join(process.cwd(), 'data', 'zero-to-one.json');
-    const fileContent = readFileSync(filePath, 'utf8');
-    return JSON.parse(fileContent);
-  } catch (error) {
-    console.error('[API] Failed to load Zero to One data:', error);
-    return null;
-  }
-}
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,31 +10,71 @@ export async function GET(request: NextRequest) {
     const query = searchParams.get('search');
     const category = searchParams.get('category');
     
-    // Load the actual audiobook data
-    const zeroToOneData = loadZeroToOneData();
-    if (!zeroToOneData) {
-      return NextResponse.json(
-        { success: false, error: 'Failed to load audiobook data' },
-        { status: 500 }
-      );
+    // For demo purposes, we'll get all audiobooks without user-specific data first
+    // TODO: Implement proper auth integration
+    
+    console.log('[API] Seeding Zero to One audiobook if needed...');
+    await convex.mutation(api.seed.seedZeroToOneAudiobook, {});
+    
+    console.log('[API] Creating demo user...');  
+    let demoUserId;
+    try {
+      demoUserId = await convex.mutation(api.seed.createSeedUser, {
+        name: "Demo User",
+        email: "demo@nara.com"
+      });
+    } catch (error) {
+      // User might already exist, get first user
+      const users = await convex.query(api.seed.getFirstUser, {});
+      if (users && users.length > 0) {
+        demoUserId = users[0]._id;
+      } else {
+        // Create a fallback approach - just get audiobooks without user data
+        console.log('[API] Falling back to audiobooks without user progress');
+        const audiobooks = await convex.query(api.audiobooks.listAudiobooks, {});
+        
+        const books = audiobooks.map(book => ({
+          id: book._id,
+          title: book.title,
+          author: book.author,
+          narrator: book.narrator || book.author,
+          coverUrl: book.coverUrl || "https://img.heroui.chat/image/book?w=400&h=600&u=default",
+          progress: 0.23, // Default progress for demo
+          lastPosition: 1420, // Default position for demo
+          duration: book.duration,
+          description: book.description,
+          youtubeVideoId: book.youtubeVideoId,
+          totalChapters: book.totalChapters || 0
+        }));
+        
+        return NextResponse.json({
+          success: true,
+          books,
+          total: books.length
+        });
+      }
     }
     
-    // Convert the zero-to-one data into the expected book format
-    const books = [{
-      id: "zero-to-one",
-      title: zeroToOneData.source.title,
-      author: "Peter Thiel",
-      narrator: "Blake Masters", 
-      coverUrl: "https://img.heroui.chat/image/book?w=400&h=600&u=zero-to-one",
-      progress: 0.23, // Will be retrieved from user progress later
-      lastPosition: 1420, // Will be retrieved from user progress later
-      duration: zeroToOneData.source.duration_s,
-      description: "Notes on Startups, or How to Build the Future",
-      youtubeVideoId: zeroToOneData.source.video_id,
-      totalChapters: zeroToOneData.chapters.length
-    }];
+    console.log('[API] Fetching audiobooks from Convex...');
     
-    let filteredBooks = books;
+    // Get all audiobooks with user progress
+    const audiobooksWithProgress = await convex.query(api.progress.getUserAudiobooksWithProgress, {
+      userId: demoUserId
+    });
+    
+    let filteredBooks = audiobooksWithProgress.map(book => ({
+      id: book._id,
+      title: book.title,
+      author: book.author,
+      narrator: book.narrator || book.author,
+      coverUrl: book.coverUrl || "https://img.heroui.chat/image/book?w=400&h=600&u=default",
+      progress: book.progress || 0,
+      lastPosition: book.lastPosition || 0,
+      duration: book.duration,
+      description: book.description,
+      youtubeVideoId: book.youtubeVideoId,
+      totalChapters: book.totalChapters || 0
+    }));
     
     // Apply search filter
     if (query) {
@@ -58,13 +88,15 @@ export async function GET(request: NextRequest) {
     
     // Apply category filter
     if (category && category !== 'all') {
+      // For now, all books are considered business/startup category
       if (category === 'business' || category === 'startup') {
-        // Zero to One fits in business/startup category
-        filteredBooks = books;
+        // Keep all books
       } else {
         filteredBooks = [];
       }
     }
+    
+    console.log(`[API] Returning ${filteredBooks.length} audiobooks`);
     
     return NextResponse.json({
       success: true,
@@ -83,11 +115,57 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // For now, we only support Zero to One. Additional books would be added here.
-    return NextResponse.json(
-      { success: false, error: 'Adding new books not yet implemented' },
-      { status: 501 }
-    );
+    const { audiobook } = await request.json();
+    
+    if (!audiobook) {
+      return NextResponse.json(
+        { success: false, error: 'Audiobook data is required' },
+        { status: 400 }
+      );
+    }
+    
+    console.log('[API] Adding new audiobook to Convex:', audiobook.id);
+    
+    // Create audiobook in Convex
+    const audiobookId = await convex.mutation(api.audiobooks.createAudiobook, {
+      title: audiobook.title,
+      author: audiobook.author,
+      narrator: audiobook.narrator,
+      coverUrl: audiobook.coverUrl,
+      duration: audiobook.duration,
+      description: `YouTube audiobook: ${audiobook.title}`,
+      youtubeVideoId: audiobook.youtubeVideoId || audiobook.id,
+      totalChapters: audiobook.chapters?.length || 0,
+      isYouTube: true,
+      chapters: audiobook.chapters,
+      content: audiobook.content,
+    });
+    
+    // Get the created audiobook
+    const createdAudiobook = await convex.query(api.audiobooks.getAudiobook, {
+      audiobookId
+    });
+    
+    const responseBook = {
+      id: createdAudiobook?._id,
+      title: createdAudiobook?.title,
+      author: createdAudiobook?.author,
+      narrator: createdAudiobook?.narrator,
+      coverUrl: createdAudiobook?.coverUrl,
+      progress: 0,
+      lastPosition: 0,
+      duration: createdAudiobook?.duration,
+      description: createdAudiobook?.description,
+      youtubeVideoId: createdAudiobook?.youtubeVideoId,
+      totalChapters: createdAudiobook?.totalChapters || 0
+    };
+    
+    console.log('[API] Successfully added audiobook to Convex');
+    
+    return NextResponse.json({
+      success: true,
+      book: responseBook
+    });
     
   } catch (error) {
     console.error('[API] Books POST error:', error);

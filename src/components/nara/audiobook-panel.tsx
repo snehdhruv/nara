@@ -13,20 +13,49 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
   currentPosition,
   isPlaying
 }) => {
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const currentParagraphRef = React.useRef<HTMLParagraphElement>(null);
 
   // Calculate which paragraph to highlight based on current position
   const currentParagraphIndex = React.useMemo(() => {
-    if (!book.content) return -1;
-    return book.content.findIndex(
-      paragraph => 
-        currentPosition >= paragraph.startTime && 
-        currentPosition <= paragraph.endTime
-    );
+    if (!book.content || book.content.length === 0) return -1;
+    
+    // Find the paragraph that contains the current position
+    for (let i = 0; i < book.content.length; i++) {
+      const paragraph = book.content[i];
+      if (currentPosition >= paragraph.startTime && currentPosition < paragraph.endTime) {
+        return i;
+      }
+    }
+    
+    // If no exact match, find the closest paragraph before current position
+    let closest = -1;
+    for (let i = 0; i < book.content.length; i++) {
+      const paragraph = book.content[i];
+      if (paragraph.startTime <= currentPosition) {
+        closest = i;
+      } else {
+        break;
+      }
+    }
+    
+    return closest;
   }, [book.content, currentPosition]);
+
+  // Auto-scroll to current paragraph
+  React.useEffect(() => {
+    if (currentParagraphRef.current && scrollContainerRef.current) {
+      currentParagraphRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest'
+      });
+    }
+  }, [currentParagraphIndex]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-cream-200 relative">
-      <div className="flex-1 overflow-auto p-8 relative">
+      <div className="flex-1 overflow-auto p-8 relative" ref={scrollContainerRef}>
         <motion.div 
           className="max-w-2xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
@@ -52,6 +81,7 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
               {book.content.map((paragraph, index) => (
                 <motion.p 
                   key={index}
+                  ref={index === currentParagraphIndex ? currentParagraphRef : null}
                   className={`${index === currentParagraphIndex ? 'bg-wood-100 -mx-2 px-2 py-1 rounded-medium' : ''}`}
                   animate={{ 
                     opacity: index === currentParagraphIndex ? 1 : 0.8,
