@@ -1,6 +1,7 @@
 import React from 'react'
 import type { AppProps } from 'next/app'
 import { ConvexProvider, ConvexReactClient } from 'convex/react'
+import { ConvexAuthProvider } from '@convex-dev/auth/react'
 
 import '../styles/globals.css'
 
@@ -10,7 +11,9 @@ const convex = new ConvexReactClient(convexUrl)
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <ConvexProvider client={convex}>
-      <Component {...pageProps} />
+      <ConvexAuthProvider client={convex}>
+        <Component {...pageProps} />
+      </ConvexAuthProvider>
     </ConvexProvider>
   )
 }
