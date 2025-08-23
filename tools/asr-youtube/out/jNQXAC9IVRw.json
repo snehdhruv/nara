@@ -1,0 +1,74 @@
+{
+  "source": {
+    "platform": "youtube",
+    "video_id": "jNQXAC9IVRw",
+    "title": "Me at the zoo",
+    "channel": "jawed",
+    "duration_s": 19,
+    "rights": "owner_ok",
+    "language": "en",
+    "captions_kind": "asr",
+    "asr_provider": "openai",
+    "asr_model": "whisper-1"
+  },
+  "chapters": [
+    {
+      "idx": 1,
+      "title": "Intro",
+      "start_s": 0,
+      "end_s": 5
+    },
+    {
+      "idx": 2,
+      "title": "The cool thing",
+      "start_s": 5,
+      "end_s": 17
+    },
+    {
+      "idx": 3,
+      "title": "End",
+      "start_s": 17,
+      "end_s": 19
+    }
+  ],
+  "segments": [
+    {
+      "chapter_idx": 1,
+      "start_s": 0,
+      "end_s": 7,
+      "text": "Alright, so here we are in front of the elephants, and the cool thing about these guys is that"
+    },
+    {
+      "chapter_idx": 2,
+      "start_s": 7,
+      "end_s": 17,
+      "text": "they have really, really, really long fronts, and that's cool."
+    },
+    {
+      "chapter_idx": 3,
+      "start_s": 17,
+      "end_s": 19,
+      "text": "And that's pretty much all there is to say."
+    }
+  ],
+  "paragraphs": [
+    {
+      "chapter_idx": 1,
+      "start_s": 0,
+      "end_s": 7,
+      "text": "Alright, so here we are in front of the elephants, and the cool thing about these guys is that"
+    },
+    {
+      "chapter_idx": 2,
+      "start_s": 7,
+      "end_s": 17,
+      "text": "they have really, really, really long fronts, and that's cool."
+    },
+    {
+      "chapter_idx": 3,
+      "start_s": 17,
+      "end_s": 19,
+      "text": "And that's pretty much all there is to say."
+    }
+  ]
+}
