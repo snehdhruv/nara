@@ -5,8 +5,8 @@ export default function IndexPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to simple test page for now
-    router.push('/simple-test');
+    // Redirect to home page with SimpleAudioTest component
+    router.push('/home');
   }, [router]);
 
   return (

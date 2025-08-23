@@ -5,15 +5,15 @@
 
 import { useState, useRef } from 'react'
 
-// Configuration (from our working browser tests)
+// Configuration (from main/audio/config.ts)
 const CONFIG = {
   vapi: {
     apiKey: '765f8644-1464-4b36-a4fe-c660e15ba313',
     assistantId: '0bfc6364-690a-492b-9671-a109c5937342' // Nara STT-Only
   },
   elevenlabs: {
-    apiKey: 'sk_b7e2e8f3e3e4c4d4e4f4g4h4i4j4k4l4m4n4o4p4q4r4s4t4u4v4w4x4y4z',
-    voiceId: 'pNInz6obpgDQGcFmaJgB' // Paul Spotify
+    apiKey: 'sk_536c3f9ad29e9e6e4f0b4aee762afa6d8db7d750d7f64587', // Real API key from config.ts
+    voiceId: 'XfWTl5ev8ylYnkKBEqnB' // Real voice ID from config.ts
   }
 }
 
@@ -30,7 +30,7 @@ export default function SimpleAudioTest() {
   const [transcript, setTranscript] = useState('')
   const [status, setStatus] = useState('Ready to test')
   const [log, setLog] = useState<string[]>([])
-  
+
   const websocketRef = useRef<WebSocket | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
@@ -48,13 +48,13 @@ export default function SimpleAudioTest() {
 
       // 1. Get microphone access
       addLog('1. Requesting microphone access...')
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: { 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
           sampleRate: 16000,
           channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true
-        } 
+        }
       })
       mediaStreamRef.current = stream
       addLog('✅ Microphone access granted')
@@ -124,20 +124,20 @@ export default function SimpleAudioTest() {
     // Create audio context with 16kHz sample rate
     const audioContext = new AudioContext({ sampleRate: 16000 })
     audioContextRef.current = audioContext
-    
+
     const source = audioContext.createMediaStreamSource(stream)
     const processor = audioContext.createScriptProcessor(4096, 1, 1)
-    
+
     processor.onaudioprocess = (event) => {
       if (ws.readyState === WebSocket.OPEN) {
         const inputBuffer = event.inputBuffer.getChannelData(0)
-        
+
         // Convert Float32Array to Int16Array (PCM)
         const pcmBuffer = new Int16Array(inputBuffer.length)
         for (let i = 0; i < inputBuffer.length; i++) {
           pcmBuffer[i] = Math.max(-32768, Math.min(32767, inputBuffer[i] * 32768))
         }
-        
+
         try {
           ws.send(pcmBuffer.buffer)
         } catch (error) {
@@ -145,7 +145,7 @@ export default function SimpleAudioTest() {
         }
       }
     }
-    
+
     source.connect(processor)
     processor.connect(audioContext.destination)
   }
@@ -158,7 +158,7 @@ export default function SimpleAudioTest() {
 
     try {
       const message: VapiMessage = JSON.parse(data)
-      
+
       // Log all messages (truncated)
       const logData = JSON.stringify(message).substring(0, 100)
       addLog(`📥 ${message.type}: ${logData}${logData.length >= 100 ? '...' : ''}`)
@@ -169,7 +169,7 @@ export default function SimpleAudioTest() {
         if (text && text !== 'undefined') {
           setTranscript(text)
           addLog(`📝 USER: "${text}" (${message.transcriptType || 'unknown'})`)
-          
+
           // If it's a final transcript, trigger TTS
           if (message.transcriptType === 'final') {
             handleFinalTranscript(text)
@@ -190,7 +190,7 @@ export default function SimpleAudioTest() {
 
   const handleFinalTranscript = async (text: string) => {
     addLog(`🎯 Final transcript: "${text}"`)
-    
+
     // Mock AI response (your team will replace this with LangGraph)
     const mockResponses = [
       "This part of the book explores themes of identity and growth.",
@@ -199,9 +199,9 @@ export default function SimpleAudioTest() {
       "The main character is quite complex in this chapter."
     ]
     const aiResponse = mockResponses[Math.floor(Math.random() * mockResponses.length)]
-    
+
     addLog(`🧠 Mock AI Response: "${aiResponse}"`)
-    
+
     // Synthesize with ElevenLabs
     await synthesizeText(aiResponse)
   }
@@ -209,7 +209,7 @@ export default function SimpleAudioTest() {
   const synthesizeText = async (text: string) => {
     try {
       addLog(`🗣️ Synthesizing: "${text}"`)
-      
+
       const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${CONFIG.elevenlabs.voiceId}`, {
         method: 'POST',
         headers: {
@@ -234,15 +234,15 @@ export default function SimpleAudioTest() {
       const audioBlob = await response.blob()
       const audioUrl = URL.createObjectURL(audioBlob)
       const audio = new Audio(audioUrl)
-      
+
       audio.onended = () => {
         URL.revokeObjectURL(audioUrl)
         addLog('✅ TTS playback complete')
       }
-      
+
       await audio.play()
       addLog('🔊 Playing TTS audio...')
-      
+
     } catch (error) {
       addLog(`❌ TTS failed: ${error}`)
     }
@@ -253,17 +253,17 @@ export default function SimpleAudioTest() {
       websocketRef.current.close()
       websocketRef.current = null
     }
-    
+
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach(track => track.stop())
       mediaStreamRef.current = null
     }
-    
+
     if (audioContextRef.current) {
       audioContextRef.current.close()
       audioContextRef.current = null
     }
-    
+
     setIsListening(false)
     setStatus('Stopped')
     addLog('⏹️ Stopped listening')
@@ -282,7 +282,7 @@ export default function SimpleAudioTest() {
 
       {/* Status Card */}
       <div className={`p-4 rounded-lg border-2 ${
-        isListening ? 'text-green-600 bg-green-50 border-green-200' : 
+        isListening ? 'text-green-600 bg-green-50 border-green-200' :
         'text-blue-600 bg-blue-50 border-blue-200'
       }`}>
         <div className="flex items-center space-x-3">
@@ -300,19 +300,19 @@ export default function SimpleAudioTest() {
           onClick={startListening}
           disabled={isListening}
           className={`px-6 py-3 rounded-lg font-semibold ${
-            isListening 
+            isListening
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
               : 'bg-blue-600 text-white hover:bg-blue-700'
           }`}
         >
           🎤 Start Voice Pipeline
         </button>
-        
+
         <button
           onClick={stopListening}
           disabled={!isListening}
           className={`px-6 py-3 rounded-lg font-semibold ${
-            !isListening 
+            !isListening
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
               : 'bg-red-600 text-white hover:bg-red-700'
           }`}
