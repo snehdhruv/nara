@@ -1,0 +1,27 @@
+syntax = "proto3";
+package spotify.transcript;
+
+message Transcript {
+  repeated Segment segments = 1;
+  string language = 2;
+  string version = 3;
+  // Some feeds also include utterances or other metadata
+  repeated Utterance utterances = 4;
+}
+
+message Segment {
+  int32 start_ms = 1;
+  int32 end_ms = 2;
+  string text = 3;
+  // optional fields seen in some transcripts:
+  float confidence = 4;      // optional
+  string speaker = 5;        // optional
+  int32 word_count = 6;      // optional
+}
+
+message Utterance {
+  int32 start_ms = 1;
+  int32 end_ms = 2;
+  string speaker = 3;
+  repeated Segment segments = 4;
+}

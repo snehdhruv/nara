@@ -1,0 +1,39 @@
+{
+  "name": "asr-youtube",
+  "version": "1.0.0",
+  "description": "YouTube ASR (OpenAI Whisper) → Chaptered Transcript JSON Tool",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "asr-youtube": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "transcribe": "tsx src/cli.ts transcribe"
+  },
+  "dependencies": {
+    "yargs": "^17.7.2",
+    "zod": "^3.22.4",
+    "undici": "^6.6.2",
+    "ytdl-core": "^4.11.5",
+    "openai": "^4.28.0",
+    "yt-dlp-wrap": "^2.3.12",
+    "@distube/yt-dlp": "^2.0.1",
+    "@types/yargs": "^17.0.32"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "tsx": "^4.7.1",
+    "@types/node": "^20.11.17"
+  },
+  "keywords": [
+    "youtube",
+    "whisper",
+    "transcription",
+    "chapters",
+    "asr"
+  ],
+  "author": "Dedalus",
+  "license": "MIT"
+}
