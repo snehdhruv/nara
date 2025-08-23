@@ -130,6 +130,9 @@ export async function POST(request: NextRequest) {
       console.log(`[API] Processing question with VoiceAgentBridge → LangGraph: "${question}"`);
       
       // Use the new method that accepts dynamic transcript data
+      console.log(`[API] Calling processQuestionWithData with audiobook: ${currentAudiobook.title}`);
+      console.log(`[API] Transcript data has ${transcriptData.segments.length} segments`);
+      
       const result = await bridge.processQuestionWithData(
         question.trim(), 
         transcriptData,

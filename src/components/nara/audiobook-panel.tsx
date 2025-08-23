@@ -15,8 +15,18 @@ interface WordWithTiming {
   isActive: boolean;
 }
 
+interface SentenceTiming {
+  text: string;
+  startTime: number;
+  endTime: number;
+  isActive: boolean;
+  paragraphIndex: number;
+}
+
 // Cache for word timing calculations
 const wordTimingCache = new Map<string, WordWithTiming[]>();
+// Cache for sentence timing calculations (better performance)
+const sentenceTimingCache = new Map<string, SentenceTiming[]>();
 
 export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
   book,
@@ -27,70 +37,73 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
   const currentParagraphRef = React.useRef<HTMLParagraphElement>(null);
   const activeWordRef = React.useRef<HTMLSpanElement>(null);
 
-  // Parse content into words with timing information using improved algorithm and caching
-  const wordsWithTiming = React.useMemo(() => {
+  // Parse content into sentences with timing information for better performance
+  const sentencesWithTiming = React.useMemo(() => {
     if (!book.content || book.content.length === 0) return [];
     
     // Create cache key from book content
     const contentHash = book.id + '_' + JSON.stringify(book.content).slice(0, 100);
     
-    // Check cache first
-    let cachedWords = wordTimingCache.get(contentHash);
-    if (!cachedWords) {
-      console.log('[AudiobookPanel] Computing word timings for first time...');
-      const words: WordWithTiming[] = [];
+    // Check cache first for sentences
+    let cachedSentences = sentenceTimingCache.get(contentHash);
+    if (!cachedSentences) {
+      console.log('[AudiobookPanel] Computing sentence timings for first time...');
+      const sentences: SentenceTiming[] = [];
       
-      book.content.forEach((paragraph) => {
+      book.content.forEach((paragraph, pIndex) => {
         const text = paragraph.text;
-        const paragraphWords = text.split(/\s+/).filter(word => word.trim().length > 0);
         const duration = paragraph.endTime - paragraph.startTime;
         
-        // Calculate word weights based on length and complexity
-        const wordWeights = paragraphWords.map(word => {
-          const baseWeight = 1.0;
-          const lengthWeight = Math.max(0.5, word.length / 8); // Longer words take more time
-          const punctuationWeight = /[.!?;,]/.test(word) ? 1.3 : 1.0; // Punctuation adds pause
-          const capitalWeight = /^[A-Z]/.test(word) ? 1.1 : 1.0; // Capitalized words (names) take slightly more time
-          return baseWeight * lengthWeight * punctuationWeight * capitalWeight;
+        // Split into sentences using a more robust approach
+        const sentenceParts = text.split(/([.!?]+\s+)/).filter(part => part.trim().length > 0);
+        const completeSentences: string[] = [];
+        let currentSentence = '';
+        
+        sentenceParts.forEach((part) => {
+          currentSentence += part;
+          // If this part ends with sentence ending punctuation, complete the sentence
+          if (/[.!?]+\s*$/.test(part.trim())) {
+            completeSentences.push(currentSentence.trim());
+            currentSentence = '';
+          }
         });
         
-        const totalWeight = wordWeights.reduce((sum, weight) => sum + weight, 0);
+        // Add remaining text as a sentence if any
+        if (currentSentence.trim()) {
+          completeSentences.push(currentSentence.trim());
+        }
+        
+        // If no sentences found, treat entire paragraph as one sentence
+        if (completeSentences.length === 0) {
+          completeSentences.push(text);
+        }
+        
+        // Distribute time across sentences
+        const sentenceDuration = duration / completeSentences.length;
         let currentTime = paragraph.startTime;
         
-        paragraphWords.forEach((word, index) => {
-          const wordDuration = (wordWeights[index] / totalWeight) * duration;
-          const startTime = currentTime;
-          const endTime = startTime + wordDuration;
-          
-          words.push({
-            word: word.trim(),
-            startTime,
-            endTime,
-            isActive: false // Will be set below
+        completeSentences.forEach((sentence) => {
+          sentences.push({
+            text: sentence,
+            startTime: currentTime,
+            endTime: currentTime + sentenceDuration,
+            isActive: false,
+            paragraphIndex: pIndex
           });
-          
-          currentTime = endTime;
-        });
-        
-        // Add paragraph break marker
-        words.push({
-          word: '\n\n',
-          startTime: paragraph.endTime - 0.1,
-          endTime: paragraph.endTime,
-          isActive: false
+          currentTime += sentenceDuration;
         });
       });
       
       // Cache the computed timings
-      cachedWords = words;
-      wordTimingCache.set(contentHash, cachedWords);
-      console.log('[AudiobookPanel] Cached word timings for', words.length, 'words');
+      cachedSentences = sentences;
+      sentenceTimingCache.set(contentHash, cachedSentences);
+      console.log('[AudiobookPanel] Cached sentence timings for', sentences.length, 'sentences');
     }
     
     // Update active state based on current position (fast operation)
-    return cachedWords.map(word => ({
-      ...word,
-      isActive: currentPosition >= word.startTime && currentPosition < word.endTime
+    return cachedSentences.map(sentence => ({
+      ...sentence,
+      isActive: currentPosition >= sentence.startTime && currentPosition < sentence.endTime
     }));
   }, [book.content, book.id, currentPosition]);
 
@@ -120,32 +133,51 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
     return closest;
   }, [book.content, currentPosition]);
 
-  // Find the currently active word
-  const activeWordIndex = React.useMemo(() => {
-    return wordsWithTiming.findIndex(word => word.isActive);
-  }, [wordsWithTiming]);
+  // Find the currently active sentence
+  const activeSentenceIndex = React.useMemo(() => {
+    return sentencesWithTiming.findIndex(sentence => sentence.isActive);
+  }, [sentencesWithTiming]);
 
-  // Auto-scroll to active word
+  // Gentle auto-scroll to active sentence (less aggressive)
+  const [userScrolledManually, setUserScrolledManually] = React.useState(false);
+  const scrollTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Track manual scrolling
   React.useEffect(() => {
-    if (activeWordRef.current && scrollContainerRef.current) {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      setUserScrolledManually(true);
+      
+      // Reset after 3 seconds of no scrolling
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      scrollTimeoutRef.current = setTimeout(() => {
+        setUserScrolledManually(false);
+      }, 3000);
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Auto-scroll to active sentence only if user hasn't manually scrolled
+  React.useEffect(() => {
+    if (!userScrolledManually && activeWordRef.current && scrollContainerRef.current && activeSentenceIndex !== -1) {
       activeWordRef.current.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
         inline: 'nearest'
       });
     }
-  }, [activeWordIndex]);
-
-  // Auto-scroll to current paragraph fallback
-  React.useEffect(() => {
-    if (currentParagraphRef.current && scrollContainerRef.current && activeWordIndex === -1) {
-      currentParagraphRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-        inline: 'nearest'
-      });
-    }
-  }, [currentParagraphIndex, activeWordIndex]);
+  }, [activeSentenceIndex, userScrolledManually]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-cream-200 relative">
@@ -169,20 +201,20 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
                   {Math.floor(currentPosition / 60)}:{(Math.floor(currentPosition) % 60).toString().padStart(2, '0')}
                 </span>
               </div>
-              {activeWordIndex >= 0 && (
+              {activeSentenceIndex >= 0 && (
                 <span className="text-xs bg-green-100 px-2 py-1 rounded-full">
-                  Word {activeWordIndex + 1} of {wordsWithTiming.filter(w => w.word !== '\n\n').length}
+                  Sentence {activeSentenceIndex + 1} of {sentencesWithTiming.length}
                 </span>
               )}
             </div>
             
             {/* Reading progress bar */}
-            {wordsWithTiming.length > 0 && (
+            {sentencesWithTiming.length > 0 && (
               <div className="w-full bg-wood-200 rounded-full h-2">
                 <div 
                   className="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full transition-all duration-300 ease-out"
                   style={{
-                    width: `${Math.max(0, Math.min(100, (activeWordIndex / Math.max(1, wordsWithTiming.filter(w => w.word !== '\n\n').length - 1)) * 100))}%`
+                    width: `${Math.max(0, Math.min(100, (activeSentenceIndex / Math.max(1, sentencesWithTiming.length - 1)) * 100))}%`
                   }}
                 >
                   <div className="h-full w-2 bg-green-200 rounded-full ml-auto animate-pulse"></div>
@@ -193,51 +225,46 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
           
           {book.content && book.content.length > 0 ? (
             <div className="text-lg leading-relaxed text-wood-800 space-y-4">
-              {/* Render word-by-word with real-time highlighting */}
-              <div className="word-highlighted-content">
-                {wordsWithTiming.map((wordData, index) => {
-                  if (wordData.word === '\n\n') {
-                    return <div key={index} className="h-4" />;
-                  }
-                  
-                  const isActive = index === activeWordIndex;
-                  const isPastActive = index < activeWordIndex;
+              {/* Render sentence-by-sentence with smooth highlighting */}
+              <div className="sentence-highlighted-content">
+                {sentencesWithTiming.map((sentenceData, index) => {
+                  const isActive = index === activeSentenceIndex;
+                  const isPastActive = index < activeSentenceIndex;
                   
                   return (
-                    <motion.span
+                    <motion.p
                       key={index}
                       ref={isActive ? activeWordRef : null}
                       className={`
-                        inline-block transition-all duration-200 rounded-md px-1 mx-0.5
-                        cursor-default select-none
+                        mb-4 p-3 rounded-lg transition-all duration-300 cursor-default select-text
                         ${isActive 
-                          ? 'bg-gradient-to-r from-yellow-200 to-yellow-300 text-wood-900 shadow-lg font-semibold border border-yellow-400' 
+                          ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-wood-900 shadow-md border-l-4 border-yellow-400' 
                           : isPastActive 
-                            ? 'text-wood-500 opacity-70'
-                            : 'text-wood-800'
+                            ? 'text-wood-600 opacity-80 bg-gray-50'
+                            : 'text-wood-800 bg-transparent'
                         }
                       `}
                       animate={{
+                        scale: isActive ? 1.02 : 1,
                         backgroundColor: isActive 
-                          ? 'linear-gradient(to right, #FEF08A, #FDE047)' // yellow gradient
-                          : 'transparent',
-                        scale: isActive ? 1.08 : 1,
-                        boxShadow: isActive 
-                          ? '0 4px 12px rgba(251, 191, 36, 0.4), 0 2px 4px rgba(0, 0, 0, 0.1)'
-                          : '0 0 0 rgba(0, 0, 0, 0)',
-                        y: isActive ? -1 : 0
+                          ? 'rgba(254, 240, 138, 0.3)' // subtle yellow
+                          : isPastActive
+                            ? 'rgba(0, 0, 0, 0.02)'
+                            : 'rgba(0, 0, 0, 0)',
+                        borderLeftWidth: isActive ? 4 : 0,
+                        borderLeftColor: isActive ? '#FBBF24' : 'transparent'
                       }}
                       transition={{ 
-                        duration: 0.15,
-                        ease: "easeOut"
+                        duration: 0.4,
+                        ease: "easeInOut"
                       }}
-                      whileHover={!isActive && !isPastActive ? {
-                        scale: 1.02,
-                        color: '#92400e' // hover color
+                      whileHover={!isActive ? {
+                        backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                        scale: 1.01
                       } : {}}
                     >
-                      {wordData.word}
-                    </motion.span>
+                      {sentenceData.text}
+                    </motion.p>
                   );
                 })}
               </div>
