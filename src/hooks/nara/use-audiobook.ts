@@ -12,7 +12,7 @@ export const useAudiobook = (props?: UseAudiobookProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // YouTube player integration
+  // YouTube player integration (only initialize after book is loaded)
   const {
     isPlaying,
     currentTime: currentPosition,
@@ -25,7 +25,7 @@ export const useAudiobook = (props?: UseAudiobookProps) => {
     startTime: currentBook?.lastPosition || 0,
     onTimeUpdate: (time: number) => {
       // Update progress every 30 seconds
-      if (Math.floor(time) % 30 === 0) {
+      if (Math.floor(time) % 30 === 0 && currentBook) {
         updateProgress(time);
       }
     }
@@ -42,7 +42,7 @@ export const useAudiobook = (props?: UseAudiobookProps) => {
         
         if (data.success) {
           setCurrentBook(data.book);
-          setCurrentPosition(data.book.lastPosition || 0);
+          // YouTube player will handle initial position via startTime
         } else {
           setError(data.error || 'Failed to load book');
         }

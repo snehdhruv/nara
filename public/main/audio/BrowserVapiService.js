@@ -312,7 +312,8 @@ class BrowserVapiService extends EventTarget {
       if (data instanceof ArrayBuffer || data instanceof Blob) {
         const size = data.byteLength || data.size || 0;
 
-        if (this.isAssistantSpeaking && size > 100) {
+        // In STT-only mode, ignore all audio data from Vapi (we'll use 11labs via VoiceAgentBridge)
+        if (!this.config.sttOnly && this.isAssistantSpeaking && size > 100) {
           this.playAudioData(data);
         }
         return;
@@ -324,14 +325,22 @@ class BrowserVapiService extends EventTarget {
       switch (message.type) {
         case 'transcript':
           if (message.role === 'user' && message.transcriptType === 'final') {
+            console.log('[BrowserVapiService] Final user transcript received:', message.transcript);
             this.dispatchEvent(new CustomEvent('userTranscript', { detail: message.transcript }));
+            // Also dispatch the legacy 'final' event for compatibility
+            this.dispatchEvent(new CustomEvent('final', { detail: message.transcript }));
+          } else if (message.role === 'user' && message.transcriptType === 'partial') {
+            this.dispatchEvent(new CustomEvent('partialTranscript', { detail: message.transcript }));
           } else if (message.role === 'assistant') {
-            this.dispatchEvent(new CustomEvent('assistantTranscript', { detail: message.transcript }));
+            // In STT-only mode, ignore assistant transcripts since we won't use Vapi TTS
+            if (!this.config.sttOnly) {
+              this.dispatchEvent(new CustomEvent('assistantTranscript', { detail: message.transcript }));
+            }
           }
           break;
 
         case 'speech-update':
-          if (message.role === 'assistant') {
+          if (message.role === 'assistant' && !this.config.sttOnly) {
             this.isAssistantSpeaking = message.status === 'started';
             this.dispatchEvent(new CustomEvent('assistantSpeaking', { detail: this.isAssistantSpeaking }));
           }

@@ -37,37 +37,48 @@ export function NaraApp() {
     error: notesError 
   } = useNotes({ bookId: selectedBookId || undefined });
 
-  // Initialize voice service
+  // Initialize voice service using full VoiceAgentBridge orchestration
   const initializeVoiceService = async () => {
     try {
-      console.log('[Voice Agent] Initializing voice service...');
+      console.log('[Voice Agent] Initializing VoiceAgentBridge orchestration...');
 
-      // Check if audio modules are loaded
+      // Initialize the complete voice agent bridge via API
+      const bridgeResponse = await fetch('/api/voice-qa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'test-connection'
+        })
+      });
+
+      const bridgeData = await bridgeResponse.json();
+      if (!bridgeData.success) {
+        throw new Error('VoiceAgentBridge connection test failed');
+      }
+
+      console.log('[Voice Agent] VoiceAgentBridge ready:', bridgeData.status);
+
+      // Check if Vapi audio modules are loaded for STT only
       if (typeof window.NaraAudioFactory === 'undefined') {
         throw new Error('Voice audio modules not loaded');
       }
 
-      // Create audio pipeline with continuous voice detection
-      const audioManager = await window.NaraAudioFactory.createAudioPipeline({
-        vapiApiKey: '765f8644-1464-4b36-a4fe-c660e15ba313',
-        vapiAssistantId: '73c59df7-34d0-4e5a-89b0-d0668982c8cc',
-        vapi: {
-          audioQuality: {
-            sampleRate: 16000,
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          }
-          // Voice configuration is handled by the Vapi assistant settings
-        }
+      // Create Vapi service for STT only (VoiceAgentBridge handles the complete pipeline)
+      const vapiService = await window.NaraAudioFactory.createVapiService({
+        apiKey: '765f8644-1464-4b36-a4fe-c660e15ba313',
+        assistantId: '73c59df7-34d0-4e5a-89b0-d0668982c8cc',
+        sttOnly: true  // Use STT-only mode to prevent Vapi TTS
       });
 
-      // Set up event listeners for voice interactions
-      audioManager.addEventListener('userMessage', async (event: CustomEvent) => {
+      // Set up event listeners for voice interactions - Use Vapi ONLY for STT
+      vapiService.addEventListener('userTranscript', async (event: CustomEvent) => {
         const transcript = event.detail;
-        console.log(`[Voice Agent] User question: "${transcript}"`);
+        console.log(`[Voice Agent] STT transcript: "${transcript}"`);
         
-        // Process question with voice-qa API
+        // Stop Vapi listening (but keep connection for next interaction)
+        vapiService.stopConversation();
+        
+        // Process through VoiceAgentBridge which handles LangGraph → 11labs TTS pipeline
         try {
           const response = await fetch('/api/voice-qa', {
             method: 'POST',
@@ -76,7 +87,7 @@ export function NaraApp() {
               action: 'ask-question',
               question: transcript,
               context: {
-                currentChapter: 1, // Get from current audiobook state
+                currentChapter: 1, // TODO: Get from current audiobook state
                 currentTime: currentPosition,
                 audioPosition: currentPosition
               }
@@ -85,93 +96,56 @@ export function NaraApp() {
 
           const data = await response.json();
           if (data.success) {
-            // Create note from the conversation
-            handleVoiceResponse(transcript, data.result.answer);
+            console.log('[Voice Agent] LangGraph response received:', data.result);
+            
+            // Create note from the interaction
+            await createNoteFromVoiceInteraction(transcript, data.result.answer);
+            
+            // Play TTS audio from 11labs via LangGraph response
+            if (data.result.audioBuffer) {
+              console.log('[Voice Agent] Playing 11labs TTS response from LangGraph');
+              await playTTSAudio(data.result.audioBuffer);
+            }
+            
+            // Handle playback hints from LangGraph if provided
+            if (data.result.playbackHint) {
+              console.log('[Voice Agent] Seek hint:', data.result.playbackHint);
+              // TODO: Implement seek to playback hint position
+            }
+            
+            // Resume audiobook after TTS completes
+            if (!isMuted) {
+              setTimeout(() => play(), 500);
+            }
+            
+            setIsListening(false);
+            setIsVoiceAgentActive(false);
           }
         } catch (error) {
-          console.error('[Voice Agent] Question processing failed:', error);
+          console.error('[Voice Agent] VoiceAgentBridge processing failed:', error);
+          setIsListening(false);
+          setIsVoiceAgentActive(false);
         }
       });
 
-      // Pause audiobook when assistant starts speaking
-      audioManager.addEventListener('speakingStateChanged', (event: CustomEvent) => {
-        const isSpeaking = event.detail;
-        if (isSpeaking && isPlaying) {
-          pause();
-          console.log('[Voice Agent] Paused audiobook for assistant response');
-        }
-      });
-
-      audioManager.addEventListener('conversationStopped', () => {
-        console.log('[Voice Agent] Conversation ended - resuming playbook');
+      vapiService.addEventListener('conversationStopped', () => {
+        console.log('[Voice Agent] STT conversation ended');
         setIsListening(false);
         setIsVoiceAgentActive(false);
-        
-        // Resume audiobook if it was paused and not muted
-        if (!isMuted) {
-          play();
-          console.log('[Voice Agent] Resumed audiobook playback');
-        }
       });
 
-      window.audioManager = audioManager;
-      console.log('[Voice Agent] Voice service initialized');
+      window.vapiService = vapiService;
+      console.log('[Voice Agent] VoiceAgentBridge orchestration ready');
       
     } catch (error) {
-      console.error('[Voice Agent] Voice service initialization failed:', error);
+      console.error('[Voice Agent] VoiceAgentBridge initialization failed:', error);
       throw error;
     }
   };
 
-  const handleNarratorActivate = async () => {
+  // Create note from voice interaction (separate from TTS handling)
+  const createNoteFromVoiceInteraction = async (transcript: string, response: string) => {
     try {
-      if (isListening) {
-        // Stop listening
-        setIsListening(false);
-        setIsVoiceAgentActive(false);
-        console.log('[Voice Agent] Stopped listening');
-        
-        // Stop the voice service
-        if (window.audioManager) {
-          window.audioManager.stopListening();
-        }
-      } else {
-        // Start listening
-        setIsListening(true);
-        setIsVoiceAgentActive(true);
-        console.log('[Voice Agent] Started listening...');
-        
-        // Pause current audiobook if active and not muted
-        if (isPlaying && !isMuted) {
-          pause();
-          console.log('[Voice Agent] Paused audiobook for voice listening');
-        }
-        
-        // Initialize voice service if not already done
-        if (!window.audioManager) {
-          await initializeVoiceService();
-        }
-        
-        // Start listening (this enables continuous voice detection through Vapi)
-        await window.audioManager.startListening();
-      }
-    } catch (error) {
-      console.error('[Voice Agent] Activation failed:', error);
-      setIsVoiceAgentActive(false);
-      setIsListening(false);
-    }
-  };
-
-  const handleMuteToggle = () => {
-    setIsMuted(!isMuted);
-    console.log(`[Audio] ${!isMuted ? 'Muted' : 'Unmuted'}`);
-    // TODO: Connect to actual mute functionality when audio team provides interface
-  };
-
-  // Voice response handler - creates notes from voice conversations
-  const handleVoiceResponse = React.useCallback(async (transcript: string, response: string) => {
-    try {
-      // Create note through API
       const noteResponse = await fetch('/api/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -189,42 +163,107 @@ export function NaraApp() {
 
       const data = await noteResponse.json();
       if (data.success) {
-        // Add note to local state
         addNote(data.note);
         console.log('[Voice Agent] Note created:', data.note.id);
       } else {
         console.error('[Voice Agent] Failed to create note:', data.error);
-        // Fallback to local note creation
-        addNote({
-          id: Date.now().toString(),
-          title: "Voice Discussion",
-          content: `Q: ${transcript}\n\nA: ${response}`,
-          timestamp: Date.now() / 1000,
-          audiobookPosition: currentPosition,
-          topic: "Voice Chat"
-        });
       }
     } catch (error) {
       console.error('[Voice Agent] Note creation failed:', error);
-      // Fallback to local note creation
-      addNote({
-        id: Date.now().toString(),
-        title: "Voice Discussion",
-        content: `Q: ${transcript}\n\nA: ${response}`,
-        timestamp: Date.now() / 1000,
-        audiobookPosition: currentPosition,
-        topic: "Voice Chat"
-      });
     }
-    
-    // Reset listening state
-    setIsListening(false);
-  }, [addNote, currentPosition]);
+  };
+
+  // Play TTS audio from base64 encoded buffer
+  const playTTSAudio = async (base64AudioBuffer: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      try {
+        // Convert base64 to blob
+        const binaryData = atob(base64AudioBuffer);
+        const bytes = new Uint8Array(binaryData.length);
+        for (let i = 0; i < binaryData.length; i++) {
+          bytes[i] = binaryData.charCodeAt(i);
+        }
+        
+        const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        
+        // Configure audio playback
+        audio.volume = 0.9;
+        
+        // Set up event handlers
+        audio.addEventListener('ended', () => {
+          console.log('[Voice Agent] LangGraph TTS playback completed');
+          URL.revokeObjectURL(audioUrl);
+          resolve();
+        });
+        
+        audio.addEventListener('error', (error) => {
+          console.error('[Voice Agent] TTS audio playback error:', error);
+          URL.revokeObjectURL(audioUrl);
+          reject(error);
+        });
+        
+        // Start playback
+        audio.play().catch(reject);
+        console.log('[Voice Agent] LangGraph TTS playback started');
+        
+      } catch (error) {
+        console.error('[Voice Agent] TTS audio setup failed:', error);
+        reject(error);
+      }
+    });
+  };
+
+  const handleNarratorActivate = async () => {
+    try {
+      if (isListening) {
+        // Stop listening
+        setIsListening(false);
+        setIsVoiceAgentActive(false);
+        console.log('[Voice Agent] Stopped listening');
+        
+        // Stop the voice service
+        if (window.vapiService) {
+          window.vapiService.stopConversation();
+        }
+      } else {
+        // Start listening
+        setIsListening(true);
+        setIsVoiceAgentActive(true);
+        console.log('[Voice Agent] Started listening...');
+        
+        // Pause current audiobook if active and not muted
+        if (isPlaying && !isMuted) {
+          pause();
+          console.log('[Voice Agent] Paused audiobook for voice listening');
+        }
+        
+        // Initialize voice service if not already done
+        if (!window.vapiService) {
+          await initializeVoiceService();
+        }
+        
+        // Start listening (this enables STT through Vapi, VoiceAgentBridge handles the rest)
+        await window.vapiService.startConversation();
+      }
+    } catch (error) {
+      console.error('[Voice Agent] Activation failed:', error);
+      setIsVoiceAgentActive(false);
+      setIsListening(false);
+    }
+  };
+
+  const handleMuteToggle = () => {
+    setIsMuted(!isMuted);
+    console.log(`[Audio] ${!isMuted ? 'Muted' : 'Unmuted'}`);
+    // TODO: Connect to actual mute functionality when audio team provides interface
+  };
+
 
   React.useEffect(() => {
-    // TODO: Setup voice service event listeners when available
-    // voiceService.on('transcription', handleVoiceResponse);
-    // return () => voiceService.off('transcription', handleVoiceResponse);
+    // VoiceAgentBridge handles all voice interactions end-to-end
+    // No additional setup needed for frontend
   }, []);
 
   // Handle book selection from dashboard

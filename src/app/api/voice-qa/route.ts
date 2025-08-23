@@ -44,12 +44,35 @@ export async function POST(request: NextRequest) {
       const bridge = await getBridge();
       const startTime = Date.now();
       
-      console.log(`[API] Processing question: "${question}"`);
+      console.log(`[API] Processing question with VoiceAgentBridge → LangGraph: "${question}"`);
       
       const result = await bridge.processQuestion(question.trim());
       const totalTime = Date.now() - startTime;
       
-      console.log(`[API] Question answered in ${totalTime}ms`);
+      console.log(`[API] LangGraph answered in ${totalTime}ms`);
+      
+      // Generate TTS for the response using 11labs via TTS API
+      const baseUrl = request.url.replace('/voice-qa', '');
+      const ttsResponse = await fetch(`${baseUrl}/tts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: result.markdown
+        })
+      });
+
+      if (!ttsResponse.ok) {
+        const errorText = await ttsResponse.text();
+        console.error(`[API] 11labs TTS generation failed: ${ttsResponse.status} - ${errorText}`);
+        return NextResponse.json(
+          { success: false, error: `TTS generation failed: ${ttsResponse.status}` },
+          { status: 500 }
+        );
+      }
+
+      const audioBuffer = await ttsResponse.arrayBuffer();
+      
+      console.log(`[API] 11labs TTS generated: ${audioBuffer.byteLength} bytes`);
       
       return NextResponse.json({
         success: true,
@@ -60,7 +83,8 @@ export async function POST(request: NextRequest) {
           playbackHint: result.playbackHint,
           latency: result.latency_ms,
           totalTime,
-          interactionId: result.interactionId
+          interactionId: result.interactionId,
+          audioBuffer: Buffer.from(audioBuffer).toString('base64') // Encode audio for JSON transport
         }
       });
     }
