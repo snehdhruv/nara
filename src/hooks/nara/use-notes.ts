@@ -6,22 +6,10 @@ const initialNotes: Note[] = [
   {
     id: "1",
     title: "Understanding Habit Formation",
-    content: "We discussed how habits are formed through the four-step process: cue, craving, response, and reward.",
+    content: "We discussed how habits are formed through the four-step process: cue, craving, response, and reward. Habits follow a predictable pattern and small changes compound over time. The key insight is that habits are the compound interest of self-improvement.",
     timestamp: 15,
-    categories: {
-      realized: [
-        "Habits follow a predictable pattern",
-        "Small changes compound over time"
-      ],
-      learned: [
-        "The four steps of habit formation: cue, craving, response, reward",
-        "Habits are the compound interest of self-improvement"
-      ],
-      implement: [
-        "Identify the cues that trigger my bad habits",
-        "Create a habit scorecard to become aware of daily behaviors"
-      ]
-    }
+    audiobookPosition: 420, // 7 minutes into the book
+    topic: "Habit Formation"
   }
 ];
 
@@ -29,7 +17,7 @@ export const useNotes = () => {
   const [notes, setNotes] = React.useState<Note[]>(initialNotes);
   
   const addNote = (note: Note) => {
-    setNotes(prev => [note, ...prev]);
+    setNotes(prev => [...prev, note]);
   };
   
   const removeNote = (id: string) => {

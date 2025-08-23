@@ -1,5 +1,5 @@
 import React from "react";
-import { Slider, Button, Tooltip } from "@heroui/react";
+import { Slider, Button } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { Book } from "@/types/nara/book";
 
@@ -32,90 +32,105 @@ export const TopBar: React.FC<TopBarProps> = ({
   const percentComplete = (currentPosition / totalDuration) * 100;
 
   return (
-    <div className="flex items-center px-6 py-3 bg-cream-50 border-b border-cream-300 shadow-sm">
-      <Button
-        isIconOnly
-        variant="light"
-        className="mr-2 text-wood-700"
-        onPress={onBackToDashboard}
-        aria-label="Back to dashboard"
-      >
-        <Icon icon="lucide:chevron-left" width={20} />
-      </Button>
-      
-      <div className="flex items-center gap-4">
+    <div className="flex items-center justify-between w-full px-6 py-4 bg-white border-b border-gray-200">
+      {/* Left section: Back button + Book info */}
+      <div className="flex items-center gap-4 flex-shrink-0">
+        <Button
+          isIconOnly
+          variant="light"
+          className="text-gray-600 hover:text-gray-800"
+          onPress={onBackToDashboard}
+          aria-label="Back to dashboard"
+        >
+          <Icon icon="lucide:chevron-left" width={20} />
+        </Button>
+        
         <img 
           src={book.coverUrl} 
           alt={book.title} 
-          className="h-12 w-12 rounded-sm shadow-sm object-cover"
+          className="h-12 w-12 rounded object-cover"
         />
-        <div>
-          <h2 className="font-semibold text-medium text-wood-800">{book.title}</h2>
-          <p className="text-small text-wood-600">Narrated by {book.narrator}</p>
+        
+        <div className="min-w-0">
+          <h2 className="font-semibold text-base text-gray-900 truncate">{book.title}</h2>
+          <p className="text-sm text-gray-600 truncate">Narrated by {book.narrator}</p>
         </div>
       </div>
 
-      <div className="flex-1 flex items-center gap-4 px-8">
-        <Button 
-          isIconOnly 
-          variant="light" 
-          className="text-wood-600 hover:text-wood-800"
-          onPress={() => {}}
-          aria-label="Previous chapter"
-        >
-          <Icon icon="lucide:skip-back" width={20} />
-        </Button>
+      {/* Center section: Media controls + Progress */}
+      <div className="flex items-center gap-6 flex-1 max-w-3xl mx-8">
+        {/* Media controls */}
+        <div className="flex items-center gap-2">
+          <Button 
+            isIconOnly 
+            variant="light" 
+            className="text-gray-600 hover:text-gray-800"
+            onPress={() => {}}
+            aria-label="Previous chapter"
+          >
+            <Icon icon="lucide:skip-back" width={20} />
+          </Button>
 
-        <Button 
-          isIconOnly 
-          variant="flat" 
-          color="primary"
-          className="h-10 w-10 rounded-full bg-wood-600 text-white hover:bg-wood-700"
-          onPress={togglePlayback}
-          aria-label={isPlaying ? "Pause" : "Play"}
-        >
-          <Icon icon={isPlaying ? "lucide:pause" : "lucide:play"} width={20} />
-        </Button>
+          <Button 
+            isIconOnly 
+            variant="flat" 
+            className="h-12 w-12 rounded-full bg-gray-900 text-white hover:bg-gray-800"
+            onPress={togglePlayback}
+            aria-label={isPlaying ? "Pause" : "Play"}
+          >
+            <Icon icon={isPlaying ? "lucide:pause" : "lucide:play"} width={20} />
+          </Button>
 
-        <Button 
-          isIconOnly 
-          variant="light"
-          className="text-wood-600 hover:text-wood-800" 
-          onPress={() => {}}
-          aria-label="Next chapter"
-        >
-          <Icon icon="lucide:skip-forward" width={20} />
-        </Button>
+          <Button 
+            isIconOnly 
+            variant="light"
+            className="text-gray-600 hover:text-gray-800" 
+            onPress={() => {}}
+            aria-label="Next chapter"
+          >
+            <Icon icon="lucide:skip-forward" width={20} />
+          </Button>
+        </div>
 
-        <div className="flex-1 flex items-center gap-3">
-          <span className="text-tiny text-wood-600">{formatTime(currentPosition)}</span>
+        {/* Progress section */}
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <span className="text-sm text-gray-600 font-mono tabular-nums flex-shrink-0">
+            {formatTime(currentPosition)}
+          </span>
+          
           <Slider 
             aria-label="Progress" 
             value={percentComplete} 
             className="flex-1"
             size="sm"
             color="warning"
+            classNames={{
+              track: "bg-gray-200",
+              filler: "bg-orange-400"
+            }}
           />
-          <span className="text-tiny text-wood-600">{formatTime(totalDuration)}</span>
+          
+          <span className="text-sm text-gray-600 font-mono tabular-nums flex-shrink-0">
+            {formatTime(totalDuration)}
+          </span>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Tooltip content="Playback speed">
-          <Button 
-            variant="light" 
-            size="sm"
-            className="text-wood-700"
-            onPress={() => {
-              const speeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
-              const currentIndex = speeds.indexOf(playbackSpeed);
-              const nextIndex = (currentIndex + 1) % speeds.length;
-              setPlaybackSpeed(speeds[nextIndex]);
-            }}
-          >
-            {playbackSpeed}x
-          </Button>
-        </Tooltip>
+      {/* Right section: Playback speed */}
+      <div className="flex items-center flex-shrink-0">
+        <Button 
+          variant="light" 
+          size="sm"
+          className="text-gray-700 hover:text-gray-900 font-medium"
+          onPress={() => {
+            const speeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+            const currentIndex = speeds.indexOf(playbackSpeed);
+            const nextIndex = (currentIndex + 1) % speeds.length;
+            setPlaybackSpeed(speeds[nextIndex]);
+          }}
+        >
+          {playbackSpeed}x
+        </Button>
       </div>
     </div>
   );

@@ -195,7 +195,7 @@ const BookShelves: React.FC<BookShelvesProps> = ({
   onSelectBook 
 }) => {
   return (
-    <div className="space-y-12">
+    <div className="space-y-16">
       {/* Currently Reading Section */}
       <BookShelf 
         title="Currently Reading"
@@ -240,8 +240,8 @@ const BookShelf: React.FC<BookShelfProps> = ({
   showProgress 
 }) => {
   return (
-    <section className="mb-12">
-      <div className="flex justify-between items-center mb-8 pb-2 border-b border-[#d4b9a8]">
+    <section className="mb-16">
+      <div className="flex justify-between items-center mb-12 pb-3 border-b border-[#d4b9a8]">
         <h2 className="text-2xl font-medium text-[#5d534f]">{title}</h2>
         <Button
           variant="light"
@@ -258,9 +258,9 @@ const BookShelf: React.FC<BookShelfProps> = ({
           <p className="text-[#8a817c]">{emptyMessage}</p>
         </div>
       ) : (
-        <div className="relative mb-8 mt-10">
+        <div className="relative">
           {/* 3D Shelf - Using relative height with min/max constraints */}
-          <div className="relative h-[min(420px,50vh)] min-h-[300px] mb-2">
+          <div className="relative h-[min(420px,50vh)] min-h-[300px] mb-8">
             {/* Shelf surface */}
             <div className="absolute bottom-0 left-0 right-0 h-[24px] bg-[#e8e4df] rounded-sm shadow-[0_2px_4px_rgba(0,0,0,0.1)]">
               {/* Shelf front edge */}
@@ -271,7 +271,7 @@ const BookShelf: React.FC<BookShelfProps> = ({
             <div className="absolute bottom-[-10px] left-[10px] right-[10px] h-[8px] bg-black/10 blur-md rounded-full"></div>
             
             {/* Books on shelf - Improved alignment and organization */}
-            <div className={`absolute bottom-[24px] left-0 right-0 px-4 md:px-6 flex ${books.length <= 3 ? 'justify-center' : 'justify-start'} gap-4 md:gap-6 lg:gap-10 overflow-x-auto pb-2 scrollbar-hidden`}>
+            <div className={`absolute bottom-[32px] left-0 right-0 px-4 md:px-6 flex ${books.length <= 3 ? 'justify-center' : 'justify-start'} gap-4 md:gap-6 lg:gap-8 overflow-x-auto pb-4 scrollbar-hidden`}>
               {books.map((book) => (
                 <motion.div
                   key={book.id}
@@ -287,7 +287,7 @@ const BookShelf: React.FC<BookShelfProps> = ({
                       <img 
                         src={book.coverUrl} 
                         alt={book.title}
-                        className="w-[clamp(100px,15vw,224px)] h-[clamp(150px,22vw,320px)] object-cover rounded-sm shadow-[6px_6px_12px_rgba(0,0,0,0.15)]"
+                        className="w-[clamp(100px,14vw,200px)] h-[clamp(150px,20vw,280px)] object-cover rounded-sm shadow-[6px_6px_12px_rgba(0,0,0,0.15)]"
                       />
                         
                       {/* Book spine/side effect - thicker */}
@@ -312,9 +312,9 @@ const BookShelf: React.FC<BookShelfProps> = ({
                     </div>
                   </div>
                   
-                  <div className="mt-3 w-[clamp(100px,15vw,224px)] text-center">
-                    <h3 className="text-base font-medium line-clamp-1">{book.title}</h3>
-                    <p className="text-sm text-[#8a817c] line-clamp-1">{book.author}</p>
+                  <div className="mt-4 w-[clamp(100px,14vw,200px)] text-center">
+                    <h3 className="text-sm font-medium line-clamp-2 leading-tight">{book.title}</h3>
+                    <p className="text-xs text-[#8a817c] line-clamp-1 mt-1">{book.author}</p>
                   </div>
                 </motion.div>
               ))}
