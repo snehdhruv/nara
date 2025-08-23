@@ -12,6 +12,9 @@ interface YouTubeVideo {
   duration: string;
   thumbnailUrl: string;
   description?: string;
+  hasClosedCaptions?: boolean;
+  publishedAt?: string;
+  viewCount?: string;
 }
 
 interface YouTubeSearchProps {
@@ -28,50 +31,34 @@ export const YouTubeSearch: React.FC<YouTubeSearchProps> = ({
   const [isSearching, setIsSearching] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState<string | null>(null);
   
-  // Sample search results for demo (would be replaced with actual YouTube API)
-  const sampleResults: YouTubeVideo[] = [
-    {
-      videoId: "dz_4Mjyqbqk",
-      title: "Zero to One By Peter Thiel #audiobooks", 
-      channel: "Year of Inspiration",
-      duration: "4:42:42",
-      thumbnailUrl: "https://i.ytimg.com/vi/dz_4Mjyqbqk/maxresdefault.jpg",
-      description: "Complete audiobook of Zero to One by Peter Thiel"
-    },
-    {
-      videoId: "XQ8a8NmDrFg",
-      title: "The Lean Startup by Eric Ries (Audiobook)",
-      channel: "Business AudioBooks", 
-      duration: "8:45:12",
-      thumbnailUrl: "https://i.ytimg.com/vi/XQ8a8NmDrFg/maxresdefault.jpg",
-      description: "Full audiobook - The Lean Startup methodology"
-    },
-    {
-      videoId: "U3nT2KDAGOc",
-      title: "Good to Great by Jim Collins - Full Audiobook",
-      channel: "Leadership Books",
-      duration: "9:12:34", 
-      thumbnailUrl: "https://i.ytimg.com/vi/U3nT2KDAGOc/maxresdefault.jpg",
-      description: "Why some companies make the leap and others don't"
-    }
-  ];
+  // Real YouTube search powered by API
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     
     setIsSearching(true);
     
-    // Simulate search delay
-    setTimeout(() => {
-      // Filter sample results based on search query for demo
-      const filtered = sampleResults.filter(video => 
-        video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        video.channel.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+    try {
+      console.log('[YouTube Search] Searching for:', searchQuery);
       
-      setSearchResults(filtered.length > 0 ? filtered : sampleResults);
+      const response = await fetch(`/api/youtube/search?q=${encodeURIComponent(searchQuery)}&maxResults=10`);
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('[YouTube Search] Found results:', data.results.length);
+        setSearchResults(data.results);
+      } else {
+        console.error('[YouTube Search] Search failed:', data.error);
+        setSearchResults([]);
+        alert('Search failed: ' + data.error);
+      }
+    } catch (error) {
+      console.error('[YouTube Search] Search error:', error);
+      setSearchResults([]);
+      alert('Search failed. Please try again.');
+    } finally {
       setIsSearching(false);
-    }, 1000);
+    }
   };
 
   const handleVideoSelect = async (video: YouTubeVideo) => {
@@ -187,9 +174,17 @@ export const YouTubeSearch: React.FC<YouTubeSearchProps> = ({
                         <h3 className="text-lg font-medium text-[#5d534f] mb-2 line-clamp-2">
                           {video.title}
                         </h3>
-                        <p className="text-sm text-[#8a817c] mb-2">
-                          {video.channel}
-                        </p>
+                        <div className="flex items-center gap-2 mb-2">
+                          <p className="text-sm text-[#8a817c]">
+                            {video.channel}
+                          </p>
+                          {video.hasClosedCaptions && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">
+                              <Icon icon="lucide:closed-captioning" width={12} />
+                              CC
+                            </span>
+                          )}
+                        </div>
                         {video.description && (
                           <p className="text-sm text-[#8a817c] line-clamp-2">
                             {video.description}

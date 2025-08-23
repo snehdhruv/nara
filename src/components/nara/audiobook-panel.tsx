@@ -163,32 +163,67 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
     };
   }, []);
 
-  // Auto-scroll to active word chunk only if user hasn't manually scrolled
-  React.useEffect(() => {
-    if (!userScrolledManually && activeWordRef.current && scrollContainerRef.current && activeChunkIndex !== -1) {
-      activeWordRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-        inline: 'nearest'
-      });
-    }
-  }, [activeChunkIndex, userScrolledManually]);
+  // Enhanced auto-scroll with React best practices
+  const autoScrollTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const isInitialRenderRef = React.useRef(true);
+  const lastScrolledChunkRef = React.useRef(-1);
 
-  // Initial scroll to current position when component loads
   React.useEffect(() => {
-    if (activeWordRef.current && scrollContainerRef.current && activeChunkIndex !== -1 && !userScrolledManually) {
-      // Add a slight delay to ensure the DOM is ready
-      const timer = setTimeout(() => {
-        activeWordRef.current?.scrollIntoView({
-          behavior: 'instant', // Instant for initial positioning
-          block: 'center',
+    // Clear any pending auto-scroll
+    if (autoScrollTimeoutRef.current) {
+      clearTimeout(autoScrollTimeoutRef.current);
+    }
+
+    // Don't auto-scroll if user has manually scrolled recently or no active chunk
+    if (userScrolledManually || activeChunkIndex === -1 || !activeWordRef.current || !scrollContainerRef.current) {
+      return;
+    }
+
+    // Don't auto-scroll if we're on the same chunk (prevents jitter)
+    if (activeChunkIndex === lastScrolledChunkRef.current && !isInitialRenderRef.current) {
+      return;
+    }
+
+    // Use requestAnimationFrame for smooth, frame-synchronized scrolling
+    const performScroll = () => {
+      if (!activeWordRef.current || !scrollContainerRef.current) return;
+
+      const scrollBehavior = isInitialRenderRef.current ? 'instant' : 'smooth';
+      const blockPosition = isInitialRenderRef.current ? 'center' : 'nearest';
+
+      try {
+        activeWordRef.current.scrollIntoView({
+          behavior: scrollBehavior as ScrollBehavior,
+          block: blockPosition as ScrollLogicalPosition,
           inline: 'nearest'
         });
-      }, 100);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [wordChunksWithTiming.length]); // Re-run when chunks are calculated
+        
+        lastScrolledChunkRef.current = activeChunkIndex;
+        isInitialRenderRef.current = false;
+        
+        console.log(`[AutoScroll] Scrolled to chunk ${activeChunkIndex} (${scrollBehavior})`);
+      } catch (error) {
+        console.warn('[AutoScroll] Scroll failed:', error);
+      }
+    };
+
+    // Use requestAnimationFrame for better performance
+    autoScrollTimeoutRef.current = setTimeout(() => {
+      requestAnimationFrame(performScroll);
+    }, isInitialRenderRef.current ? 50 : 100); // Faster initial scroll
+
+    return () => {
+      if (autoScrollTimeoutRef.current) {
+        clearTimeout(autoScrollTimeoutRef.current);
+      }
+    };
+  }, [activeChunkIndex, userScrolledManually, wordChunksWithTiming.length]);
+
+  // Reset initial render flag when content changes
+  React.useEffect(() => {
+    isInitialRenderRef.current = true;
+    lastScrolledChunkRef.current = -1;
+  }, [book.id]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-cream-200 relative">
