@@ -865,14 +865,35 @@ export class VapiService extends EventEmitter {
     }
   }
 
-  async destroy(): Promise<void> {
+  async stop(): Promise<void> {
+    console.log('[VapiService] Stopping all audio processing...');
+    
+    // Stop any active session
     await this.stopListening();
-
+    
+    // Stop media recorder if active
+    if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+      this.mediaRecorder.stop();
+    }
+    
+    // Close websocket connection
+    if (this.websocket) {
+      this.websocket.close();
+      this.websocket = null;
+    }
+    
+    // Stop audio stream
     if (this.audioStream) {
       this.audioStream.getTracks().forEach(track => track.stop());
       this.audioStream = null;
     }
+    
+    this.isConnected = false;
+    this.emit('stopped');
+  }
 
+  async destroy(): Promise<void> {
+    await this.stop();
     this.removeAllListeners();
   }
 }
