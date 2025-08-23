@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nara Audiobook Copilot - Modular Test</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .title {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .status-title {
+            color: white;
+            font-weight: 500;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.ready { background: #51cf66; }
+        .status-indicator.active { background: #339af0; }
+        .status-indicator.processing { background: #ffd43b; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            min-width: 140px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.primary { background: linear-gradient(135deg, #51cf66 0%, #40c057 100%); }
+        .btn.danger { background: linear-gradient(135deg, #ff6b6b 0%, #fa5252 100%); }
+        .btn.secondary { background: linear-gradient(135deg, #868e96 0%, #495057 100%); }
+
+        .conversation-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-height: 200px;
+        }
+
+        .conversation-title {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 18px;
+            border-radius: 12px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .message.user {
+            background: rgba(102, 126, 234, 0.3);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.assistant {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            margin-right: auto;
+        }
+
+        .message-label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .metric-value {
+            color: #51cf66;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .metric-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .log-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .log-entry {
+            color: #e0e0e0;
+            margin-bottom: 5px;
+            line-height: 1.4;
+        }
+
+        .log-entry.error { color: #ff6b6b; }
+        .log-entry.success { color: #51cf66; }
+        .log-entry.info { color: #339af0; }
+        .log-entry.warning { color: #ffd43b; }
+
+        .config-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🎧 Nara Audiobook Copilot</h1>
+            <p class="subtitle">Modular Audio Pipeline Test</p>
+        </div>
+
+        <div class="config-info">
+            <strong>Architecture:</strong> Modular Browser Components<br>
+            <strong>Services:</strong> BrowserVapiService + BrowserTTSService + BrowserAudioPlayer<br>
+            <strong>Features:</strong> Enhanced Audio Processing, Noise Suppression, Wake Word Detection
+        </div>
+
+        <div class="status-grid">
+            <div class="status-card">
+                <div class="status-title">
+                    <div class="status-indicator" id="audioManagerStatus"></div>
+                    Audio Manager
+                </div>
+                <div id="audioManagerState">Initializing...</div>
+            </div>
+            <div class="status-card">
+                <div class="status-title">
+                    <div class="status-indicator" id="vapiStatus"></div>
+                    Vapi Service
+                </div>
+                <div id="vapiState">Not initialized</div>
+            </div>
+            <div class="status-card">
+                <div class="status-title">
+                    <div class="status-indicator" id="ttsStatus"></div>
+                    TTS Service
+                </div>
+                <div id="ttsState">Not initialized</div>
+            </div>
+            <div class="status-card">
+                <div class="status-title">
+                    <div class="status-indicator" id="audioPlayerStatus"></div>
+                    Audio Player
+                </div>
+                <div id="audioPlayerState">Not initialized</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn secondary" id="initBtn" onclick="initializeAudio()">Initialize Audio</button>
+            <button class="btn primary" id="startBtn" onclick="startConversation()" disabled>Start Conversation</button>
+            <button class="btn danger" id="stopBtn" onclick="stopConversation()" disabled>Stop Conversation</button>
+            <button class="btn secondary" id="testBtn" onclick="testAudio()" disabled>Test Audio</button>
+        </div>
+
+        <div class="conversation-card">
+            <div class="conversation-title">
+                💬 Conversation
+            </div>
+            <div id="conversationArea">
+                <div style="color: rgba(255,255,255,0.6); text-align: center; padding: 40px;">
+                    Initialize audio services to begin...
+                </div>
+            </div>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="latencyMetric">--</div>
+                <div class="metric-label">Latency (ms)</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="qualityMetric">--</div>
+                <div class="metric-label">Audio Quality</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="noiseMetric">--</div>
+                <div class="metric-label">Noise Level</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="messagesMetric">0</div>
+                <div class="metric-label">Messages</div>
+            </div>
+        </div>
+
+        <div class="log-container">
+            <div id="debugLog"></div>
+        </div>
+    </div>
+
+    <!-- Load modular audio services -->
+    <script src="main/audio/BrowserVapiService.js"></script>
+    <script src="main/audio/BrowserTTSService.js"></script>
+    <script src="main/audio/BrowserAudioPlayer.js"></script>
+    <script src="main/audio/BrowserAudioManager.js"></script>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            vapiApiKey: '765f8644-1464-4b36-a4fe-c660e15ba313',
+            vapiAssistantId: '73c59df7-34d0-4e5a-89b0-d0668982c8cc',
+            ttsApiKey: 'sk_536c3f9ad29e9e6e4f0b4aee762afa6d8db7d750d7f64587',
+            ttsVoiceId: 'XfWTl5ev8ylYnkKBEqnB'
+        };
+
+        // Global state
+        let audioManager = null;
+        let messageCount = 0;
+        let startTime = null;
+
+        // DOM elements
+        const initBtn = document.getElementById('initBtn');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const testBtn = document.getElementById('testBtn');
+        const conversationArea = document.getElementById('conversationArea');
+        const debugLog = document.getElementById('debugLog');
+
+        // Status indicators
+        const statusElements = {
+            audioManager: document.getElementById('audioManagerStatus'),
+            vapi: document.getElementById('vapiStatus'),
+            tts: document.getElementById('ttsStatus'),
+            audioPlayer: document.getElementById('audioPlayerStatus')
+        };
+
+        const stateElements = {
+            audioManager: document.getElementById('audioManagerState'),
+            vapi: document.getElementById('vapiState'),
+            tts: document.getElementById('ttsState'),
+            audioPlayer: document.getElementById('audioPlayerState')
+        };
+
+        // Utility functions
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            debugLog.appendChild(logEntry);
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function updateStatus(service, status, state) {
+            if (statusElements[service]) {
+                statusElements[service].className = `status-indicator ${status}`;
+            }
+            if (stateElements[service]) {
+                stateElements[service].textContent = state;
+            }
+        }
+
+        function updateMetric(metric, value) {
+            const element = document.getElementById(`${metric}Metric`);
+            if (element) {
+                element.textContent = value;
+            }
+        }
+
+        function addMessage(text, sender) {
+            if (conversationArea.children[0]?.style?.color) {
+                conversationArea.innerHTML = '';
+            }
+
+            const message = document.createElement('div');
+            message.className = `message ${sender}`;
+
+            const label = document.createElement('div');
+            label.className = 'message-label';
+            label.textContent = sender === 'user' ? 'You' : 'Nara';
+
+            const content = document.createElement('div');
+            content.textContent = text;
+
+            message.appendChild(label);
+            message.appendChild(content);
+            conversationArea.appendChild(message);
+            conversationArea.scrollTop = conversationArea.scrollHeight;
+
+            messageCount++;
+            updateMetric('messages', messageCount);
+        }
+
+        // Initialize audio services
+        async function initializeAudio() {
+            try {
+                log('🚀 Initializing modular audio pipeline...', 'info');
+                updateStatus('audioManager', 'processing', 'Initializing...');
+
+                // Create audio manager with configuration
+                audioManager = new BrowserAudioManager(CONFIG);
+
+                // Set up event handlers
+                setupAudioManagerEvents();
+
+                // Initialize the audio pipeline
+                await audioManager.initialize();
+
+                log('✅ Audio pipeline initialized successfully', 'success');
+                updateStatus('audioManager', 'ready', 'Ready');
+
+                // Update UI
+                initBtn.disabled = true;
+                startBtn.disabled = false;
+                testBtn.disabled = false;
+
+                conversationArea.innerHTML = '<div style="color: rgba(255,255,255,0.6); text-align: center; padding: 40px;">Ready to start conversation...</div>';
+
+            } catch (error) {
+                log(`❌ Audio initialization failed: ${error.message}`, 'error');
+                updateStatus('audioManager', 'error', 'Failed');
+            }
+        }
+
+        // Set up audio manager event handlers
+        function setupAudioManagerEvents() {
+            audioManager.addEventListener('ready', () => {
+                log('🎵 Audio Manager ready', 'success');
+                updateStatus('audioManager', 'ready', 'Ready');
+            });
+
+            audioManager.addEventListener('conversationStarted', () => {
+                log('🎤 Conversation started', 'success');
+                updateStatus('vapi', 'active', 'Listening...');
+                startTime = Date.now();
+
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            });
+
+            audioManager.addEventListener('userMessage', (event) => {
+                const message = event.detail;
+                log(`📝 User: "${message}"`, 'success');
+                addMessage(message, 'user');
+
+                if (startTime) {
+                    const latency = Date.now() - startTime;
+                    updateMetric('latency', latency);
+                }
+            });
+
+            audioManager.addEventListener('assistantMessage', (event) => {
+                const message = event.detail;
+                log(`🤖 Assistant: "${message}"`, 'success');
+                addMessage(message, 'assistant');
+            });
+
+            audioManager.addEventListener('speakingStateChanged', (event) => {
+                const isSpeaking = event.detail;
+                updateStatus('vapi', isSpeaking ? 'processing' : 'active',
+                           isSpeaking ? 'Speaking...' : 'Listening...');
+            });
+
+            audioManager.addEventListener('conversationStopped', () => {
+                log('🛑 Conversation stopped', 'info');
+                updateStatus('vapi', 'ready', 'Ready');
+
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            });
+
+            audioManager.addEventListener('error', (event) => {
+                const error = event.detail;
+                log(`❌ Audio Manager error: ${error.message || error}`, 'error');
+                updateStatus('audioManager', 'error', 'Error');
+            });
+
+            // Service-specific events
+            audioManager.addEventListener('processingStarted', () => {
+                updateStatus('tts', 'processing', 'Synthesizing...');
+            });
+
+            audioManager.addEventListener('processingComplete', () => {
+                updateStatus('tts', 'ready', 'Ready');
+            });
+
+            audioManager.addEventListener('playbackStarted', () => {
+                updateStatus('audioPlayer', 'active', 'Playing...');
+            });
+
+            audioManager.addEventListener('playbackComplete', () => {
+                updateStatus('audioPlayer', 'ready', 'Ready');
+            });
+        }
+
+        // Start conversation
+        async function startConversation() {
+            if (!audioManager) {
+                log('❌ Audio manager not initialized', 'error');
+                return;
+            }
+
+            try {
+                log('🎤 Starting conversation...', 'info');
+                await audioManager.startListening();
+            } catch (error) {
+                log(`❌ Failed to start conversation: ${error.message}`, 'error');
+            }
+        }
+
+        // Stop conversation
+        function stopConversation() {
+            if (!audioManager) {
+                log('❌ Audio manager not initialized', 'error');
+                return;
+            }
+
+            try {
+                log('🛑 Stopping conversation...', 'info');
+                audioManager.stopListening();
+            } catch (error) {
+                log(`❌ Failed to stop conversation: ${error.message}`, 'error');
+            }
+        }
+
+        // Test audio pipeline
+        async function testAudio() {
+            if (!audioManager) {
+                log('❌ Audio manager not initialized', 'error');
+                return;
+            }
+
+            try {
+                log('🧪 Testing audio pipeline...', 'info');
+
+                const results = await audioManager.testAudioPipeline();
+
+                log(`✅ Audio test results:`, 'success');
+                log(`  - Microphone: ${results.microphone ? '✅' : '❌'}`, results.microphone ? 'success' : 'error');
+                log(`  - Vapi: ${results.vapi ? '✅' : '❌'}`, results.vapi ? 'success' : 'error');
+                log(`  - TTS: ${results.tts ? '✅' : '❌'}`, results.tts ? 'success' : 'error');
+                log(`  - Audio Player: ${results.audioPlayer ? '✅' : '❌'}`, results.audioPlayer ? 'success' : 'error');
+                log(`  - Overall: ${results.overall ? '✅ PASSED' : '❌ FAILED'}`, results.overall ? 'success' : 'error');
+
+                // Update quality metric
+                const qualityScore = Object.values(results).filter(Boolean).length / Object.keys(results).length;
+                updateMetric('quality', `${Math.round(qualityScore * 100)}%`);
+
+            } catch (error) {
+                log(`❌ Audio test failed: ${error.message}`, 'error');
+                updateMetric('quality', 'Error');
+            }
+        }
+
+        // Update metrics periodically
+        setInterval(() => {
+            if (audioManager) {
+                const metrics = audioManager.getMetrics();
+                const state = audioManager.getState();
+
+                // Update noise level if available
+                if (state.vapiState && state.vapiState.voiceEnhancement) {
+                    const noiseReduction = state.vapiState.voiceEnhancement.backgroundNoiseReduction;
+                    updateMetric('noise', `${Math.round((1 - noiseReduction) * 100)}%`);
+                }
+            }
+        }, 2000);
+
+        // Initialize on page load
+        log('🎧 Nara Modular Audio Test ready!', 'success');
+        log('💡 Click "Initialize Audio" to begin', 'info');
+    </script>
+</body>
+</html>

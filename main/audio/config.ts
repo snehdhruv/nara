@@ -17,6 +17,22 @@ export const AUDIO_CONFIG = {
       enabled: true,
       phrase: 'Hey Nara',                       // Wake phrase
       sensitivity: 0.7                          // 70% confidence threshold
+    },
+    // Enhanced audio quality settings
+    audioQuality: {
+      sampleRate: 24000,                        // High quality sample rate
+      bitrate: 128,                            // Good quality bitrate
+      echoCancellation: true,                  // Cancel echo
+      noiseSuppression: true,                  // Suppress background noise
+      autoGainControl: true,                   // Automatic volume control
+      channelCount: 1                          // Mono for voice
+    },
+    // Voice enhancement options
+    voiceEnhancement: {
+      enabled: true,                           // Enable voice processing
+      backgroundNoiseReduction: 0.8,          // Strong noise reduction
+      speechEnhancement: true,                 // Enhance speech clarity
+      adaptiveFiltering: true                  // Adaptive noise filtering
     }
   } as VapiConfig,
 

@@ -18,6 +18,8 @@ export interface TTSConfig {
 
 export interface TTSRequest {
   text: string;
+  voiceId?: string; // Override default voice
+  model?: 'eleven_monolingual_v1' | 'eleven_multilingual_v2' | 'eleven_turbo_v2'; // Override default model
   voiceSettings?: Partial<TTSConfig>;
   priority: 'normal' | 'high'; // High priority for real-time responses
 }
@@ -217,14 +219,18 @@ export class TTSService extends EventEmitter {
         ...request.voiceSettings
       };
 
+      // Use request-specific voice and model, or fall back to config defaults
+      const voiceId = request.voiceId || this.config.voiceId;
+      const modelId = request.model || this.config.model;
+
       const requestBody = {
         text: request.text,
-        model_id: this.config.model,
+        model_id: modelId,
         voice_settings: voiceSettings
       };
 
       const response = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${this.config.voiceId}/stream`,
+        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
         {
           method: 'POST',
           headers: {
