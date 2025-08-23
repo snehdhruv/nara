@@ -26,10 +26,10 @@ export const createAuth = (ctx: GenericCtx) =>
             scope: [
                 "user-read-email",
                 "user-read-private", 
-                "user-read-currently-playing",
                 "user-read-playback-state",
+                "user-read-currently-playing",
+                "user-read-playback-position",
                 "user-read-recently-played",
-                "user-modify-playback-state",
                 "streaming"
             ]
         }
