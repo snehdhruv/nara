@@ -4,6 +4,15 @@ export const useAvailableBooks = () => {
   // Sample books data
   const books = [
     {
+      id: "zero-to-one",
+      title: "Zero to One",
+      author: "Peter Thiel",
+      coverUrl: "https://img.heroui.chat/image/book?w=400&h=600&u=zero-to-one",
+      progress: 0.23,
+      narrator: "Blake Masters",
+      lastPosition: 1420
+    },
+    {
       id: "atomic-habits",
       title: "Atomic Habits",
       author: "James Clear",
@@ -55,15 +64,6 @@ export const useAvailableBooks = () => {
       coverUrl: "https://img.heroui.chat/image/book?w=400&h=600&u=design-everyday",
       progress: 0,
       narrator: "Neil Hellegers",
-      lastPosition: 0
-    },
-    {
-      id: "zero-to-one",
-      title: "Zero to One",
-      author: "Peter Thiel",
-      coverUrl: "https://img.heroui.chat/image/book?w=400&h=600&u=zero-to-one",
-      progress: 0,
-      narrator: "Blake Masters",
       lastPosition: 0
     },
     {

@@ -14,6 +14,7 @@ export function NaraApp() {
   const [selectedBookId, setSelectedBookId] = React.useState<string | null>(null);
   const [isVoiceAgentActive, setIsVoiceAgentActive] = React.useState(false);
   const [isListening, setIsListening] = React.useState(false);
+  const [isMuted, setIsMuted] = React.useState(false);
   const { 
     currentBook, 
     isPlaying, 
@@ -27,21 +28,20 @@ export function NaraApp() {
 
   const handleNarratorActivate = async () => {
     try {
-      // Toggle voice agent state
-      if (isVoiceAgentActive) {
-        // Deactivate voice agent
-        setIsVoiceAgentActive(false);
+      if (isListening) {
+        // Stop listening
         setIsListening(false);
-        console.log('[Voice Agent] Deactivated');
+        setIsVoiceAgentActive(false);
+        console.log('[Voice Agent] Stopped listening');
         // TODO: Stop voice service when audio team provides interface
       } else {
-        // Activate voice agent
-        setIsVoiceAgentActive(true);
+        // Start listening
         setIsListening(true);
-        console.log('[Voice Agent] Activated - Listening for "Hey Nara"...');
+        setIsVoiceAgentActive(true);
+        console.log('[Voice Agent] Started listening...');
         
-        // Pause current playback if active
-        if (isPlaying) {
+        // Pause current playback if active and not muted
+        if (isPlaying && !isMuted) {
           togglePlayback();
         }
         
@@ -51,6 +51,7 @@ export function NaraApp() {
         // Simulate listening timeout for demo
         setTimeout(() => {
           setIsListening(false);
+          setIsVoiceAgentActive(false);
         }, 5000);
       }
     } catch (error) {
@@ -58,6 +59,12 @@ export function NaraApp() {
       setIsVoiceAgentActive(false);
       setIsListening(false);
     }
+  };
+
+  const handleMuteToggle = () => {
+    setIsMuted(!isMuted);
+    console.log(`[Audio] ${!isMuted ? 'Muted' : 'Unmuted'}`);
+    // TODO: Connect to actual mute functionality when audio team provides interface
   };
 
   // Voice response handler - will be connected when audio team provides interface
@@ -170,31 +177,49 @@ export function NaraApp() {
           Add Test Note
         </Button>
         
-        {/* Main Hey Narrator button */}
-        <Button 
-          size="lg" 
-          className={`
-            rounded-full shadow-xl flex items-center gap-3 font-medium px-6 py-3 border-none 
-            transition-all duration-300 hover:scale-105
-            ${isVoiceAgentActive 
-              ? isListening 
-                ? 'bg-[#4CAF50] hover:bg-[#45a049] text-white animate-pulse shadow-[0_0_20px_rgba(76,175,80,0.6)]' // Active listening - green with glow
-                : 'bg-[#FF9800] hover:bg-[#F57C00] text-white shadow-[0_0_15px_rgba(255,152,0,0.5)]' // Active waiting - orange with glow
-              : 'bg-[#8B7355] hover:bg-[#7A6348] text-white hover:shadow-2xl' // Inactive - brown
-            }
-          `}
-          onPress={handleNarratorActivate}
-        >
-          <Icon 
-            icon={isVoiceAgentActive ? (isListening ? "lucide:mic" : "lucide:mic-off") : "lucide:mic"} 
-            width={20} 
-            className={`text-white transition-transform duration-200 ${isListening ? 'animate-bounce' : ''}`}
-          />
-          {isVoiceAgentActive 
-            ? (isListening ? 'Listening...' : 'Voice Active') 
-            : 'Hey Narrator'
-          }
-        </Button>
+        {/* Connected Voice Control Buttons */}
+        <div className="flex items-center gap-2">
+          {/* Mute button */}
+          <Button 
+            size="lg" 
+            className={`
+              rounded-full shadow-xl h-14 w-14 min-w-14 border-none transition-all duration-300 hover:scale-105
+              ${isMuted 
+                ? 'bg-red-500 hover:bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]' 
+                : 'bg-gray-600 hover:bg-gray-700 text-white hover:shadow-xl'
+              }
+            `}
+            onPress={handleMuteToggle}
+            aria-label={isMuted ? "Unmute" : "Mute"}
+          >
+            <Icon 
+              icon={isMuted ? "lucide:mic-off" : "lucide:mic"} 
+              width={20} 
+              className="text-white"
+            />
+          </Button>
+
+          {/* Hey Narrator button */}
+          <Button 
+            size="lg" 
+            className={`
+              rounded-full shadow-xl flex items-center gap-3 font-medium px-6 py-3 h-14 border-none 
+              transition-all duration-300 hover:scale-105
+              ${isListening 
+                ? 'bg-[#4CAF50] hover:bg-[#45a049] text-white animate-pulse shadow-[0_0_20px_rgba(76,175,80,0.6)]' // Listening - green with glow
+                : 'bg-[#8B7355] hover:bg-[#7A6348] text-white hover:shadow-2xl' // Inactive - brown
+              }
+            `}
+            onPress={handleNarratorActivate}
+          >
+            <Icon 
+              icon={isListening ? "lucide:mic" : "lucide:mic"} 
+              width={20} 
+              className={`text-white transition-transform duration-200 ${isListening ? 'animate-bounce' : ''}`}
+            />
+            {isListening ? 'Listening...' : 'Hey Narrator'}
+          </Button>
+        </div>
       </div>
     </div>
   );

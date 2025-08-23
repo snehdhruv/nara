@@ -186,3 +186,188 @@ export const getListeningHistory = query({
       .take(limit);
   },
 });
+
+// Search for audiobooks on Spotify
+export const searchAudiobooks = action({
+  args: { 
+    query: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { query, limit = 20 }) => {
+    const user = await betterAuthComponent.getAuthUser(ctx);
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
+    const spotifyAccount = await ctx.runQuery(api.spotify.getSpotifyAccount);
+    
+    if (!spotifyAccount?.accessToken) {
+      throw new Error("No Spotify access token available");
+    }
+
+    try {
+      // Search for shows (which includes audiobooks and podcasts)
+      const response = await fetch(
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=show&market=US&limit=${limit}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${spotifyAccount.accessToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Spotify API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Filter for audiobooks (shows that are likely audiobooks)
+      const audiobooks = data.shows?.items.filter((show: any) => 
+        show.media_type === 'audiobook' || 
+        show.description?.toLowerCase().includes('audiobook') ||
+        show.description?.toLowerCase().includes('narrated') ||
+        show.publisher?.toLowerCase().includes('audiobook') ||
+        show.name?.toLowerCase().includes('audiobook')
+      ) || [];
+
+      return audiobooks.map((show: any) => ({
+        id: show.id,
+        title: show.name,
+        author: show.publisher || 'Unknown Author',
+        description: show.description,
+        coverUrl: show.images?.[0]?.url || show.images?.[1]?.url,
+        totalEpisodes: show.total_episodes,
+        languages: show.languages,
+        spotifyUri: show.uri,
+        external_urls: show.external_urls,
+      }));
+    } catch (error) {
+      console.error("Error searching audiobooks:", error);
+      throw new Error("Failed to search audiobooks");
+    }
+  },
+});
+
+// Get audiobook episodes/chapters
+export const getAudiobookEpisodes = action({
+  args: { 
+    showId: v.string(),
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+  },
+  handler: async (ctx, { showId, limit = 50, offset = 0 }) => {
+    const user = await betterAuthComponent.getAuthUser(ctx);
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
+    const spotifyAccount = await ctx.runQuery(api.spotify.getSpotifyAccount);
+    
+    if (!spotifyAccount?.accessToken) {
+      throw new Error("No Spotify access token available");
+    }
+
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/shows/${showId}/episodes?market=US&limit=${limit}&offset=${offset}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${spotifyAccount.accessToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Spotify API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      return {
+        total: data.total,
+        episodes: data.items.map((episode: any) => ({
+          id: episode.id,
+          title: episode.name,
+          description: episode.description,
+          duration_ms: episode.duration_ms,
+          duration: Math.floor(episode.duration_ms / 1000), // Convert to seconds
+          release_date: episode.release_date,
+          spotifyUri: episode.uri,
+          external_urls: episode.external_urls,
+        }))
+      };
+    } catch (error) {
+      console.error("Error fetching audiobook episodes:", error);
+      throw new Error("Failed to fetch audiobook episodes");
+    }
+  },
+});
+
+// Get popular audiobooks (featured shows that are likely audiobooks)
+export const getPopularAudiobooks = action({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { limit = 20 }) => {
+    const user = await betterAuthComponent.getAuthUser(ctx);
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
+    const spotifyAccount = await ctx.runQuery(api.spotify.getSpotifyAccount);
+    
+    if (!spotifyAccount?.accessToken) {
+      throw new Error("No Spotify access token available");
+    }
+
+    try {
+      // Search for popular audiobook-related terms
+      const searchTerms = ['audiobook', 'narrated by', 'bestseller audiobook'];
+      const allAudiobooks = [];
+
+      for (const term of searchTerms) {
+        const response = await fetch(
+          `https://api.spotify.com/v1/search?q=${encodeURIComponent(term)}&type=show&market=US&limit=${Math.ceil(limit / searchTerms.length)}`,
+          {
+            headers: {
+              "Authorization": `Bearer ${spotifyAccount.accessToken}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const audiobooks = data.shows?.items.filter((show: any) => 
+            show.media_type === 'audiobook' || 
+            show.description?.toLowerCase().includes('audiobook') ||
+            show.description?.toLowerCase().includes('narrated')
+          ) || [];
+          
+          allAudiobooks.push(...audiobooks);
+        }
+      }
+
+      // Remove duplicates and limit results
+      const uniqueAudiobooks = allAudiobooks
+        .filter((book, index, self) => 
+          index === self.findIndex(b => b.id === book.id)
+        )
+        .slice(0, limit);
+
+      return uniqueAudiobooks.map((show: any) => ({
+        id: show.id,
+        title: show.name,
+        author: show.publisher || 'Unknown Author',
+        description: show.description,
+        coverUrl: show.images?.[0]?.url || show.images?.[1]?.url,
+        totalEpisodes: show.total_episodes,
+        languages: show.languages,
+        spotifyUri: show.uri,
+      }));
+    } catch (error) {
+      console.error("Error fetching popular audiobooks:", error);
+      throw new Error("Failed to fetch popular audiobooks");
+    }
+  },
+});
