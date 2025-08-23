@@ -11,7 +11,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -19,31 +19,31 @@
             padding: 20px;
             color: #333;
         }
-        
+
         .main-container {
             max-width: 1200px;
             margin: 0 auto;
         }
-        
+
         .header {
             text-align: center;
             margin-bottom: 32px;
             color: white;
         }
-        
+
         .header h1 {
             font-size: 2.5rem;
             font-weight: 300;
             margin-bottom: 8px;
             letter-spacing: -0.5px;
         }
-        
+
         .header p {
             font-size: 1.1rem;
             opacity: 0.9;
             font-weight: 400;
         }
-        
+
         .container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
@@ -52,7 +52,7 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
+
         .status-card {
             background: white;
             border-radius: 16px;
@@ -62,12 +62,12 @@
             border: 1px solid rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
-        
+
         .status-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
         }
-        
+
         .status-indicator {
             display: flex;
             align-items: center;
@@ -75,24 +75,24 @@
             font-weight: 500;
             color: #333;
         }
-        
+
         .status-dot {
             width: 10px;
             height: 10px;
             border-radius: 50%;
             background: #e0e0e0;
         }
-        
+
         .status-dot.ready { background: #4CAF50; }
         .status-dot.listening { background: #2196F3; animation: pulse 2s infinite; }
         .status-dot.processing { background: #FF9800; }
         .status-dot.error { background: #f44336; }
-        
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.6; }
         }
-        
+
         .controls {
             display: flex;
             gap: 16px;
@@ -100,7 +100,7 @@
             margin: 32px 0;
             flex-wrap: wrap;
         }
-        
+
         .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -115,12 +115,12 @@
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
             min-width: 140px;
         }
-        
+
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
-        
+
         .btn:disabled {
             background: #e0e0e0;
             color: #999;
@@ -128,16 +128,16 @@
             box-shadow: none;
             transform: none;
         }
-        
+
         .btn.danger {
             background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
             box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
         }
-        
+
         .btn.danger:hover {
             box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
         }
-        
+
         .transcript-card {
             background: white;
             border-radius: 16px;
@@ -147,31 +147,31 @@
             border: 1px solid rgba(0, 0, 0, 0.05);
             min-height: 80px;
         }
-        
+
         .transcript-card.has-content {
             border-left: 4px solid #4CAF50;
         }
-        
+
         .transcript-text {
             font-size: 1.1rem;
             line-height: 1.5;
             color: #333;
         }
-        
+
         .transcript-placeholder {
             color: #999;
             font-style: italic;
             text-align: center;
             padding: 20px 0;
         }
-        
+
         .log-container {
             background: #1a1a1a;
             border-radius: 12px;
             padding: 20px;
             margin-top: 24px;
         }
-        
+
         .log-header {
             color: #fff;
             font-weight: 500;
@@ -180,7 +180,7 @@
             align-items: center;
             gap: 8px;
         }
-        
+
         .log {
             background: #000;
             border-radius: 8px;
@@ -193,21 +193,21 @@
             color: #00ff41;
             white-space: pre-wrap;
         }
-        
+
         .config-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 16px;
             margin: 24px 0;
         }
-        
+
         .config-card {
             background: white;
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
-        
+
         .config-title {
             font-weight: 600;
             color: #333;
@@ -216,34 +216,34 @@
             align-items: center;
             gap: 8px;
         }
-        
+
         .config-item {
             display: flex;
             justify-content: space-between;
             margin-bottom: 6px;
             font-size: 0.9rem;
         }
-        
+
         .config-label {
             color: #666;
             font-weight: 500;
         }
-        
+
         .config-value {
             color: #333;
         }
-        
+
         @media (max-width: 768px) {
             .container {
                 padding: 24px;
                 margin: 10px;
             }
-            
+
             .controls {
                 flex-direction: column;
                 align-items: center;
             }
-            
+
             .btn {
                 width: 100%;
                 max-width: 280px;
@@ -309,7 +309,7 @@
                         <span class="config-value">16kHz PCM</span>
                     </div>
                 </div>
-                
+
                 <div class="config-card">
                     <div class="config-title">🗣️ ElevenLabs TTS</div>
                     <div class="config-item">
@@ -474,7 +474,7 @@
                                 // Update transcript display
                                 const transcriptDisplay = document.getElementById('transcriptDisplay');
                                 const transcriptCard = document.getElementById('transcriptCard');
-                                
+
                                 transcriptDisplay.textContent = transcript;
                                 transcriptDisplay.className = 'transcript-text';
                                 transcriptCard.classList.add('has-content');
@@ -720,7 +720,7 @@
                 updateStatus('⏹️ Pipeline stopped', 'warning');
                 const transcriptDisplay = document.getElementById('transcriptDisplay');
                 const transcriptCard = document.getElementById('transcriptCard');
-                
+
                 transcriptDisplay.textContent = 'Speak to see live transcription and AI responses...';
                 transcriptDisplay.className = 'transcript-placeholder';
                 transcriptCard.classList.remove('has-content');
@@ -758,10 +758,10 @@
         function updateStatus(message, type = 'info') {
             const statusElement = document.getElementById('status');
             const statusDot = document.getElementById('statusDot');
-            
+
             // Update status text
             statusElement.textContent = message;
-            
+
             // Update status dot
             statusDot.className = 'status-dot';
             if (type === 'error') {

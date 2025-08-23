@@ -8,10 +8,14 @@
   "scripts": {
     "dev": "concurrently 'nextron --renderer-port=3000' 'bunx --bun convex dev'",
     "build": "nextron build",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "mcp:server": "tsx mcp-vapi-server.ts",
+    "mcp:client": "tsx mcp-vapi-client-example.ts",
+    "mcp:build": "tsc mcp-vapi-server.ts --outDir dist --target es2020 --module commonjs"
   },
   "dependencies": {
     "@convex-dev/auth": "^0.0.88",
+    "@modelcontextprotocol/sdk": "^1.0.0",
     "@vapi-ai/web": "^2.3.8",
     "concurrently": "^9.2.0",
     "convex": "^1.26.1",
@@ -28,10 +32,11 @@
     "electron-builder": "^24.13.3",
     "next": "^14.2.4",
     "nextron": "^9.5.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.7.3",
     "postcss": "^8.4.38",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tailwindcss": "^3.4.3",
-    "typescript": "^5.7.3"
+    "tailwindcss": "^3.4.3"
   }
 }
