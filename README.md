@@ -1,26 +1,38 @@
-# Nara Desktop (Skeleton)
+<p align="center"><img src="https://i.imgur.com/a9QWW0v.png"></p>
 
-## Overview
-- TODO: Electron-based desktop app
-- TODO: Spotify integration via castLabs
-- TODO: LangGraph for spoiler-safe QA
-- TODO: Local SQLite database
+## Usage
 
-## Getting Started
-- TODO: Setup development environment
-- TODO: Install dependencies
-- TODO: Configure environment variables
-- TODO: Build and run the app
+### Create an App
 
-## Architecture
-- TODO: Electron main process
-- TODO: React renderer process
-- TODO: Spotify Web Playback SDK micro-app
-- TODO: LangGraph agents for QA
+```
+# with npx
+$ npx create-nextron-app my-app --example with-tailwindcss
 
-## Next Steps
-- TODO: Implement authentication flow
-- TODO: Setup database schema
-- TODO: Build UI components
-- TODO: Integrate Spotify SDK
-- TODO: Implement LangGraph agents
+# with yarn
+$ yarn create nextron-app my-app --example with-tailwindcss
+
+# with pnpm
+$ pnpm dlx create-nextron-app my-app --example with-tailwindcss
+```
+
+### Install Dependencies
+
+```
+$ cd my-app
+
+# using yarn or npm
+$ yarn (or `npm install`)
+
+# using pnpm
+$ pnpm install --shamefully-hoist
+```
+
+### Use it
+
+```
+# development mode
+$ yarn dev (or `npm run dev` or `pnpm run dev`)
+
+# production build
+$ yarn build (or `npm run build` or `pnpm run build`)
+```

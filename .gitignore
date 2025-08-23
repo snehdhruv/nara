@@ -1,1 +1,18 @@
-# TODO: add ignores (node_modules, dist, etc.)
+# dependencies
+node_modules
+
+# logs
+*.log
+
+# next.js
+.next
+next-env.d.ts
+
+# build
+/app
+dist
+
+.env.local
+
+# convex
+/convex/_generated
