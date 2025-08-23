@@ -174,6 +174,22 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
     }
   }, [activeChunkIndex, userScrolledManually]);
 
+  // Initial scroll to current position when component loads
+  React.useEffect(() => {
+    if (activeWordRef.current && scrollContainerRef.current && activeChunkIndex !== -1 && !userScrolledManually) {
+      // Add a slight delay to ensure the DOM is ready
+      const timer = setTimeout(() => {
+        activeWordRef.current?.scrollIntoView({
+          behavior: 'instant', // Instant for initial positioning
+          block: 'center',
+          inline: 'nearest'
+        });
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [wordChunksWithTiming.length]); // Re-run when chunks are calculated
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-cream-200 relative">
       <div className="flex-1 overflow-auto p-8 relative" ref={scrollContainerRef}>
@@ -205,15 +221,37 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
             
             {/* Reading progress bar */}
             {wordChunksWithTiming.length > 0 && (
-              <div className="w-full bg-wood-200 rounded-full h-2">
+              <div className="w-full bg-wood-200 rounded-full h-2 relative">
                 <div 
                   className="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full transition-all duration-300 ease-out"
                   style={{
                     width: `${Math.max(0, Math.min(100, (activeChunkIndex / Math.max(1, wordChunksWithTiming.length - 1)) * 100))}%`
                   }}
-                >
-                  <div className="h-full w-2 bg-green-200 rounded-full ml-auto animate-pulse"></div>
-                </div>
+                />
+                {/* Animated progress bubble that shows exact position */}
+                <div 
+                  className="absolute top-0 w-3 h-3 bg-green-500 rounded-full shadow-lg transform -translate-x-1/2 -translate-y-0.5 transition-all duration-300 ease-out animate-pulse"
+                  style={{
+                    left: `${(() => {
+                      if (wordChunksWithTiming.length === 0) return 0;
+                      
+                      // Calculate fine-grained position within active chunk
+                      const activeChunk = wordChunksWithTiming[activeChunkIndex];
+                      if (!activeChunk) return (activeChunkIndex / Math.max(1, wordChunksWithTiming.length - 1)) * 100;
+                      
+                      // Progress within the current chunk based on time
+                      const chunkProgress = Math.max(0, Math.min(1, 
+                        (currentPosition - activeChunk.startTime) / (activeChunk.endTime - activeChunk.startTime)
+                      ));
+                      
+                      // Total progress = completed chunks + progress in current chunk
+                      const completedChunks = activeChunkIndex / wordChunksWithTiming.length;
+                      const currentChunkProgress = chunkProgress / wordChunksWithTiming.length;
+                      
+                      return Math.max(0, Math.min(100, (completedChunks + currentChunkProgress) * 100));
+                    })()}%`
+                  }}
+                />
               </div>
             )}
           </div>
