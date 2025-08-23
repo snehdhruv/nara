@@ -16,19 +16,33 @@ interface BookInfo {
 
 export const useAvailableBooks = () => {
   const [books, setBooks] = useState<BookInfo[]>([]);
+  const [recentBooks, setRecentBooks] = useState<BookInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchBooks = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/books');
-      const data = await response.json();
       
-      if (data.success) {
-        setBooks(data.books);
+      // Fetch all books and recent books in parallel
+      const [booksResponse, recentResponse] = await Promise.all([
+        fetch('/api/books'),
+        fetch('/api/books/recent')
+      ]);
+      
+      const [booksData, recentData] = await Promise.all([
+        booksResponse.json(),
+        recentResponse.json()
+      ]);
+      
+      if (booksData.success) {
+        setBooks(booksData.books);
       } else {
-        setError(data.error || 'Failed to fetch books');
+        setError(booksData.error || 'Failed to fetch books');
+      }
+      
+      if (recentData.success) {
+        setRecentBooks(recentData.books);
       }
     } catch (err) {
       console.error('[useAvailableBooks] Fetch error:', err);
@@ -41,12 +55,10 @@ export const useAvailableBooks = () => {
   useEffect(() => {
     fetchBooks();
   }, []);
-
-  // Recent books (books with progress > 0 but < 1)
-  const recentBooks = books.filter(book => book.progress && book.progress > 0 && book.progress < 1);
   
   const refetch = async () => {
     setBooks([]);
+    setRecentBooks([]);
     setError(null);
     setLoading(true);
     await fetchBooks();
