@@ -1,8 +1,0 @@
-node_modules/
-dist/
-.env
-headers.json
-*.log
-*.tmp
-*.bin
-.DS_Store

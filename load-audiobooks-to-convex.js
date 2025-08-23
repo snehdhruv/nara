@@ -6,21 +6,21 @@ const path = require('path');
 // Audiobook files to process (excluding rickroll)
 const audiobooks = [
   {
-    file: 'tools/ingest-youtube/out/dz_4Mjyqbqk.json',
+    file: 'src/lib/tools/ingest-youtube/out/dz_4Mjyqbqk.json',
     videoId: 'dz_4Mjyqbqk',
     title: 'Zero to One',
     author: 'Peter Thiel',
     narrator: 'Blake Masters'
   },
   {
-    file: 'tools/ingest-youtube/out/UF8uR6Z6KLc.json',
+    file: 'src/lib/tools/ingest-youtube/out/UF8uR6Z6KLc.json',
     videoId: 'UF8uR6Z6KLc',
     title: 'Steve Jobs Stanford Commencement',
     author: 'Steve Jobs',
     narrator: 'Steve Jobs'
   },
   {
-    file: 'tools/ingest-youtube/out/Th8JoIan4dg.json',
+    file: 'src/lib/tools/ingest-youtube/out/Th8JoIan4dg.json',
     videoId: 'Th8JoIan4dg', 
     title: 'How to Get Startup Ideas',
     author: 'Y Combinator',
