@@ -42,6 +42,7 @@ async function testCompletePipeline() {
     // Test 2: Different modes
     console.log('Test 2: Testing Focused Mode');
     const focusedResult = await runChapterQA({
+      transcriptData: transcriptData,
       datasetPath: './data/zero-to-one.json',
       audiobookId: 'zero-to-one', 
       question: 'What specific examples does Peter Thiel give about monopolies?',

@@ -133,6 +133,12 @@ export async function POST(request: NextRequest) {
       console.log(`[API] Calling processQuestionWithData with audiobook: ${currentAudiobook.title}`);
       console.log(`[API] Transcript data has ${transcriptData.segments.length} segments`);
       
+      // Calculate userProgressIdx based on audiobook's total chapters
+      const totalChapters = transcriptData.chapters.length;
+      const userProgressIdx = Math.max(1, totalChapters); // Allow access to all available chapters
+      
+      console.log(`[API] Audiobook has ${totalChapters} chapters, setting userProgressIdx to ${userProgressIdx}`);
+      
       const result = await bridge.processQuestionWithData(
         question.trim(), 
         transcriptData,
@@ -140,7 +146,7 @@ export async function POST(request: NextRequest) {
           audiobookId: currentAudiobook._id,
           currentPosition_s: context?.currentTime || 0,
           playbackChapterIdx: context?.currentChapter || 1,
-          userProgressIdx: 14 // Allow access to all chapters for now
+          userProgressIdx: userProgressIdx
         }
       );
       const totalTime = Date.now() - startTime;
