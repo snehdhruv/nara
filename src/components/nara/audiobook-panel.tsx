@@ -274,13 +274,13 @@ export const AudiobookPanel: React.FC<AudiobookPanelProps> = ({
                 <div className="mt-8 p-4 bg-gray-100 rounded-lg text-sm">
                   <div className="font-medium text-gray-700 mb-2">Debug Info:</div>
                   <div>Current Position: {currentPosition.toFixed(2)}s</div>
-                  <div>Active Word Index: {activeWordIndex}</div>
-                  <div>Total Words: {wordsWithTiming.length}</div>
+                  <div>Active Sentence Index: {activeSentenceIndex}</div>
+                  <div>Total Sentences: {sentencesWithTiming.length}</div>
                   <div>Current Paragraph: {currentParagraphIndex + 1} of {book.content?.length || 0}</div>
-                  {activeWordIndex >= 0 && (
+                  {activeSentenceIndex >= 0 && (
                     <div>
-                      Active Word: "{wordsWithTiming[activeWordIndex]?.word}" 
-                      ({wordsWithTiming[activeWordIndex]?.startTime.toFixed(2)}s - {wordsWithTiming[activeWordIndex]?.endTime.toFixed(2)}s)
+                      Active Sentence: "{sentencesWithTiming[activeSentenceIndex]?.text.substring(0, 50)}..." 
+                      ({sentencesWithTiming[activeSentenceIndex]?.startTime.toFixed(2)}s - {sentencesWithTiming[activeSentenceIndex]?.endTime.toFixed(2)}s)
                     </div>
                   )}
                 </div>

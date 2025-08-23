@@ -38,10 +38,11 @@ class DedalusClient implements LLMClient {
           'Authorization': `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: 'anthropic/claude-3-haiku-20240307', // Claude Haiku - fast & conversational
+          model: 'anthropic/claude-3-5-haiku-20241022', // Claude 3.5 Haiku - latest & fastest
           messages: formattedMessages,
-          max_tokens: 150, // Much shorter for conversational responses
-          temperature: 0.7
+          max_tokens: 400, // Optimal length for voice narration (30-60 seconds of speech)
+          temperature: 0.6, // Slightly more focused for voice clarity
+          stop: ["\n\n", "###", "---"] // Stop at natural conversation breaks
         }),
       });
 
