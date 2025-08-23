@@ -64,7 +64,7 @@ export class VapiService extends EventEmitter {
   private audioStream: MediaStream | null = null;
   private websocket: WebSocket | null = null;
   private isWakeWordMode = false; // true when listening for wake word only
-  private isConnected = false;
+  isConnected = false;
 
   constructor(config: VapiConfig) {
     super();
