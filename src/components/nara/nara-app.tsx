@@ -48,7 +48,8 @@ export function NaraApp() {
     isAudioMuted,
     muteAudiobook,
     unmuteAudiobook,
-    toggleMute
+    toggleMute,
+    getCurrentChapter
   } = useAudiobook({ bookId: selectedBookId || undefined });
   
   const { 
@@ -95,7 +96,7 @@ export function NaraApp() {
           context: {
             audiobookId: currentBook?.id || null, // Pass the actual audiobook being played
             youtubeVideoId: currentBook?.youtubeVideoId || null, // Also pass YouTube ID
-            currentChapter: currentBook?.currentChapter || 1,
+            currentChapter: getCurrentChapter(), // Use calculated current chapter
             currentTime: currentPosition,
             audioPosition: currentPosition,
             bookTitle: currentBook?.title || 'Unknown Book'
@@ -351,7 +352,7 @@ export function NaraApp() {
         currentPosition,
         {
           audiobookId: currentBook?.id,
-          chapterIdx: currentBook?.currentChapter || 1
+          chapterIdx: getCurrentChapter()
         }
       );
       
@@ -361,8 +362,8 @@ export function NaraApp() {
         {
           bookId: currentBook?.id || 'unknown',
           bookTitle: currentBook?.title || 'Audiobook',
-          currentChapter: currentBook?.currentChapter,
-          chapterTitle: currentBook?.chapterTitle
+          currentChapter: getCurrentChapter(),
+          chapterTitle: currentBook?.chapters?.find(ch => ch.idx === getCurrentChapter())?.title
         },
         {
           startTime: currentPosition - 30,
