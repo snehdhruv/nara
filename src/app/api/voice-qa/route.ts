@@ -1,28 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createVoiceAgentBridge } from '../../../../main/audio/INTEGRATION_EXAMPLE';
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../convex/_generated/api";
-import { convertConvexToCanonical, validateConvexAudiobook } from '../../../../agents/langgraph/utils/convexAdapter';
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-
-// Create a single bridge instance to reuse
-let bridgeInstance: any = null;
-
-async function getBridge() {
-  if (!bridgeInstance) {
-    try {
-      const bridge = await createVoiceAgentBridge();
-      await bridge.initialize();
-      bridgeInstance = bridge;
-      console.log('[API] Voice bridge initialized');
-    } catch (error) {
-      console.error('[API] Bridge initialization failed:', error);
-      throw error;
-    }
-  }
-  return bridgeInstance;
-}
 
 // Get audiobook data from Convex for voice context
 async function getAudiobookForVoice(audiobookId: string, youtubeVideoId: string) {
