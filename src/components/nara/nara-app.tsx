@@ -126,9 +126,9 @@ export function NaraApp() {
       currentAudioRef.current = 'audiobook';
       
       // Use Convex action directly for much faster response
-      const data = await convex.action("actions/voiceQA:streamingVoiceQA", {
+      const data = await convex.action(api.actions.voiceQA.streamingVoiceQA, {
         question: transcript,
-        audiobookId: currentBook?.id,
+        audiobookId: currentBook?.id as any,
         currentChapter: getCurrentChapter(),
         currentPosition: currentPosition
       });
@@ -235,7 +235,9 @@ export function NaraApp() {
         if (data.note && currentBook) {
           const generatedNote = {
             title: data.note.title,
-            bulletPoints: data.note.bulletPoints
+            bulletPoints: data.note.bulletPoints,
+            timestamp: Date.now(),
+            audiobookPosition: currentPosition
           };
           
           // Create shareable note with book context
@@ -245,7 +247,7 @@ export function NaraApp() {
               bookId: currentBook?.id || 'unknown',
               bookTitle: currentBook?.title || 'Audiobook',
               currentChapter: getCurrentChapter(),
-              chapterTitle: currentBook?.chapters?.find(ch => ch.idx === getCurrentChapter())?.title
+              chapterTitle: (currentBook as any)?.chapters?.find((ch: any) => ch.idx === getCurrentChapter())?.title
             },
             {
               startTime: currentPosition - 30,
@@ -347,7 +349,7 @@ export function NaraApp() {
       }
 
       // Initialize Vapi service for STT only (VoiceAgentBridge handles TTS)
-      const vapiService = await window.NaraAudioFactory.createVapiService({
+      const vapiService = await (window as any).NaraAudioFactory.createVapiService({
         apiKey: '765f8644-1464-4b36-a4fe-c660e15ba313',
         assistantId: '73c59df7-34d0-4e5a-89b0-d0668982c8cc',
         sttOnly: true // STT only - VoiceAgentBridge handles the rest
@@ -480,10 +482,10 @@ export function NaraApp() {
     } catch (error) {
       console.error('[Voice Agent] Activation failed:', error);
       console.error('[Voice Agent] Error details:', {
-        message: error?.message,
-        stack: error?.stack,
-        name: error?.name,
-        cause: error?.cause
+        message: (error as any)?.message,
+        stack: (error as any)?.stack,
+        name: (error as any)?.name,
+        cause: (error as any)?.cause
       });
       setIsVoiceAgentActive(false);
       setIsListening(false);
@@ -516,7 +518,7 @@ export function NaraApp() {
           bookId: currentBook?.id || 'unknown',
           bookTitle: currentBook?.title || 'Audiobook',
           currentChapter: getCurrentChapter(),
-          chapterTitle: currentBook?.chapters?.find(ch => ch.idx === getCurrentChapter())?.title
+          chapterTitle: (currentBook as any)?.chapters?.find((ch: any) => ch.idx === getCurrentChapter())?.title
         },
         {
           startTime: currentPosition - 30,
