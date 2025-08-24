@@ -35,14 +35,45 @@ export function NaraApp() {
   const vapiServiceRef = React.useRef<any>(null);
   const narratorCloningRef = React.useRef<any>(null);
   
+  // Enable TTS interruption when user manually starts audiobook
+  const enableTTSInterruption = () => {
+    if (ttsAudioRef.current && currentAudioRef.current === 'tts') {
+      console.log('[Voice Agent] TTS interrupted by manual audiobook play');
+      ttsAudioRef.current.pause();
+      ttsAudioRef.current = null;
+      currentAudioRef.current = 'audiobook';
+      
+      // Unmute audiobook since it was muted during TTS
+      unmuteAudiobook();
+      
+      // Set interrupted flag to prevent TTS handlers from resuming
+      isInterruptedRef.current = true;
+    }
+  };
+
+  // Wrapped play function that interrupts TTS if active
+  const play = () => {
+    enableTTSInterruption();
+    originalPlay();
+  };
+
+  // Wrapped togglePlayback function that interrupts TTS when starting playback
+  const togglePlayback = () => {
+    // If we're about to start playing (currently paused), interrupt TTS
+    if (!isPlaying) {
+      enableTTSInterruption();
+    }
+    originalTogglePlayback();
+  };
+
   // Simple voice interaction approach (no VAD/continuous listening)
   
   const { 
     currentBook, 
     isPlaying, 
     currentPosition, 
-    togglePlayback,
-    play,
+    togglePlayback: originalTogglePlayback,
+    play: originalPlay,
     pause,
     setPlaybackSpeed, 
     playbackSpeed,
@@ -617,22 +648,6 @@ export function NaraApp() {
     }
   };
 
-  // Enable voice interruption of TTS
-  const enableTTSInterruption = () => {
-    if (ttsAudioRef.current && currentAudioRef.current === 'tts') {
-      console.log('[Voice Agent] TTS interrupted by voice input');
-      ttsAudioRef.current.pause();
-      ttsAudioRef.current = null;
-      currentAudioRef.current = null;
-      
-      // Resume audiobook playback
-      setTimeout(() => {
-        currentAudioRef.current = 'audiobook';
-        unmuteAudiobook();
-        play();
-      }, 100);
-    }
-  };
 
   React.useEffect(() => {
     // Initialize narrator voice cloning properly
