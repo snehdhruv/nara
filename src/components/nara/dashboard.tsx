@@ -19,13 +19,27 @@ interface BookInfo {
   progress?: number;
   narrator: string;
   lastPosition: number;
-  duration?: string;
+  duration?: number;
   genre?: string;
   rating?: number;
   publishedYear?: number;
   description?: string;
   tags?: string[];
+  youtubeVideoId?: string;
+  totalChapters?: number;
 }
+
+// Helper function to format duration from seconds to readable string
+const formatDuration = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  } else {
+    return `${minutes}m`;
+  }
+};
 
 export const Dashboard: React.FC<DashboardProps> = ({ onSelectBook }) => {
   const { books, recentBooks, refetch } = useAvailableBooks();
@@ -464,7 +478,7 @@ const BookShelf: React.FC<BookShelfProps> = ({
                       {book.duration && (
                         <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
                           <Icon icon="lucide:clock" width={12} />
-                          <span>{book.duration}</span>
+                          <span>{formatDuration(book.duration)}</span>
                         </div>
                       )}
                       

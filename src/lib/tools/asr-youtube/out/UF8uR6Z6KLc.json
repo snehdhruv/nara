@@ -1,0 +1,1826 @@
+{
+  "source": {
+    "platform": "youtube",
+    "video_id": "UF8uR6Z6KLc",
+    "title": "Steve Jobs' 2005 Stanford Commencement Address",
+    "channel": "Stanford",
+    "duration_s": 904,
+    "rights": "owner_ok",
+    "language": "en",
+    "captions_kind": "asr",
+    "asr_provider": "openai",
+    "asr_model": "whisper-1"
+  },
+  "chapters": [
+    {
+      "idx": 1,
+      "title": "Full",
+      "start_s": 0,
+      "end_s": 904
+    }
+  ],
+  "segments": [
+    {
+      "chapter_idx": 1,
+      "start_s": 0,
+      "end_s": 10.44,
+      "text": "This program is brought to you by Stanford University."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 10.44,
+      "end_s": 11.96,
+      "text": "Please visit us at stanford.edu."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 11.96,
+      "end_s": 26.96,
+      "text": "Thank you."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 26.96,
+      "end_s": 31.4,
+      "text": "I'm honored to be with you today for your commencement from one of the finest universities"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 31.4,
+      "end_s": 35.92,
+      "text": "in the world."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 35.92,
+      "end_s": 44.08,
+      "text": "Truth be told, I never graduated from college, and this is the closest I've ever gotten to"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 44.08,
+      "end_s": 46.68,
+      "text": "a college graduation."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 46.68,
+      "end_s": 51.36,
+      "text": "Today, I want to tell you three stories from my life."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 51.36,
+      "end_s": 52.36,
+      "text": "That's it."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 52.36,
+      "end_s": 53.36,
+      "text": "No big deal."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 53.36,
+      "end_s": 55.84,
+      "text": "Just three stories."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 55.84,
+      "end_s": 60.8,
+      "text": "The first story is about connecting the dots."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 60.8,
+      "end_s": 65.32,
+      "text": "I dropped out of Reed College after the first six months, but then stayed around as a drop-in"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 65.32,
+      "end_s": 69.36,
+      "text": "for another 18 months or so before I really quit."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 69.36,
+      "end_s": 72.24,
+      "text": "So why'd I drop out?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 72.24,
+      "end_s": 75.2,
+      "text": "It started before I was born."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 75.2,
+      "end_s": 80.4,
+      "text": "My biological mother was a young, unwed graduate student, and she decided to put me up for"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 80.4,
+      "end_s": 82.32,
+      "text": "adoption."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 82.32,
+      "end_s": 86.76,
+      "text": "She felt very strongly that I should be adopted by college graduates, so everything was all"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 86.76,
+      "end_s": 93.56,
+      "text": "set for me to be adopted at birth by a lawyer and his wife, except that when I popped out,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 93.56,
+      "end_s": 97.84,
+      "text": "they decided at the last minute that they really wanted a girl."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 97.84,
+      "end_s": 102.6,
+      "text": "So my parents, who were on a waiting list, got a call in the middle of the night asking,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 102.6,
+      "end_s": 107.36,
+      "text": "we've got an unexpected baby boy, do you want him?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 107.36,
+      "end_s": 110.84,
+      "text": "They said, of course."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 110.84,
+      "end_s": 115.8,
+      "text": "My biological mother found out later that my mother had never graduated from college"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 115.8,
+      "end_s": 119.12,
+      "text": "and that my father had never graduated from high school."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 119.12,
+      "end_s": 123.36,
+      "text": "She refused to sign the final adoption papers."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 123.36,
+      "end_s": 129.36,
+      "text": "She only relented a few months later when my parents promised that I would go to college."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 129.36,
+      "end_s": 133.88,
+      "text": "This was the start in my life."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 133.88,
+      "end_s": 139.88,
+      "text": "And 17 years later, I did go to college, but I naively chose a college that was almost"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 139.92,
+      "end_s": 142.52,
+      "text": "as expensive as Stanford."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 142.52,
+      "end_s": 147.68,
+      "text": "And all of my working class parents' savings were being spent on my college tuition."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 147.68,
+      "end_s": 150.64,
+      "text": "After six months, I couldn't see the value in it."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 150.64,
+      "end_s": 155.08,
+      "text": "I had no idea what I wanted to do with my life and no idea how college was going to"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 155.08,
+      "end_s": 156.88,
+      "text": "help me figure it out."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 156.88,
+      "end_s": 162.6,
+      "text": "And here I was, spending all the money my parents had saved their entire life."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 162.6,
+      "end_s": 167.56,
+      "text": "So I decided to drop out and trust that it would all work out okay."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 167.56,
+      "end_s": 171.8,
+      "text": "It was pretty scary at the time, but looking back, it was one of the best decisions I ever"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 171.8,
+      "end_s": 173.96,
+      "text": "made."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 173.96,
+      "end_s": 178.72,
+      "text": "The minute I dropped out, I could stop taking the required classes that didn't interest"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 178.72,
+      "end_s": 184.68,
+      "text": "me and begin dropping in on the ones that looked far more interesting."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 184.68,
+      "end_s": 186.44,
+      "text": "It wasn't all romantic."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 186.44,
+      "end_s": 190.4,
+      "text": "I didn't have a dorm room, so I slept on the floor in friends' rooms."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 190.4,
+      "end_s": 194.64,
+      "text": "I returned Coke bottles for the five-cent deposits to buy food with."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 194.64,
+      "end_s": 199.2,
+      "text": "And I would walk the seven miles across town every Sunday night to get one good meal a"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 199.2,
+      "end_s": 201.96,
+      "text": "week at the Hare Krishna temple."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 201.96,
+      "end_s": 203.72,
+      "text": "I loved it."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 203.72,
+      "end_s": 208.04,
+      "text": "And much of what I stumbled into by following my curiosity and intuition turned out to be"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 208.04,
+      "end_s": 210.16,
+      "text": "priceless later on."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 210.16,
+      "end_s": 213.28,
+      "text": "Let me give you one example."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 213.28,
+      "end_s": 218.44,
+      "text": "Reed College at that time offered perhaps the best calligraphy instruction in the country."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 218.44,
+      "end_s": 223.64,
+      "text": "Throughout the campus, every poster, every label on every drawer was beautifully hand"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 223.64,
+      "end_s": 225.44,
+      "text": "calligraphed."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 225.44,
+      "end_s": 230.32,
+      "text": "Because I had dropped out and didn't have to take the normal classes, I decided to take"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 230.32,
+      "end_s": 232.88,
+      "text": "a calligraphy class to learn how to do this."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 232.88,
+      "end_s": 238,
+      "text": "I learned about serif and sans serif typefaces, about varying the amount of space between"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 238,
+      "end_s": 243.3,
+      "text": "different letter combinations, about what makes great typography great."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 243.3,
+      "end_s": 249.62,
+      "text": "It was beautiful, historical, artistically subtle in a way that science can't capture."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 249.62,
+      "end_s": 252.06,
+      "text": "And I found it fascinating."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 252.06,
+      "end_s": 257.46,
+      "text": "None of this had even a hope of any practical application in my life."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 257.46,
+      "end_s": 262.14,
+      "text": "But ten years later, when we were designing the first Macintosh computer, it all came"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 262.14,
+      "end_s": 263.42,
+      "text": "back to me."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 263.42,
+      "end_s": 265.98,
+      "text": "And we designed it all into the Mac."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 265.98,
+      "end_s": 269.34,
+      "text": "It was the first computer with beautiful typography."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 269.34,
+      "end_s": 273.54,
+      "text": "If I had never dropped in on that single course in college, the Mac would have never"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 273.54,
+      "end_s": 277.28,
+      "text": "had multiple typefaces or proportionally spaced fonts."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 277.28,
+      "end_s": 281.42,
+      "text": "And since Windows just copied the Mac, it's likely that no personal computer would have"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 281.42,
+      "end_s": 289.78,
+      "text": "them."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 289.78,
+      "end_s": 293.96,
+      "text": "If I had never dropped out, I would have never dropped in on that calligraphy class."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 293.96,
+      "end_s": 298.14,
+      "text": "And personal computers might not have the wonderful typography that they do."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 298.14,
+      "end_s": 302.86,
+      "text": "Of course, it was impossible to connect the dots looking forward when I was in college."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 302.86,
+      "end_s": 306.78,
+      "text": "But it was very, very clear looking backwards ten years later."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 306.78,
+      "end_s": 309.94,
+      "text": "Again, you can't connect the dots looking forward."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 309.94,
+      "end_s": 312.72,
+      "text": "You can only connect them looking backwards."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 312.72,
+      "end_s": 316.52,
+      "text": "So you have to trust that the dots will somehow connect in your future."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 316.52,
+      "end_s": 321.78,
+      "text": "You have to trust in something, your gut, destiny, life, karma, whatever."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 321.78,
+      "end_s": 326,
+      "text": "Because believing that the dots will connect down the road will give you the confidence"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 326,
+      "end_s": 330.6,
+      "text": "to follow your heart, even when it leads you off the well-worn path."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 330.6,
+      "end_s": 338.36,
+      "text": "And that will make all the difference."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 338.36,
+      "end_s": 343.7,
+      "text": "My second story is about love and loss."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 343.7,
+      "end_s": 344.84,
+      "text": "I was lucky."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 344.84,
+      "end_s": 348.24,
+      "text": "I found what I loved to do early in life."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 348.24,
+      "end_s": 351.62,
+      "text": "Woz and I started Apple in my parents' garage when I was 20."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 351.62,
+      "end_s": 356.14,
+      "text": "We worked hard, and in ten years, Apple had grown from just the two of us in a garage"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 356.14,
+      "end_s": 359.9,
+      "text": "into a $2 billion company with over 4,000 employees."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 359.9,
+      "end_s": 363.98,
+      "text": "We had just released our finest creation, the Macintosh, a year earlier, and I had just"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 363.98,
+      "end_s": 366.1,
+      "text": "turned 30."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 366.1,
+      "end_s": 368.78,
+      "text": "And then I got fired."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 368.78,
+      "end_s": 371.98,
+      "text": "How can you get fired from a company you started?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 371.98,
+      "end_s": 377.46,
+      "text": "Well, as Apple grew, we hired someone who I thought was very talented to run the company"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 377.46,
+      "end_s": 378.46,
+      "text": "with me."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 378.46,
+      "end_s": 380.82,
+      "text": "And for the first year or so, things went well."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 381.02,
+      "end_s": 385.54,
+      "text": "But then our visions of the future began to diverge, and eventually we had a falling out."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 385.54,
+      "end_s": 388.74,
+      "text": "When we did, our board of directors sided with him."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 388.74,
+      "end_s": 393.14,
+      "text": "And so at 30, I was out, and very publicly out."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 393.14,
+      "end_s": 398.18,
+      "text": "What had been the focus of my entire adult life was gone, and it was devastating."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 398.18,
+      "end_s": 400.78,
+      "text": "I really didn't know what to do for a few months."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 400.78,
+      "end_s": 405,
+      "text": "I felt that I had let the previous generation of entrepreneurs down, that I had dropped"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 405,
+      "end_s": 407.7,
+      "text": "the baton as it was being passed to me."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 407.7,
+      "end_s": 414.06,
+      "text": "I met with David Packard and Bob Noyce and tried to apologize for screwing up so badly."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 414.06,
+      "end_s": 418.26,
+      "text": "I was a very public failure, and I even thought about running away from the Valley."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 418.26,
+      "end_s": 421.32,
+      "text": "But something slowly began to dawn on me."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 421.32,
+      "end_s": 424.74,
+      "text": "I still loved what I did."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 424.74,
+      "end_s": 427.94,
+      "text": "The turn of events at Apple had not changed that one bit."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 427.94,
+      "end_s": 431.78,
+      "text": "I'd been rejected, but I was still in love."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 431.78,
+      "end_s": 434.52,
+      "text": "And so I decided to start over."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 434.52,
+      "end_s": 438.32,
+      "text": "I didn't see it then, but it turned out that getting fired from Apple was the best thing"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 438.32,
+      "end_s": 440.64,
+      "text": "that could have ever happened to me."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 440.64,
+      "end_s": 445.88,
+      "text": "The heaviness of being successful was replaced by the lightness of being a beginner again,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 445.88,
+      "end_s": 447.8,
+      "text": "less sure about everything."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 447.8,
+      "end_s": 451.24,
+      "text": "It freed me to enter one of the most creative periods of my life."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 451.24,
+      "end_s": 456.04,
+      "text": "During the next five years, I started a company named Next, another company named Pixar, and"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 456.04,
+      "end_s": 459.44,
+      "text": "fell in love with an amazing woman who would become my wife."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 459.44,
+      "end_s": 464.04,
+      "text": "Pixar went on to create the world's first computer-animated feature film, Toy Story,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 464.04,
+      "end_s": 469.56,
+      "text": "and is now the most successful animation studio in the world."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 469.56,
+      "end_s": 475.56,
+      "text": "In a remarkable turn of events, Apple bought Next, and I returned to Apple, and the technology"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 475.56,
+      "end_s": 479.46,
+      "text": "we developed at Next is at the heart of Apple's current renaissance."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 479.46,
+      "end_s": 483.56,
+      "text": "And Lorene and I have a wonderful family together."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 483.56,
+      "end_s": 487.78,
+      "text": "I'm pretty sure none of this would have happened if I hadn't been fired from Apple."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 487.78,
+      "end_s": 493.48,
+      "text": "It was awful-tasting medicine, but I guess the patient needed it."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 493.48,
+      "end_s": 496.2,
+      "text": "Because life's gonna hit you in the head with a brick."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 496.2,
+      "end_s": 497.72,
+      "text": "Don't lose faith."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 497.72,
+      "end_s": 501.96,
+      "text": "I'm convinced that the only thing that kept me going was that I loved what I did."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 501.96,
+      "end_s": 507.8,
+      "text": "You've got to find what you love, and that is as true for work as it is for your lovers."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 507.8,
+      "end_s": 512.18,
+      "text": "Your work is gonna fill a large part of your life, and the only way to be truly satisfied"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 512.18,
+      "end_s": 514.72,
+      "text": "is to do what you believe is great work."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 514.72,
+      "end_s": 518.8,
+      "text": "And the only way to do great work is to love what you do."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 518.8,
+      "end_s": 523.36,
+      "text": "If you haven't found it yet, keep looking, and don't settle."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 523.36,
+      "end_s": 526.98,
+      "text": "Because with all matters of the heart, you'll know when you find it."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 526.98,
+      "end_s": 531.8,
+      "text": "And like any great relationship, it just gets better and better as the years roll on."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 531.8,
+      "end_s": 544.88,
+      "text": "So keep looking, don't settle."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 544.88,
+      "end_s": 548.86,
+      "text": "My third story is about death."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 548.86,
+      "end_s": 552.3,
+      "text": "When I was 17, I read a quote that went something like,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 552.3,
+      "end_s": 560.46,
+      "text": "If you live each day as if it was your last, someday you'll most certainly be right."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 560.46,
+      "end_s": 562.34,
+      "text": "It made an impression on me."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 562.34,
+      "end_s": 566.86,
+      "text": "And since then, for the past 33 years, I've looked in the mirror every morning and asked"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 566.86,
+      "end_s": 573.88,
+      "text": "myself if today were the last day of my life, would I want to do what I am about to do today?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 573.88,
+      "end_s": 578.5,
+      "text": "And whenever the answer has been no for too many days in a row, I know I need to change"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 578.5,
+      "end_s": 580.5,
+      "text": "something."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 580.5,
+      "end_s": 584.42,
+      "text": "Remembering that I'll be dead soon is the most important tool I've ever encountered"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 584.42,
+      "end_s": 587.56,
+      "text": "to help me make the big choices in life."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 587.56,
+      "end_s": 594.42,
+      "text": "Because almost everything, all external expectations, all pride, all fear of embarrassment or failure,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 594.42,
+      "end_s": 600.76,
+      "text": "these things just fall away in the face of death, leaving only what is truly important."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 600.76,
+      "end_s": 605.62,
+      "text": "Remembering that you are going to die is the best way I know to avoid the trap of thinking"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 605.62,
+      "end_s": 607.7,
+      "text": "you have something to lose."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 607.7,
+      "end_s": 609.54,
+      "text": "You are already naked."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 609.54,
+      "end_s": 613.58,
+      "text": "There is no reason not to follow your heart."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 613.58,
+      "end_s": 617.5,
+      "text": "About a year ago, I was diagnosed with cancer."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 617.5,
+      "end_s": 622.88,
+      "text": "I had a scan at 7.30 in the morning and it clearly showed a tumor on my pancreas."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 622.88,
+      "end_s": 625.74,
+      "text": "I didn't even know what a pancreas was."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 625.74,
+      "end_s": 630.82,
+      "text": "The doctors told me this was almost certainly a type of cancer that is incurable and that"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 630.82,
+      "end_s": 635.3,
+      "text": "I should expect to live no longer than three to six months."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 635.3,
+      "end_s": 641.38,
+      "text": "My doctor advised me to go home and get my affairs in order, which is doctor's code for"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 641.38,
+      "end_s": 643.34,
+      "text": "prepare to die."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 643.34,
+      "end_s": 648.34,
+      "text": "It means to try and tell your kids everything you thought you'd have the next ten years"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 648.34,
+      "end_s": 651.38,
+      "text": "to tell them in just a few months."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 651.38,
+      "end_s": 655.46,
+      "text": "It means to make sure everything is buttoned up so that it will be as easy as possible"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 655.46,
+      "end_s": 657.12,
+      "text": "for your family."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 657.12,
+      "end_s": 660.86,
+      "text": "It means to say your goodbyes."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 660.86,
+      "end_s": 663.76,
+      "text": "I lived with that diagnosis all day."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 663.76,
+      "end_s": 668.4,
+      "text": "Later that evening, I had a biopsy where they stuck an endoscope down my throat, through"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 668.4,
+      "end_s": 673.4,
+      "text": "my stomach and into my intestines, put a needle into my pancreas and got a few cells from"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 673.4,
+      "end_s": 674.84,
+      "text": "the tumor."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 674.84,
+      "end_s": 679.88,
+      "text": "I was sedated, but my wife, who was there, told me that when they viewed the cells under"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 679.88,
+      "end_s": 685.52,
+      "text": "a microscope, the doctors started crying because it turned out to be a very rare form of pancreatic"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 685.52,
+      "end_s": 688.28,
+      "text": "cancer that is curable with surgery."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 688.28,
+      "end_s": 700.28,
+      "text": "I had the surgery, and thankfully, I'm fine now."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 700.28,
+      "end_s": 704.76,
+      "text": "This was the closest I've been to facing death, and I hope it's the closest I get for a few"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 704.76,
+      "end_s": 706.32,
+      "text": "more decades."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 706.32,
+      "end_s": 710.48,
+      "text": "Having lived through it, I can now say this to you with a bit more certainty than when"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 710.48,
+      "end_s": 715.16,
+      "text": "death was a useful but purely intellectual concept."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 715.16,
+      "end_s": 717.68,
+      "text": "No one wants to die."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 717.68,
+      "end_s": 721.76,
+      "text": "Even people who want to go to heaven don't want to die to get there."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 721.76,
+      "end_s": 725.6,
+      "text": "And yet, death is the destination we all share."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 725.6,
+      "end_s": 731.44,
+      "text": "No one has ever escaped it, and that is as it should be, because death is very likely"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 731.44,
+      "end_s": 734.52,
+      "text": "the single best invention of life."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 734.52,
+      "end_s": 736.04,
+      "text": "It's life's change agent."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 736.04,
+      "end_s": 739.32,
+      "text": "It clears out the old to make way for the new."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 739.32,
+      "end_s": 742,
+      "text": "Right now, the new is you."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 742,
+      "end_s": 748.04,
+      "text": "But someday, not too long from now, you will gradually become the old and be cleared away."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 748.04,
+      "end_s": 752.08,
+      "text": "Sorry to be so dramatic, but it's quite true."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 752.08,
+      "end_s": 757.5,
+      "text": "Your time is limited, so don't waste it living someone else's life."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 757.5,
+      "end_s": 762.68,
+      "text": "Don't be trapped by dogma, which is living with the results of other people's thinking."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 762.68,
+      "end_s": 766.72,
+      "text": "Don't let the noise of others' opinions drown out your own inner voice."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 766.72,
+      "end_s": 770.92,
+      "text": "And most important, have the courage to follow your heart and intuition."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 770.92,
+      "end_s": 775.44,
+      "text": "They somehow already know what you truly want to become."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 775.44,
+      "end_s": 789.04,
+      "text": "Everything else is secondary."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 789.04,
+      "end_s": 794.88,
+      "text": "When I was young, there was an amazing publication called the Whole Earth Catalog, which was"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 794.88,
+      "end_s": 797.6,
+      "text": "one of the Bibles of my generation."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 797.6,
+      "end_s": 802.88,
+      "text": "It was created by a fellow named Stuart Brand, not far from here in Menlo Park, and he brought"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 802.88,
+      "end_s": 805.6,
+      "text": "it to life with his poetic touch."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 805.6,
+      "end_s": 810.02,
+      "text": "This was in the late 60s, before personal computers and desktop publishing, so it was"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 810.02,
+      "end_s": 814,
+      "text": "all made with typewriters, scissors, and Polaroid cameras."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 814,
+      "end_s": 819.26,
+      "text": "It was sort of like Google in paperback form, 35 years before Google came along."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 819.26,
+      "end_s": 824.76,
+      "text": "It was idealistic, overflowing with neat tools and great notions."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 824.92,
+      "end_s": 829.2,
+      "text": "Stuart and his team put out several issues of the Whole Earth Catalog, and then, when"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 829.2,
+      "end_s": 832.7,
+      "text": "it had run its course, they put out a final issue."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 832.7,
+      "end_s": 837.92,
+      "text": "It was the mid-1970s, and I was your age."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 837.92,
+      "end_s": 843.56,
+      "text": "On the back cover of their final issue was a photograph of an early morning country road,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 843.56,
+      "end_s": 848.16,
+      "text": "the kind you might find yourself hitchhiking on if you were so adventurous."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 848.16,
+      "end_s": 853.16,
+      "text": "Beneath it were the words, stay hungry, stay foolish."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 853.16,
+      "end_s": 859.44,
+      "text": "It was their farewell message as they signed off, stay hungry, stay foolish."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 859.44,
+      "end_s": 862.98,
+      "text": "And I have always wished that for myself."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 862.98,
+      "end_s": 868.4,
+      "text": "And now, as you graduate to begin anew, I wish that for you."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 868.4,
+      "end_s": 871.28,
+      "text": "Stay hungry, stay foolish."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 871.28,
+      "end_s": 872.28,
+      "text": "Thank you all very much."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 872.28,
+      "end_s": 873.28,
+      "text": "Thank you."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 896.6,
+      "end_s": 900.2,
+      "text": "The preceding program is copyrighted by Stanford University."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 900.2,
+      "end_s": 903.12,
+      "text": "Please visit us at stanford.edu."
+    }
+  ],
+  "paragraphs": [
+    {
+      "chapter_idx": 1,
+      "start_s": 0,
+      "end_s": 11.96,
+      "text": "This program is brought to you by Stanford University. Please visit us at stanford. edu."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 11.96,
+      "end_s": 35.92,
+      "text": "Thank you. I'm honored to be with you today for your commencement from one of the finest universities in the world."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 35.92,
+      "end_s": 46.68,
+      "text": "Truth be told, I never graduated from college, and this is the closest I've ever gotten to a college graduation."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 46.68,
+      "end_s": 52.36,
+      "text": "Today, I want to tell you three stories from my life. That's it."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 52.36,
+      "end_s": 55.84,
+      "text": "No big deal. Just three stories."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 55.84,
+      "end_s": 69.36,
+      "text": "The first story is about connecting the dots. I dropped out of Reed College after the first six months, but then stayed around as a drop-in for another 18 months or so before I really quit."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 69.36,
+      "end_s": 75.2,
+      "text": "So why'd I drop out? It started before I was born."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 75.2,
+      "end_s": 97.84,
+      "text": "My biological mother was a young, unwed graduate student, and she decided to put me up for She felt very strongly that I should be adopted by college graduates, so everything was all set for me to be adopted at birth by a lawyer and his wife, except that when I popped out, they decided at the last minute that they really wanted a girl."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 97.84,
+      "end_s": 107.36,
+      "text": "So my parents, who were on a waiting list, got a call in the middle of the night asking, we've got an unexpected baby boy, do you want him?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 107.36,
+      "end_s": 119.12,
+      "text": "They said, of course. My biological mother found out later that my mother had never graduated from college and that my father had never graduated from high school."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 119.12,
+      "end_s": 129.36,
+      "text": "She refused to sign the final adoption papers. She only relented a few months later when my parents promised that I would go to college."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 129.36,
+      "end_s": 142.52,
+      "text": "This was the start in my life. And 17 years later, I did go to college, but I naively chose a college that was almost as expensive as Stanford."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 142.52,
+      "end_s": 150.64,
+      "text": "And all of my working class parents' savings were being spent on my college tuition. After six months, I couldn't see the value in it."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 150.64,
+      "end_s": 156.88,
+      "text": "I had no idea what I wanted to do with my life and no idea how college was going to help me figure it out."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 156.88,
+      "end_s": 167.56,
+      "text": "And here I was, spending all the money my parents had saved their entire life. So I decided to drop out and trust that it would all work out okay."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 167.56,
+      "end_s": 184.68,
+      "text": "It was pretty scary at the time, but looking back, it was one of the best decisions I ever The minute I dropped out, I could stop taking the required classes that didn't interest me and begin dropping in on the ones that looked far more interesting."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 184.68,
+      "end_s": 190.4,
+      "text": "It wasn't all romantic. I didn't have a dorm room, so I slept on the floor in friends' rooms."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 190.4,
+      "end_s": 201.96,
+      "text": "I returned Coke bottles for the five-cent deposits to buy food with. And I would walk the seven miles across town every Sunday night to get one good meal a week at the Hare Krishna temple."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 201.96,
+      "end_s": 210.16,
+      "text": "I loved it. And much of what I stumbled into by following my curiosity and intuition turned out to be priceless later on."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 210.16,
+      "end_s": 218.44,
+      "text": "Let me give you one example. Reed College at that time offered perhaps the best calligraphy instruction in the country."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 218.44,
+      "end_s": 225.44,
+      "text": "Throughout the campus, every poster, every label on every drawer was beautifully hand calligraphed."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 225.44,
+      "end_s": 232.88,
+      "text": "Because I had dropped out and didn't have to take the normal classes, I decided to take a calligraphy class to learn how to do this."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 232.88,
+      "end_s": 243.3,
+      "text": "I learned about serif and sans serif typefaces, about varying the amount of space between different letter combinations, about what makes great typography great."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 243.3,
+      "end_s": 252.06,
+      "text": "It was beautiful, historical, artistically subtle in a way that science can't capture. And I found it fascinating."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 252.06,
+      "end_s": 263.42,
+      "text": "None of this had even a hope of any practical application in my life. But ten years later, when we were designing the first Macintosh computer, it all came back to me."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 263.42,
+      "end_s": 269.34,
+      "text": "And we designed it all into the Mac. It was the first computer with beautiful typography."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 269.34,
+      "end_s": 277.28,
+      "text": "If I had never dropped in on that single course in college, the Mac would have never had multiple typefaces or proportionally spaced fonts."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 277.28,
+      "end_s": 293.96,
+      "text": "And since Windows just copied the Mac, it's likely that no personal computer would have If I had never dropped out, I would have never dropped in on that calligraphy class."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 293.96,
+      "end_s": 302.86,
+      "text": "And personal computers might not have the wonderful typography that they do. Of course, it was impossible to connect the dots looking forward when I was in college."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 302.86,
+      "end_s": 309.94,
+      "text": "But it was very, very clear looking backwards ten years later. Again, you can't connect the dots looking forward."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 309.94,
+      "end_s": 316.52,
+      "text": "You can only connect them looking backwards. So you have to trust that the dots will somehow connect in your future."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 316.52,
+      "end_s": 330.6,
+      "text": "You have to trust in something, your gut, destiny, life, karma, whatever. Because believing that the dots will connect down the road will give you the confidence to follow your heart, even when it leads you off the well-worn path."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 330.6,
+      "end_s": 343.7,
+      "text": "And that will make all the difference. My second story is about love and loss."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 343.7,
+      "end_s": 348.24,
+      "text": "I was lucky. I found what I loved to do early in life."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 348.24,
+      "end_s": 359.9,
+      "text": "Woz and I started Apple in my parents' garage when I was 20. We worked hard, and in ten years, Apple had grown from just the two of us in a garage into a $2 billion company with over 4, 000 employees."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 359.9,
+      "end_s": 366.1,
+      "text": "We had just released our finest creation, the Macintosh, a year earlier, and I had just turned 30."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 366.1,
+      "end_s": 371.98,
+      "text": "And then I got fired. How can you get fired from a company you started?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 371.98,
+      "end_s": 380.82,
+      "text": "Well, as Apple grew, we hired someone who I thought was very talented to run the company And for the first year or so, things went well."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 381.02,
+      "end_s": 388.74,
+      "text": "But then our visions of the future began to diverge, and eventually we had a falling out. When we did, our board of directors sided with him."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 388.74,
+      "end_s": 398.18,
+      "text": "And so at 30, I was out, and very publicly out. What had been the focus of my entire adult life was gone, and it was devastating."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 398.18,
+      "end_s": 407.7,
+      "text": "I really didn't know what to do for a few months. I felt that I had let the previous generation of entrepreneurs down, that I had dropped the baton as it was being passed to me."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 407.7,
+      "end_s": 418.26,
+      "text": "I met with David Packard and Bob Noyce and tried to apologize for screwing up so badly. I was a very public failure, and I even thought about running away from the Valley."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 418.26,
+      "end_s": 424.74,
+      "text": "But something slowly began to dawn on me. I still loved what I did."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 424.74,
+      "end_s": 431.78,
+      "text": "The turn of events at Apple had not changed that one bit. I'd been rejected, but I was still in love."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 431.78,
+      "end_s": 440.64,
+      "text": "And so I decided to start over. I didn't see it then, but it turned out that getting fired from Apple was the best thing that could have ever happened to me."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 440.64,
+      "end_s": 447.8,
+      "text": "The heaviness of being successful was replaced by the lightness of being a beginner again, less sure about everything."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 447.8,
+      "end_s": 459.44,
+      "text": "It freed me to enter one of the most creative periods of my life. During the next five years, I started a company named Next, another company named Pixar, and fell in love with an amazing woman who would become my wife."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 459.44,
+      "end_s": 469.56,
+      "text": "Pixar went on to create the world's first computer-animated feature film, Toy Story, and is now the most successful animation studio in the world."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 469.56,
+      "end_s": 479.46,
+      "text": "In a remarkable turn of events, Apple bought Next, and I returned to Apple, and the technology we developed at Next is at the heart of Apple's current renaissance."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 479.46,
+      "end_s": 487.78,
+      "text": "And Lorene and I have a wonderful family together. I'm pretty sure none of this would have happened if I hadn't been fired from Apple."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 487.78,
+      "end_s": 496.2,
+      "text": "It was awful-tasting medicine, but I guess the patient needed it. Because life's gonna hit you in the head with a brick."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 496.2,
+      "end_s": 501.96,
+      "text": "Don't lose faith. I'm convinced that the only thing that kept me going was that I loved what I did."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 501.96,
+      "end_s": 514.72,
+      "text": "You've got to find what you love, and that is as true for work as it is for your lovers. Your work is gonna fill a large part of your life, and the only way to be truly satisfied is to do what you believe is great work."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 514.72,
+      "end_s": 523.36,
+      "text": "And the only way to do great work is to love what you do. If you haven't found it yet, keep looking, and don't settle."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 523.36,
+      "end_s": 531.8,
+      "text": "Because with all matters of the heart, you'll know when you find it. And like any great relationship, it just gets better and better as the years roll on."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 531.8,
+      "end_s": 548.86,
+      "text": "So keep looking, don't settle. My third story is about death."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 548.86,
+      "end_s": 560.46,
+      "text": "When I was 17, I read a quote that went something like, If you live each day as if it was your last, someday you'll most certainly be right."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 560.46,
+      "end_s": 573.88,
+      "text": "It made an impression on me. And since then, for the past 33 years, I've looked in the mirror every morning and asked myself if today were the last day of my life, would I want to do what I am about to do today?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 573.88,
+      "end_s": 580.5,
+      "text": "And whenever the answer has been no for too many days in a row, I know I need to change something."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 580.5,
+      "end_s": 587.56,
+      "text": "Remembering that I'll be dead soon is the most important tool I've ever encountered to help me make the big choices in life."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 587.56,
+      "end_s": 600.76,
+      "text": "Because almost everything, all external expectations, all pride, all fear of embarrassment or failure, these things just fall away in the face of death, leaving only what is truly important."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 600.76,
+      "end_s": 607.7,
+      "text": "Remembering that you are going to die is the best way I know to avoid the trap of thinking you have something to lose."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 607.7,
+      "end_s": 613.58,
+      "text": "You are already naked. There is no reason not to follow your heart."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 613.58,
+      "end_s": 622.88,
+      "text": "About a year ago, I was diagnosed with cancer. I had a scan at 7. 30 in the morning and it clearly showed a tumor on my pancreas."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 622.88,
+      "end_s": 635.3,
+      "text": "I didn't even know what a pancreas was. The doctors told me this was almost certainly a type of cancer that is incurable and that I should expect to live no longer than three to six months."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 635.3,
+      "end_s": 643.34,
+      "text": "My doctor advised me to go home and get my affairs in order, which is doctor's code for prepare to die."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 643.34,
+      "end_s": 651.38,
+      "text": "It means to try and tell your kids everything you thought you'd have the next ten years to tell them in just a few months."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 651.38,
+      "end_s": 657.12,
+      "text": "It means to make sure everything is buttoned up so that it will be as easy as possible for your family."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 657.12,
+      "end_s": 663.76,
+      "text": "It means to say your goodbyes. I lived with that diagnosis all day."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 663.76,
+      "end_s": 674.84,
+      "text": "Later that evening, I had a biopsy where they stuck an endoscope down my throat, through my stomach and into my intestines, put a needle into my pancreas and got a few cells from the tumor."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 674.84,
+      "end_s": 688.28,
+      "text": "I was sedated, but my wife, who was there, told me that when they viewed the cells under a microscope, the doctors started crying because it turned out to be a very rare form of pancreatic cancer that is curable with surgery."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 688.28,
+      "end_s": 706.32,
+      "text": "I had the surgery, and thankfully, I'm fine now. This was the closest I've been to facing death, and I hope it's the closest I get for a few more decades."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 706.32,
+      "end_s": 715.16,
+      "text": "Having lived through it, I can now say this to you with a bit more certainty than when death was a useful but purely intellectual concept."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 715.16,
+      "end_s": 721.76,
+      "text": "No one wants to die. Even people who want to go to heaven don't want to die to get there."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 721.76,
+      "end_s": 734.52,
+      "text": "And yet, death is the destination we all share. No one has ever escaped it, and that is as it should be, because death is very likely the single best invention of life."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 734.52,
+      "end_s": 739.32,
+      "text": "It's life's change agent. It clears out the old to make way for the new."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 739.32,
+      "end_s": 748.04,
+      "text": "Right now, the new is you. But someday, not too long from now, you will gradually become the old and be cleared away."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 748.04,
+      "end_s": 757.5,
+      "text": "Sorry to be so dramatic, but it's quite true. Your time is limited, so don't waste it living someone else's life."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 757.5,
+      "end_s": 766.72,
+      "text": "Don't be trapped by dogma, which is living with the results of other people's thinking. Don't let the noise of others' opinions drown out your own inner voice."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 766.72,
+      "end_s": 775.44,
+      "text": "And most important, have the courage to follow your heart and intuition. They somehow already know what you truly want to become."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 775.44,
+      "end_s": 797.6,
+      "text": "Everything else is secondary. When I was young, there was an amazing publication called the Whole Earth Catalog, which was one of the Bibles of my generation."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 797.6,
+      "end_s": 805.6,
+      "text": "It was created by a fellow named Stuart Brand, not far from here in Menlo Park, and he brought it to life with his poetic touch."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 805.6,
+      "end_s": 814,
+      "text": "This was in the late 60s, before personal computers and desktop publishing, so it was all made with typewriters, scissors, and Polaroid cameras."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 814,
+      "end_s": 824.76,
+      "text": "It was sort of like Google in paperback form, 35 years before Google came along. It was idealistic, overflowing with neat tools and great notions."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 824.92,
+      "end_s": 832.7,
+      "text": "Stuart and his team put out several issues of the Whole Earth Catalog, and then, when it had run its course, they put out a final issue."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 832.7,
+      "end_s": 848.16,
+      "text": "It was the mid-1970s, and I was your age. On the back cover of their final issue was a photograph of an early morning country road, the kind you might find yourself hitchhiking on if you were so adventurous."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 848.16,
+      "end_s": 859.44,
+      "text": "Beneath it were the words, stay hungry, stay foolish. It was their farewell message as they signed off, stay hungry, stay foolish."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 859.44,
+      "end_s": 868.4,
+      "text": "And I have always wished that for myself. And now, as you graduate to begin anew, I wish that for you."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 868.4,
+      "end_s": 872.28,
+      "text": "Stay hungry, stay foolish. Thank you all very much."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 872.28,
+      "end_s": 900.2,
+      "text": "Thank you. The preceding program is copyrighted by Stanford University."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 900.2,
+      "end_s": 903.12,
+      "text": "Please visit us at stanford. edu."
+    }
+  ]
+}

@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/tests/artifacts/*
+!/tests/artifacts/.gitkeep
 
 # next.js
 /.next/

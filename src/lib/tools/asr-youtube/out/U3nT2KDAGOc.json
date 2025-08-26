@@ -1,0 +1,974 @@
+{
+  "source": {
+    "platform": "youtube",
+    "video_id": "U3nT2KDAGOc",
+    "title": "The Science of Character",
+    "channel": "Tiffany Shlain & Let It Ripple Studio",
+    "duration_s": 485,
+    "rights": "owner_ok",
+    "language": "en",
+    "captions_kind": "asr",
+    "asr_provider": "openai",
+    "asr_model": "whisper-1"
+  },
+  "chapters": [
+    {
+      "idx": 1,
+      "title": "Full",
+      "start_s": 0,
+      "end_s": 485
+    }
+  ],
+  "segments": [
+    {
+      "chapter_idx": 1,
+      "start_s": 0,
+      "end_s": 12.68,
+      "text": "There are 7 billion, well actually 7.1 billion humans on the planet, and each one of us has"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 12.68,
+      "end_s": 16.82,
+      "text": "a unique character."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 16.82,
+      "end_s": 20.92,
+      "text": "So what determines your character?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 20.92,
+      "end_s": 25.08,
+      "text": "You do, and all the people around you."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 25.08,
+      "end_s": 27.08,
+      "text": "And of course some genetics too."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 27.08,
+      "end_s": 33,
+      "text": "But there's new science proving that if you focus on certain parts of who you are,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 33,
+      "end_s": 35.64,
+      "text": "you can develop your character."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 35.64,
+      "end_s": 42,
+      "text": "And ultimately live a more meaningful, successful, and happy life, no matter what your circumstances."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 42,
+      "end_s": 46.32,
+      "text": "I mean isn't that what we're all trying to figure out?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 46.32,
+      "end_s": 51.4,
+      "text": "This whole idea about developing our character really took shape in 2004, when two psychologists"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 51.4,
+      "end_s": 55.96,
+      "text": "suggested that instead of just focusing on all the things that can go wrong with us,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 55.96,
+      "end_s": 61.48,
+      "text": "it's also important to celebrate all the things that can go right."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 61.48,
+      "end_s": 67.2,
+      "text": "You see, they looked throughout history to identify core virtues that humans across cultures"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 67.2,
+      "end_s": 70.8,
+      "text": "have agreed lead to a meaningful life."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 70.8,
+      "end_s": 76.38,
+      "text": "And then they identified 24 character strengths that when practiced and developed could lead"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 76.38,
+      "end_s": 78.52,
+      "text": "to these virtues."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 78.52,
+      "end_s": 82.8,
+      "text": "And they organized them, like scientists have done throughout history to understand things"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 82.8,
+      "end_s": 85.52,
+      "text": "better."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 85.52,
+      "end_s": 91.28,
+      "text": "These groundbreaking studies showed that every person is a unique combination of these strengths."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 91.28,
+      "end_s": 96.16,
+      "text": "Like for me, I'm high on curiosity, I can work a little on the prudence."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 96.16,
+      "end_s": 98.64,
+      "text": "Actually, what is prudence?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 98.64,
+      "end_s": 103.36,
+      "text": "Anyhow, one of the most interesting parts of all this is they found that if we focus"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 103.36,
+      "end_s": 108.04,
+      "text": "on building upon the strengths we have, it has a lasting effect on our happiness and"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 108.04,
+      "end_s": 109.72,
+      "text": "well-being."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 109.72,
+      "end_s": 110.72,
+      "text": "So think about it."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 111.52,
+      "end_s": 113.52,
+      "text": "What are your top five strengths?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 120.12,
+      "end_s": 124.76,
+      "text": "Now another part of this is that you can help shape other people's character too."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 124.76,
+      "end_s": 130.32,
+      "text": "They found that the key to human relationships is ultimately appreciating the character strengths"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 130.32,
+      "end_s": 132.16,
+      "text": "in others."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 132.16,
+      "end_s": 136.72,
+      "text": "To explore this, we asked people around the world, who do you admire and why?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 137.72,
+      "end_s": 140.72,
+      "text": "I admire my mother the most because she's very loving and caring."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 146.72,
+      "end_s": 151.72,
+      "text": "My sister, because she is so tough and so brave."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 151.72,
+      "end_s": 156.72,
+      "text": "People who use their creative energy to make the world a better place."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 157.72,
+      "end_s": 162.72,
+      "text": "This powerful new framework paved the way for a whole new era of social science that"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 162.72,
+      "end_s": 165.72,
+      "text": "it turns out is unpacking a very old idea."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 187.72,
+      "end_s": 190.72,
+      "text": "So how do we develop these character strengths?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 190.72,
+      "end_s": 195.72,
+      "text": "One theory suggests that people either have a fixed mindset or a growth mindset."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 195.72,
+      "end_s": 200.72,
+      "text": "A fixed mindset is the belief that we're born with certain abilities, intelligence,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 200.72,
+      "end_s": 203.72,
+      "text": "and talents, and we're stuck with it."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 203.72,
+      "end_s": 207.72,
+      "text": "A growth mindset is believing I can change."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 207.72,
+      "end_s": 210.72,
+      "text": "If I set my mind to it, I can do anything."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 212.72,
+      "end_s": 215.72,
+      "text": "Let's take, for example, failing at something."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 215.72,
+      "end_s": 219.72,
+      "text": "With a fixed mindset, failing means I'm a failure."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 219.72,
+      "end_s": 222.72,
+      "text": "A growth mindset understands failure happens to everyone."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 222.72,
+      "end_s": 224.72,
+      "text": "Of course it's hard, I've been there."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 224.72,
+      "end_s": 228.72,
+      "text": "But it's also something to learn from, something to improve upon."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 229.72,
+      "end_s": 232.72,
+      "text": "Fortunately, we can all develop a growth mindset."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 232.72,
+      "end_s": 235.72,
+      "text": "It takes practice and it takes encouragement from the people around us."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 235.72,
+      "end_s": 237.72,
+      "text": "But it can be learned."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 237.72,
+      "end_s": 242.72,
+      "text": "And it's all because of an amazing part of the human brain called the prefrontal cortex."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 242.72,
+      "end_s": 246.72,
+      "text": "It's like our brain's control panel that orchestrates our thoughts and actions,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 246.72,
+      "end_s": 249.72,
+      "text": "what many scientists call executive functions."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 252.72,
+      "end_s": 257.72,
+      "text": "Or what neuroscientist Adele, no not that Adele, Adele Diamond, calls self-regulations."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 258.72,
+      "end_s": 261.72,
+      "text": "I like to think of it as my self-control filter,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 261.72,
+      "end_s": 264.72,
+      "text": "the thing that keeps my impulses and emotions in check."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 265.72,
+      "end_s": 269.72,
+      "text": "And the way to strengthen that filter is as simple as taking a moment,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 269.72,
+      "end_s": 272.72,
+      "text": "focusing your attention and asking yourself,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 272.72,
+      "end_s": 277.72,
+      "text": "is what I'm about to do a reflection of who I am and who I want to be?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 278.72,
+      "end_s": 282.72,
+      "text": "So while we're all becoming more and more distracted in this age of distraction,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 283.72,
+      "end_s": 286.72,
+      "text": "we need to remember to take a moment and think."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 287.72,
+      "end_s": 290.72,
+      "text": "There are a lot of new exciting conversations happening about character."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 291.72,
+      "end_s": 294.72,
+      "text": "One that I find interesting is that there are seven strengths in particular"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 294.72,
+      "end_s": 299.72,
+      "text": "that can be real game-changers in academic achievement, success and happiness,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 299.72,
+      "end_s": 301.72,
+      "text": "no matter what your circumstances."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 302.72,
+      "end_s": 307.72,
+      "text": "Those seven are optimism, gratitude, social integrity,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 307.72,
+      "end_s": 309.72,
+      "text": "and self-discipline."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 309.72,
+      "end_s": 313.72,
+      "text": "While there have been many different theories about character throughout history,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 313.72,
+      "end_s": 317.72,
+      "text": "what scientists in this field agree on is that character matters,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 317.72,
+      "end_s": 322.72,
+      "text": "and that character strengths can be learned, practiced and cultivated."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 340.72,
+      "end_s": 344.72,
+      "text": "So when you think about yourself, what are your strengths?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 346.72,
+      "end_s": 351.72,
+      "text": "And how can you find ways to use them more in your home, work, school and community?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 352.72,
+      "end_s": 357.72,
+      "text": "It's like you have these superpowers and focusing your attention on them makes them stronger."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 357.72,
+      "end_s": 361.72,
+      "text": "And then if you focus on the people around you and their strengths,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 361.72,
+      "end_s": 363.72,
+      "text": "it makes them stronger too."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 363.72,
+      "end_s": 366.72,
+      "text": "As each of us becomes our best versions of ourselves"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 366.72,
+      "end_s": 369.72,
+      "text": "and encourages others to do the same,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 369.72,
+      "end_s": 372.72,
+      "text": "we can lead to important changes throughout the world."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 372.72,
+      "end_s": 378.72,
+      "text": "Just imagine a world infused with more humanity, justice, courage, wisdom and compassion."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 383.72,
+      "end_s": 387.72,
+      "text": "So if you can be a better version of yourself, how do you want to be?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 387.72,
+      "end_s": 391.72,
+      "text": "I definitely want to be somebody that other people can feel they can rely on."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 391.72,
+      "end_s": 393.72,
+      "text": "A man who was courageous."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 393.72,
+      "end_s": 394.72,
+      "text": "A man who was courageous."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 394.72,
+      "end_s": 397.72,
+      "text": "Somebody who went for their goals."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 398.72,
+      "end_s": 400.72,
+      "text": "As a risk taker."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 400.72,
+      "end_s": 401.72,
+      "text": "Kind."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 401.72,
+      "end_s": 405.72,
+      "text": "Exactly like my mom, beautiful, strong and powerful."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 405.72,
+      "end_s": 408.72,
+      "text": "I want people to say that I'm funny."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 408.72,
+      "end_s": 410.72,
+      "text": "Who is a nice person."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 413.72,
+      "end_s": 414.72,
+      "text": "Generous."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 414.72,
+      "end_s": 415.72,
+      "text": "Be yourself."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 415.72,
+      "end_s": 416.72,
+      "text": "Kind."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 417.72,
+      "end_s": 418.72,
+      "text": "Accountable."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 418.72,
+      "end_s": 419.72,
+      "text": "Incondicional."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 419.72,
+      "end_s": 421.72,
+      "text": "I'm a new child that I want to see."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 422.72,
+      "end_s": 423.72,
+      "text": "Sensible."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 423.72,
+      "end_s": 424.72,
+      "text": "Professional."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 424.72,
+      "end_s": 425.72,
+      "text": "Charismatic."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 425.72,
+      "end_s": 432.72,
+      "text": "I want to become someone who, when the time comes for me to die,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 432.72,
+      "end_s": 436.72,
+      "text": "I go, oh my goodness, I have boosted up."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 436.72,
+      "end_s": 439.72,
+      "text": "I have brung it dry."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 441.72,
+      "end_s": 443.72,
+      "text": "Everybody gets a start."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 443.72,
+      "end_s": 445.72,
+      "text": "They just need to learn how to shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 451.72,
+      "end_s": 453.72,
+      "text": "I'm a new child that I want to see."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 453.72,
+      "end_s": 459.72,
+      "text": "I want to become someone who, when the time comes for me to die,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 459.72,
+      "end_s": 463.72,
+      "text": "I go, oh my goodness, I have boosted up."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 463.72,
+      "end_s": 465.72,
+      "text": "I have brung it dry."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 465.72,
+      "end_s": 467.72,
+      "text": "Everybody gets a start."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 467.72,
+      "end_s": 470.72,
+      "text": "They just need to learn how to shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 470.72,
+      "end_s": 472.72,
+      "text": "I'm a new child that I want to see."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 472.72,
+      "end_s": 478.72,
+      "text": "I want to become someone who, when the time comes for me to die,"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 478.72,
+      "end_s": 481.72,
+      "text": "I go, oh my goodness, I have boosted up."
+    }
+  ],
+  "paragraphs": [
+    {
+      "chapter_idx": 1,
+      "start_s": 0,
+      "end_s": 16.82,
+      "text": "There are 7 billion, well actually 7. 1 billion humans on the planet, and each one of us has a unique character."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 16.82,
+      "end_s": 25.08,
+      "text": "So what determines your character? You do, and all the people around you."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 25.08,
+      "end_s": 35.64,
+      "text": "And of course some genetics too. But there's new science proving that if you focus on certain parts of who you are, you can develop your character."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 35.64,
+      "end_s": 46.32,
+      "text": "And ultimately live a more meaningful, successful, and happy life, no matter what your circumstances. I mean isn't that what we're all trying to figure out?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 46.32,
+      "end_s": 61.48,
+      "text": "This whole idea about developing our character really took shape in 2004, when two psychologists suggested that instead of just focusing on all the things that can go wrong with us, it's also important to celebrate all the things that can go right."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 61.48,
+      "end_s": 70.8,
+      "text": "You see, they looked throughout history to identify core virtues that humans across cultures have agreed lead to a meaningful life."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 70.8,
+      "end_s": 78.52,
+      "text": "And then they identified 24 character strengths that when practiced and developed could lead to these virtues."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 78.52,
+      "end_s": 91.28,
+      "text": "And they organized them, like scientists have done throughout history to understand things These groundbreaking studies showed that every person is a unique combination of these strengths."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 91.28,
+      "end_s": 98.64,
+      "text": "Like for me, I'm high on curiosity, I can work a little on the prudence. Actually, what is prudence?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 98.64,
+      "end_s": 109.72,
+      "text": "Anyhow, one of the most interesting parts of all this is they found that if we focus on building upon the strengths we have, it has a lasting effect on our happiness and well-being."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 109.72,
+      "end_s": 113.52,
+      "text": "So think about it. What are your top five strengths?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 120.12,
+      "end_s": 132.16,
+      "text": "Now another part of this is that you can help shape other people's character too. They found that the key to human relationships is ultimately appreciating the character strengths in others."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 132.16,
+      "end_s": 140.72,
+      "text": "To explore this, we asked people around the world, who do you admire and why? I admire my mother the most because she's very loving and caring."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 146.72,
+      "end_s": 156.72,
+      "text": "My sister, because she is so tough and so brave. People who use their creative energy to make the world a better place."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 157.72,
+      "end_s": 165.72,
+      "text": "This powerful new framework paved the way for a whole new era of social science that it turns out is unpacking a very old idea."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 187.72,
+      "end_s": 195.72,
+      "text": "So how do we develop these character strengths? One theory suggests that people either have a fixed mindset or a growth mindset."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 195.72,
+      "end_s": 203.72,
+      "text": "A fixed mindset is the belief that we're born with certain abilities, intelligence, and talents, and we're stuck with it."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 203.72,
+      "end_s": 210.72,
+      "text": "A growth mindset is believing I can change. If I set my mind to it, I can do anything."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 212.72,
+      "end_s": 219.72,
+      "text": "Let's take, for example, failing at something. With a fixed mindset, failing means I'm a failure."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 219.72,
+      "end_s": 224.72,
+      "text": "A growth mindset understands failure happens to everyone. Of course it's hard, I've been there."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 224.72,
+      "end_s": 232.72,
+      "text": "But it's also something to learn from, something to improve upon. Fortunately, we can all develop a growth mindset."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 232.72,
+      "end_s": 237.72,
+      "text": "It takes practice and it takes encouragement from the people around us. But it can be learned."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 237.72,
+      "end_s": 249.72,
+      "text": "And it's all because of an amazing part of the human brain called the prefrontal cortex. It's like our brain's control panel that orchestrates our thoughts and actions, what many scientists call executive functions."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 252.72,
+      "end_s": 264.72,
+      "text": "Or what neuroscientist Adele, no not that Adele, Adele Diamond, calls self-regulations. I like to think of it as my self-control filter, the thing that keeps my impulses and emotions in check."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 265.72,
+      "end_s": 277.72,
+      "text": "And the way to strengthen that filter is as simple as taking a moment, focusing your attention and asking yourself, is what I'm about to do a reflection of who I am and who I want to be?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 278.72,
+      "end_s": 286.72,
+      "text": "So while we're all becoming more and more distracted in this age of distraction, we need to remember to take a moment and think."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 287.72,
+      "end_s": 301.72,
+      "text": "There are a lot of new exciting conversations happening about character. One that I find interesting is that there are seven strengths in particular that can be real game-changers in academic achievement, success and happiness, no matter what your circumstances."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 302.72,
+      "end_s": 309.72,
+      "text": "Those seven are optimism, gratitude, social integrity, and self-discipline."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 309.72,
+      "end_s": 322.72,
+      "text": "While there have been many different theories about character throughout history, what scientists in this field agree on is that character matters, and that character strengths can be learned, practiced and cultivated."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 340.72,
+      "end_s": 351.72,
+      "text": "So when you think about yourself, what are your strengths? And how can you find ways to use them more in your home, work, school and community?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 352.72,
+      "end_s": 363.72,
+      "text": "It's like you have these superpowers and focusing your attention on them makes them stronger. And then if you focus on the people around you and their strengths, it makes them stronger too."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 363.72,
+      "end_s": 372.72,
+      "text": "As each of us becomes our best versions of ourselves and encourages others to do the same, we can lead to important changes throughout the world."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 372.72,
+      "end_s": 387.72,
+      "text": "Just imagine a world infused with more humanity, justice, courage, wisdom and compassion. So if you can be a better version of yourself, how do you want to be?"
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 387.72,
+      "end_s": 393.72,
+      "text": "I definitely want to be somebody that other people can feel they can rely on. A man who was courageous."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 393.72,
+      "end_s": 397.72,
+      "text": "A man who was courageous. Somebody who went for their goals."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 398.72,
+      "end_s": 405.72,
+      "text": "As a risk taker. Exactly like my mom, beautiful, strong and powerful."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 405.72,
+      "end_s": 410.72,
+      "text": "I want people to say that I'm funny. Who is a nice person."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 414.72,
+      "end_s": 418.72,
+      "text": "Be yourself. Accountable."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 418.72,
+      "end_s": 421.72,
+      "text": "Incondicional. I'm a new child that I want to see."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 423.72,
+      "end_s": 425.72,
+      "text": "Professional. Charismatic."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 425.72,
+      "end_s": 436.72,
+      "text": "I want to become someone who, when the time comes for me to die, I go, oh my goodness, I have boosted up."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 436.72,
+      "end_s": 443.72,
+      "text": "I have brung it dry. Everybody gets a start."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 443.72,
+      "end_s": 453.72,
+      "text": "They just need to learn how to shine. I'm a new child that I want to see."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 453.72,
+      "end_s": 463.72,
+      "text": "I want to become someone who, when the time comes for me to die, I go, oh my goodness, I have boosted up."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 463.72,
+      "end_s": 467.72,
+      "text": "I have brung it dry. Everybody gets a start."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 467.72,
+      "end_s": 472.72,
+      "text": "They just need to learn how to shine. I'm a new child that I want to see."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 472.72,
+      "end_s": 481.72,
+      "text": "I want to become someone who, when the time comes for me to die, I go, oh my goodness, I have boosted up."
+    }
+  ]
+}

@@ -6,7 +6,15 @@
     "dev": "concurrently 'next dev --turbopack' 'npx convex dev'",
     "build": "npx convex deploy && next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "npm run test:unit && npm run test:integration && npm run test:e2e",
+    "test:unit": "tsx tests/unit/*.ts",
+    "test:integration": "tsx tests/integration/*.ts",
+    "test:e2e": "playwright test tests/e2e/",
+    "test:voice": "node tests/voice/*.js",
+    "test:scripts": "node tests/scripts/*.js",
+    "test:clean": "rm -rf tests/artifacts/*",
+    "test:all": "npm run test && npm run test:voice && npm run test:scripts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.60.0",

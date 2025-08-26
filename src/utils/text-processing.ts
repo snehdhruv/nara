@@ -245,18 +245,18 @@ export function calculateWordTimings(
 export function findActiveWord(
   words: WordTiming[],
   currentTime: number
-): { index: number; progress: number } | null {
+): { index: number; progress: number; word: string } | null {
   for (let i = 0; i < words.length; i++) {
     const word = words[i];
     if (currentTime >= word.startTime && currentTime < word.endTime) {
       const progress = (currentTime - word.startTime) / (word.endTime - word.startTime);
-      return { index: i, progress };
+      return { index: i, progress, word: word.word };
     }
   }
   
   // If past all words, return last word
   if (currentTime >= words[words.length - 1]?.endTime) {
-    return { index: words.length - 1, progress: 1 };
+    return { index: words.length - 1, progress: 1, word: words[words.length - 1]?.word || '' };
   }
   
   return null;
