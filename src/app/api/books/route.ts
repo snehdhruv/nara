@@ -218,3 +218,38 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const bookId = searchParams.get('id');
+    
+    if (!bookId) {
+      return NextResponse.json(
+        { success: false, error: 'Book ID is required' },
+        { status: 400 }
+      );
+    }
+    
+    console.log('[API] Deleting audiobook from Convex:', bookId);
+    
+    // Delete audiobook from Convex (this also deletes associated progress and notes)
+    await convex.mutation(api.audiobooks.deleteAudiobook, {
+      audiobookId: bookId as any
+    });
+    
+    console.log('[API] Successfully deleted audiobook from Convex');
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Audiobook deleted successfully'
+    });
+    
+  } catch (error) {
+    console.error('[API] Books DELETE error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to delete book' },
+      { status: 500 }
+    );
+  }
+}

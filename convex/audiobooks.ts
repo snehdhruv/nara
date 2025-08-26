@@ -175,15 +175,18 @@ export const deleteAudiobook = mutation({
     }
     
     // Also delete associated progress and notes
-    const progressRecords = await ctx.db
+    // Since we don't have userId and the indexes require it, we need to scan all records
+    const allProgressRecords = await ctx.db
       .query("audiobookProgress")
-      .withIndex("by_user_audiobook", (q) => q.eq("audiobookId", audiobookId))
       .collect();
     
-    const noteRecords = await ctx.db
+    const progressRecords = allProgressRecords.filter(p => p.audiobookId === audiobookId);
+    
+    const allNoteRecords = await ctx.db
       .query("audiobookNotes")
-      .withIndex("by_user_audiobook", (q) => q.eq("audiobookId", audiobookId))
       .collect();
+    
+    const noteRecords = allNoteRecords.filter(n => n.audiobookId === audiobookId);
     
     // Delete all related records
     for (const progress of progressRecords) {

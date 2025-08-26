@@ -89,6 +89,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectBook }) => {
       alert(`Failed to add audiobook: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
+
+  const handleDeleteBook = async (bookId: string, bookTitle: string) => {
+    if (!confirm(`Are you sure you want to delete "${bookTitle}"? This will also remove all your notes and progress for this audiobook.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/books?id=${bookId}`, {
+        method: 'DELETE',
+      });
+      
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to delete book');
+      }
+      
+      console.log('[Dashboard] Successfully deleted audiobook');
+      
+      // Refresh the books list to reflect the deletion
+      await refetch();
+    } catch (error) {
+      console.error('[Dashboard] Failed to delete audiobook:', error);
+      alert(`Failed to delete audiobook: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
   
   // Show YouTube search overlay
   if (showYouTubeSearch) {
@@ -253,6 +278,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectBook }) => {
               nextUp={nextUpBooks}
               finished={finishedBooks}
               onSelectBook={onSelectBook}
+              onDeleteBook={handleDeleteBook}
             />
           )}
         </main>
@@ -286,30 +312,24 @@ interface BookShelvesProps {
   nextUp: BookInfo[];
   finished: BookInfo[];
   onSelectBook: (bookId: string) => void;
+  onDeleteBook?: (bookId: string, bookTitle: string) => void;
 }
 
 const BookShelves: React.FC<BookShelvesProps> = ({ 
   currentlyReading, 
   nextUp, 
   finished, 
-  onSelectBook 
+  onSelectBook,
+  onDeleteBook 
 }) => {
   return (
     <div className="space-y-16">
-      {/* Currently Reading Section */}
-      <BookShelf 
-        title="Currently Reading"
-        books={currentlyReading}
-        onSelectBook={onSelectBook}
-        emptyMessage="You're not reading any books right now."
-        showProgress
-      />
-      
       {/* Recommended Section (renamed from Next Up) */}
       <BookShelf 
         title="Recommended for Startups"
         books={nextUp}
         onSelectBook={onSelectBook}
+        onDeleteBook={onDeleteBook}
         emptyMessage="No recommendations available right now."
       />
       
@@ -318,6 +338,7 @@ const BookShelves: React.FC<BookShelvesProps> = ({
         title="Finished"
         books={finished}
         onSelectBook={onSelectBook}
+        onDeleteBook={onDeleteBook}
         emptyMessage="You haven't finished any books yet."
       />
     </div>
@@ -328,6 +349,7 @@ interface BookShelfProps {
   title: string;
   books: BookInfo[];
   onSelectBook: (bookId: string) => void;
+  onDeleteBook?: (bookId: string, bookTitle: string) => void;
   emptyMessage: string;
   showProgress?: boolean;
 }
@@ -336,6 +358,7 @@ const BookShelf: React.FC<BookShelfProps> = ({
   title, 
   books, 
   onSelectBook, 
+  onDeleteBook,
   emptyMessage,
   showProgress 
 }) => {
@@ -378,12 +401,32 @@ const BookShelf: React.FC<BookShelfProps> = ({
                   // Enhanced hover effect
                   whileHover={{ y: -15, rotateY: 5, rotateZ: -2 }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                  className="cursor-pointer flex-shrink-0 flex flex-col items-center"
-                  onClick={() => onSelectBook(book.id)}
+                  className="cursor-pointer flex-shrink-0 flex flex-col items-center relative group"
                 >
                   <div className="relative flex flex-col items-center">
+                    {/* Delete button - visible on hover */}
+                    {onDeleteBook && (
+                      <Button
+                        isIconOnly
+                        size="sm"
+                        variant="flat"
+                        color="danger"
+                        className="absolute -top-2 -right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-red-500 hover:bg-red-600 text-white rounded-full"
+                        onPress={() => onDeleteBook(book.id, book.title)}
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+                        }}
+                        aria-label={`Delete ${book.title}`}
+                      >
+                        <Icon icon="lucide:x" width={14} />
+                      </Button>
+                    )}
+
                     {/* Book cover - Using responsive sizing with min/max constraints */}
-                    <div className="relative">
+                    <div 
+                      className="relative"
+                      onClick={() => onSelectBook(book.id)}
+                    >
                       <img 
                         src={book.coverUrl} 
                         alt={book.title}

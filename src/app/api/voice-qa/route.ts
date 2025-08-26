@@ -1,28 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createVoiceAgentBridge } from '../../../../main/audio/INTEGRATION_EXAMPLE';
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../convex/_generated/api";
-import { convertConvexToCanonical, validateConvexAudiobook } from '../../../../agents/langgraph/utils/convexAdapter';
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-
-// Create a single bridge instance to reuse
-let bridgeInstance: any = null;
-
-async function getBridge() {
-  if (!bridgeInstance) {
-    try {
-      const bridge = await createVoiceAgentBridge();
-      await bridge.initialize();
-      bridgeInstance = bridge;
-      console.log('[API] Voice bridge initialized');
-    } catch (error) {
-      console.error('[API] Bridge initialization failed:', error);
-      throw error;
-    }
-  }
-  return bridgeInstance;
-}
 
 // Get audiobook data from Convex for voice context
 async function getAudiobookForVoice(audiobookId: string, youtubeVideoId: string) {
@@ -133,11 +113,18 @@ export async function POST(request: NextRequest) {
       console.log(`[API] Calling processQuestionWithData with audiobook: ${currentAudiobook.title}`);
       console.log(`[API] Transcript data has ${transcriptData.segments.length} segments`);
       
-      // Calculate userProgressIdx based on audiobook's total chapters
-      const totalChapters = transcriptData.chapters.length;
-      const userProgressIdx = Math.max(1, totalChapters); // Allow access to all available chapters
+      // Get the actual current chapter from context, ensure it's valid
+      const currentChapterIdx = context?.currentChapter || 1;
       
-      console.log(`[API] Audiobook has ${totalChapters} chapters, setting userProgressIdx to ${userProgressIdx}`);
+      // Find the highest chapter index that has segments
+      const availableChapterIdxs = Array.from(new Set(transcriptData.segments.map(s => s.chapter_idx)));
+      const maxAvailableChapter = Math.max(...availableChapterIdxs);
+      
+      // Ensure the chapter index is within available range
+      const validChapterIdx = Math.min(currentChapterIdx, maxAvailableChapter);
+      
+      console.log(`[API] Current chapter: ${currentChapterIdx}, max available: ${maxAvailableChapter}, using: ${validChapterIdx}`);
+      console.log(`[API] Available chapters with segments: ${availableChapterIdxs.join(', ')}`);
       
       const result = await bridge.processQuestionWithData(
         question.trim(), 
@@ -145,8 +132,8 @@ export async function POST(request: NextRequest) {
         {
           audiobookId: currentAudiobook._id,
           currentPosition_s: context?.currentTime || 0,
-          playbackChapterIdx: context?.currentChapter || 1,
-          userProgressIdx: userProgressIdx
+          playbackChapterIdx: validChapterIdx,
+          userProgressIdx: maxAvailableChapter
         }
       );
       const totalTime = Date.now() - startTime;

@@ -121,6 +121,21 @@ export const useAudiobook = (props?: UseAudiobookProps) => {
       muteAudiobook();
     }
   };
+
+  // Calculate current chapter based on current position
+  const getCurrentChapter = () => {
+    if (!currentBook || !currentBook.chapters || currentBook.chapters.length === 0) {
+      return 1;
+    }
+    
+    // Find the chapter that contains the current position
+    const currentChapter = currentBook.chapters.find(chapter => 
+      currentPosition >= chapter.start_s && 
+      (currentPosition < chapter.end_s || chapter === currentBook.chapters[currentBook.chapters.length - 1])
+    );
+    
+    return currentChapter ? currentChapter.idx : 1;
+  };
   
   return {
     currentBook,
@@ -138,6 +153,7 @@ export const useAudiobook = (props?: UseAudiobookProps) => {
     isAudioMuted,
     muteAudiobook,
     unmuteAudiobook,
-    toggleMute
+    toggleMute,
+    getCurrentChapter
   };
 };

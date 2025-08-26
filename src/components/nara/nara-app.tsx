@@ -11,11 +11,16 @@ import { Icon } from "@iconify/react";
 import { Dashboard } from "./dashboard";
 import Script from 'next/script';
 import { generateActionableNote, createShareableNote } from '@/services/nara/note-generation';
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "../../../convex/_generated/api";
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export function NaraApp() {
   const [selectedBookId, setSelectedBookId] = React.useState<string | null>(null);
   const [isVoiceAgentActive, setIsVoiceAgentActive] = React.useState(false);
   const [isListening, setIsListening] = React.useState(false);
+  const [streamingResponse, setStreamingResponse] = React.useState<string>("");
   
   // Audio state management refs to prevent race conditions
   const currentAudioRef = React.useRef<'audiobook' | 'tts' | null>(null);
@@ -30,14 +35,45 @@ export function NaraApp() {
   const vapiServiceRef = React.useRef<any>(null);
   const narratorCloningRef = React.useRef<any>(null);
   
+  // Enable TTS interruption when user manually starts audiobook
+  const enableTTSInterruption = () => {
+    if (ttsAudioRef.current && currentAudioRef.current === 'tts') {
+      console.log('[Voice Agent] TTS interrupted by manual audiobook play');
+      ttsAudioRef.current.pause();
+      ttsAudioRef.current = null;
+      currentAudioRef.current = 'audiobook';
+      
+      // Unmute audiobook since it was muted during TTS
+      unmuteAudiobook();
+      
+      // Set interrupted flag to prevent TTS handlers from resuming
+      isInterruptedRef.current = true;
+    }
+  };
+
+  // Wrapped play function that interrupts TTS if active
+  const play = () => {
+    enableTTSInterruption();
+    originalPlay();
+  };
+
+  // Wrapped togglePlayback function that interrupts TTS when starting playback
+  const togglePlayback = () => {
+    // If we're about to start playing (currently paused), interrupt TTS
+    if (!isPlaying) {
+      enableTTSInterruption();
+    }
+    originalTogglePlayback();
+  };
+
   // Simple voice interaction approach (no VAD/continuous listening)
   
   const { 
     currentBook, 
     isPlaying, 
     currentPosition, 
-    togglePlayback,
-    play,
+    togglePlayback: originalTogglePlayback,
+    play: originalPlay,
     pause,
     setPlaybackSpeed, 
     playbackSpeed,
@@ -48,7 +84,8 @@ export function NaraApp() {
     isAudioMuted,
     muteAudiobook,
     unmuteAudiobook,
-    toggleMute
+    toggleMute,
+    getCurrentChapter
   } = useAudiobook({ bookId: selectedBookId || undefined });
   
   const { 
@@ -85,26 +122,16 @@ export function NaraApp() {
         vapiServiceRef.current.stopConversation();
       }
       
-      // Process through VoiceAgentBridge which handles LangGraph → 11labs TTS pipeline
-      const response = await fetch('/api/voice-qa', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'ask-question',
-          question: transcript,
-          context: {
-            audiobookId: currentBook?.id || null, // Pass the actual audiobook being played
-            youtubeVideoId: currentBook?.youtubeVideoId || null, // Also pass YouTube ID
-            currentChapter: currentBook?.currentChapter || 1,
-            currentTime: currentPosition,
-            audioPosition: currentPosition,
-            bookTitle: currentBook?.title || 'Unknown Book'
-          }
-        }),
-        signal: abortControllerRef.current.signal
+      // Set initial audio state (TTS handler will manage pausing)
+      currentAudioRef.current = 'audiobook';
+      
+      // Use Convex action directly for much faster response
+      const data = await convex.action(api.actions.voiceQA.streamingVoiceQA, {
+        question: transcript,
+        audiobookId: currentBook?.id as any,
+        currentChapter: getCurrentChapter(),
+        currentPosition: currentPosition
       });
-
-      const data = await response.json();
       
       // Check if this query was aborted
       if (abortControllerRef.current?.signal.aborted) {
@@ -113,26 +140,153 @@ export function NaraApp() {
       }
       
       if (data.success) {
-        console.log('[Voice Agent] LangGraph response received:', data.result);
+        console.log('[Voice Agent] Convex response received:', data);
         
-        // Create note from the interaction (answer is already cleaned by API)
-        await createNoteFromVoiceInteraction(transcript, data.result.answer);
-        
-        // Play TTS audio from 11labs via LangGraph response
-        if (data.result.audioBuffer) {
-          console.log('[Voice Agent] Playing 11labs TTS response from LangGraph');
-          await playTTSAudio(data.result.audioBuffer);
+        // Generate TTS for the response
+        const baseUrl = window.location.origin;
+        const ttsResponse = await fetch(`${baseUrl}/api/tts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: data.answer
+          })
+        });
+
+        if (ttsResponse.ok) {
+          const audioBuffer = await ttsResponse.arrayBuffer();
+          const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          
+          // Pause audiobook playback (this stops the timer) - following exact original pattern
+          if (isPlaying) {
+            pause();
+            console.log('[Voice Agent] Paused audiobook for TTS playback');
+          }
+          
+          // Mute audiobook as backup
+          muteAudiobook();
+          currentAudioRef.current = 'tts';
+          
+          const audio = new Audio(audioUrl);
+          ttsAudioRef.current = audio;
+          
+          // Configure audio playback
+          audio.volume = 0.9;
+          
+          // Set up event handlers - exact original pattern
+          audio.addEventListener('ended', () => {
+            console.log('[Voice Agent] TTS playback completed - resuming audiobook');
+            URL.revokeObjectURL(audioUrl);
+            ttsAudioRef.current = null;
+            currentAudioRef.current = 'audiobook';
+            
+            // Resume audiobook playback at the same position
+            unmuteAudiobook();
+            setTimeout(() => {
+              if (!isInterruptedRef.current) {
+                play();
+              }
+            }, 300);
+            
+            isInterruptedRef.current = false;
+          });
+          
+          audio.addEventListener('error', (error) => {
+            console.error('[Voice Agent] TTS audio playback error:', error);
+            URL.revokeObjectURL(audioUrl);
+            ttsAudioRef.current = null;
+            currentAudioRef.current = null;
+            
+            // Resume audiobook on error
+            unmuteAudiobook();
+            if (!isInterruptedRef.current) {
+              play();
+            }
+          });
+          
+          // Start playback
+          audio.play().catch(error => {
+            console.error('[Voice Agent] TTS audio setup failed:', error);
+            URL.revokeObjectURL(audioUrl);
+            ttsAudioRef.current = null;
+            currentAudioRef.current = null;
+            
+            // Resume audiobook on setup error
+            unmuteAudiobook();
+            if (!isInterruptedRef.current) {
+              play();
+            }
+          });
+          
+          console.log('[Voice Agent] TTS playback started - audiobook timer paused');
+        } else {
+          console.error('[Voice Agent] TTS failed');
+          // Don't resume here - let the finally block handle it
         }
-        
-        // Handle playback hints from LangGraph if provided
-        if (data.result.playbackHint) {
-          console.log('[Voice Agent] Seek hint:', data.result.playbackHint);
-          // TODO: Implement seek to playback hint position
+
+        // If there's a playback hint, seek to it
+        if (data.playbackHint) {
+          const hintTime = data.playbackHint.start_s || currentPosition;
+          console.log(`[Voice Agent] Seeking to suggested time: ${hintTime}s`);
+          seekTo(hintTime);
+        }
+
+        // Create note from the interaction using structured response
+        if (data.note && currentBook) {
+          const generatedNote = {
+            title: data.note.title,
+            bulletPoints: data.note.bulletPoints,
+            timestamp: Date.now(),
+            audiobookPosition: currentPosition
+          };
+          
+          // Create shareable note with book context
+          const shareableNote = createShareableNote(
+            generatedNote,
+            {
+              bookId: currentBook?.id || 'unknown',
+              bookTitle: currentBook?.title || 'Audiobook',
+              currentChapter: getCurrentChapter(),
+              chapterTitle: (currentBook as any)?.chapters?.find((ch: any) => ch.idx === getCurrentChapter())?.title
+            },
+            {
+              startTime: currentPosition - 30,
+              endTime: currentPosition,
+              transcriptSnippet: transcript.substring(0, 100)
+            }
+          );
+          
+          // Save to database
+          const noteResponse = await fetch('/api/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              bookId: currentBook?.id || 'unknown',
+              title: shareableNote.title,
+              content: shareableNote.content,
+              bulletPoints: shareableNote.bulletPoints,
+              timestamp: shareableNote.timestamp,
+              audiobookPosition: shareableNote.audiobookPosition,
+              topic: "Voice Insight",
+              userQuestion: transcript,
+              aiResponse: data.answer,
+              chapterInfo: shareableNote.chapterInfo
+            })
+          });
+
+          const noteData = await noteResponse.json();
+          if (noteData.success) {
+            addNote(noteData.note);
+            console.log('[Voice Agent] Actionable note created:', noteData.note.id);
+          } else {
+            console.error('[Voice Agent] Failed to create note:', noteData.error);
+          }
         }
       }
     } catch (error: any) {
       if (error.name !== 'AbortError') {
         console.error('[Voice Agent] VoiceAgentBridge processing failed:', error);
+        // Don't resume here - let the finally block handle it
       }
     } finally {
       processingQueryRef.current = false;
@@ -142,17 +296,19 @@ export function NaraApp() {
       setIsListening(false);
       setIsVoiceAgentActive(false);
       
-      // Resume narrator after voice interaction is complete
-      console.log('[Voice Agent] Voice interaction complete - resuming narrator');
-      currentAudioRef.current = 'audiobook';
+      // Resume narrator after voice interaction is complete (if TTS didn't handle it)
+      console.log('[Voice Agent] Voice interaction complete');
       
-      // Resume audiobook playback after a brief pause
-      setTimeout(() => {
-        if (!isInterruptedRef.current) {
-          play();
-          console.log('[Voice Agent] Resumed narrator playback');
-        }
-      }, 500);
+      // Only resume if TTS isn't playing (TTS handlers manage their own resume)
+      if (currentAudioRef.current !== 'tts') {
+        currentAudioRef.current = 'audiobook';
+        setTimeout(() => {
+          if (!isInterruptedRef.current) {
+            play();
+            console.log('[Voice Agent] Resumed narrator playback from finally block');
+          }
+        }, 500);
+      }
       
       // Process next query in queue if any
       const nextQuery = queryQueueRef.current.shift();
@@ -193,7 +349,7 @@ export function NaraApp() {
       }
 
       // Initialize Vapi service for STT only (VoiceAgentBridge handles TTS)
-      const vapiService = await window.NaraAudioFactory.createVapiService({
+      const vapiService = await (window as any).NaraAudioFactory.createVapiService({
         apiKey: '765f8644-1464-4b36-a4fe-c660e15ba313',
         assistantId: '73c59df7-34d0-4e5a-89b0-d0668982c8cc',
         sttOnly: true // STT only - VoiceAgentBridge handles the rest
@@ -326,10 +482,10 @@ export function NaraApp() {
     } catch (error) {
       console.error('[Voice Agent] Activation failed:', error);
       console.error('[Voice Agent] Error details:', {
-        message: error?.message,
-        stack: error?.stack,
-        name: error?.name,
-        cause: error?.cause
+        message: (error as any)?.message,
+        stack: (error as any)?.stack,
+        name: (error as any)?.name,
+        cause: (error as any)?.cause
       });
       setIsVoiceAgentActive(false);
       setIsListening(false);
@@ -351,7 +507,7 @@ export function NaraApp() {
         currentPosition,
         {
           audiobookId: currentBook?.id,
-          chapterIdx: currentBook?.currentChapter || 1
+          chapterIdx: getCurrentChapter()
         }
       );
       
@@ -361,8 +517,8 @@ export function NaraApp() {
         {
           bookId: currentBook?.id || 'unknown',
           bookTitle: currentBook?.title || 'Audiobook',
-          currentChapter: currentBook?.currentChapter,
-          chapterTitle: currentBook?.chapterTitle
+          currentChapter: getCurrentChapter(),
+          chapterTitle: (currentBook as any)?.chapters?.find((ch: any) => ch.idx === getCurrentChapter())?.title
         },
         {
           startTime: currentPosition - 30,
@@ -494,22 +650,6 @@ export function NaraApp() {
     }
   };
 
-  // Enable voice interruption of TTS
-  const enableTTSInterruption = () => {
-    if (ttsAudioRef.current && currentAudioRef.current === 'tts') {
-      console.log('[Voice Agent] TTS interrupted by voice input');
-      ttsAudioRef.current.pause();
-      ttsAudioRef.current = null;
-      currentAudioRef.current = null;
-      
-      // Resume audiobook playback
-      setTimeout(() => {
-        currentAudioRef.current = 'audiobook';
-        unmuteAudiobook();
-        play();
-      }, 100);
-    }
-  };
 
   React.useEffect(() => {
     // Initialize narrator voice cloning properly
@@ -684,8 +824,29 @@ export function NaraApp() {
     );
   }
 
+  // Streaming response overlay
+  const StreamingResponseOverlay = () => {
+    if (!streamingResponse) return null;
+    
+    return (
+      <div className="fixed inset-x-4 top-20 z-50 max-w-2xl mx-auto">
+        <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg p-4 shadow-lg">
+          <div className="flex items-start gap-3">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse mt-2"></div>
+            <div className="flex-1">
+              <div className="text-sm font-medium text-gray-700 mb-2">AI Response</div>
+              <div className="text-gray-800 text-sm leading-relaxed">{streamingResponse}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
+      <StreamingResponseOverlay />
+      
       {/* Load YouTube API for audiobook player */}
       <Script 
         src="https://www.youtube.com/iframe_api" 
