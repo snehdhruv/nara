@@ -35,7 +35,6 @@ export const AudiobookPanelV2: React.FC<AudiobookPanelProps> = ({
   const lastScrollPositionRef = React.useRef(0);
   const userHasScrolledRef = React.useRef(false);
   const scrollTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-  const [scrollY, setScrollY] = React.useState(0);
 
   // Process book content into sentence-based segments with word timings
   const processedContent = React.useMemo(() => {
@@ -134,28 +133,19 @@ export const AudiobookPanelV2: React.FC<AudiobookPanelProps> = ({
     };
   }, [processedContent, currentPosition]);
 
-  // Update scroll position based on active word position
+  // Simple auto-scroll that actually works
   React.useEffect(() => {
     if (!isPlaying || userHasScrolledRef.current || !activeWordRef.current || !scrollContainerRef.current) return;
     
-    const container = scrollContainerRef.current;
-    const activeWord = activeWordRef.current;
+    console.log('[Auto-scroll] Following word:', activeInfo.activeWord?.word);
     
-    // Get word position and calculate where it should be centered
-    const containerHeight = container.getBoundingClientRect().height;
-    const wordOffsetTop = activeWord.offsetTop;
-    const targetScrollY = wordOffsetTop - containerHeight / 2;
-    
-    setScrollY(targetScrollY);
+    // Just scroll the active word into view
+    activeWordRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'nearest'
+    });
   }, [activeInfo.activeWord?.index, isPlaying]);
-
-  // Apply scroll position with Framer Motion
-  React.useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (container && !userHasScrolledRef.current) {
-      container.scrollTop = scrollY;
-    }
-  }, [scrollY]);
 
   // Track manual scrolling
   React.useEffect(() => {
@@ -204,37 +194,20 @@ export const AudiobookPanelV2: React.FC<AudiobookPanelProps> = ({
     const isPast = isInActiveSegment && activeInfo.activeWord && index < activeInfo.activeWord.index;
     
     return (
-      <motion.span
+      <span
         key={`${word.word}-${index}`}
         ref={isActive ? activeWordRef : null}
-        className={`inline-block mx-0.5 transition-all duration-200 ${
+        className={`inline-block mr-1 ${
           isActive 
-            ? 'text-amber-900 font-semibold' 
+            ? 'text-amber-900 font-semibold bg-amber-100 px-1 rounded' 
             : isPast 
               ? 'text-wood-600 opacity-90' 
               : 'text-wood-800'
         }`}
-        animate={{
-          scale: isActive ? 1.2 : 1,
-          backgroundColor: isActive 
-            ? 'rgba(251, 191, 36, 0.2)' // Amber highlight
-            : 'rgba(0, 0, 0, 0)', // Use transparent rgba instead of 'transparent'
-          padding: isActive ? '2px 4px' : '0px',
-          borderRadius: isActive ? '4px' : '0px'
-        }}
-        style={{
-          textShadow: isActive 
-            ? '0 0 20px rgba(251, 191, 36, 0.5)' 
-            : 'none'
-        }}
-        transition={{
-          duration: 0.2,
-          ease: 'easeInOut',
-          scale: { type: 'spring', stiffness: 400, damping: 25 }
-        }}
+        style={{ wordBreak: 'break-word' }}
       >
         {word.word}
-      </motion.span>
+      </span>
     );
   };
 
@@ -283,15 +256,13 @@ export const AudiobookPanelV2: React.FC<AudiobookPanelProps> = ({
       <div 
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto px-8 py-6 scroll-smooth"
-        style={{
-          scrollBehavior: userHasScrolledRef.current ? 'auto' : 'smooth'
-        }}
       >
-        <div className="max-w-3xl mx-auto">
+        <div className="w-full max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
+            className="w-full"
           >
             <h1 className="text-3xl font-bold mb-2 text-wood-900">{book.title}</h1>
             <h2 className="text-xl text-wood-700 mb-8">
@@ -299,7 +270,7 @@ export const AudiobookPanelV2: React.FC<AudiobookPanelProps> = ({
             </h2>
             
             {/* Render processed segments */}
-            <div className="space-y-6">
+            <div className="space-y-6 w-full">
               {processedContent.map((segment, segmentIndex) => {
                 const isActiveSegment = segmentIndex === activeInfo.segmentIndex;
                 const segmentElement = (
@@ -332,7 +303,7 @@ export const AudiobookPanelV2: React.FC<AudiobookPanelProps> = ({
                         ? 'bg-gradient-to-r from-amber-50 to-transparent shadow-md' 
                         : ''
                     }`}>
-                      <p className="text-lg leading-relaxed">
+                      <p className="text-lg leading-relaxed break-words hyphens-auto w-full">
                         {segment.wordTimings.map((word, wordIndex) => 
                           renderWord(word, wordIndex, isActiveSegment)
                         )}
@@ -354,19 +325,6 @@ export const AudiobookPanelV2: React.FC<AudiobookPanelProps> = ({
             )}
           </motion.div>
         </div>
-      </div>
-      
-      {/* Reading Mode Indicator */}
-      <div className="absolute bottom-4 right-4">
-        <motion.div
-          className="bg-wood-800 text-cream-100 px-3 py-1 rounded-full text-xs shadow-lg flex items-center gap-2"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 0.8, x: 0 }}
-          whileHover={{ opacity: 1 }}
-        >
-          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-          <span>Auto-scroll {userHasScrolledRef.current ? 'paused' : 'active'}</span>
-        </motion.div>
       </div>
     </div>
   );
