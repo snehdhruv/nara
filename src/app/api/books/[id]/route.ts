@@ -40,13 +40,18 @@ export async function GET(
         console.log('[API] Zero to One book not found by YouTube ID');
       }
     } else {
-      // Try to get audiobook by Convex ID first
-      try {
-        audiobook = await convex.query(api.audiobooks.getAudiobook, {
-          audiobookId: bookId as any
-        });
-      } catch (error) {
-        console.log('[API] Book not found by Convex ID, trying YouTube ID...');
+      // Check if bookId looks like a Convex ID (starts with certain pattern) vs YouTube ID
+      const isConvexId = bookId.match(/^[a-z0-9]{32}$/);
+      
+      if (isConvexId) {
+        // Try to get audiobook by Convex ID first
+        try {
+          audiobook = await convex.query(api.audiobooks.getAudiobook, {
+            audiobookId: bookId as any
+          });
+        } catch (error) {
+          console.log('[API] Book not found by Convex ID, trying YouTube ID...');
+        }
       }
       
       // If not found by ID, try by YouTube video ID
@@ -152,17 +157,26 @@ export async function PUT(
         console.log('[API] Zero to One book not found by YouTube ID');
       }
     } else {
-      try {
-        audiobook = await convex.query(api.audiobooks.getAudiobook, {
-          audiobookId: bookId as any
-        });
-      } catch (error) {
-        // Try by YouTube ID
+      // Check if bookId looks like a Convex ID vs YouTube ID
+      const isConvexId = bookId.match(/^[a-z0-9]{32}$/);
+      
+      if (isConvexId) {
+        try {
+          audiobook = await convex.query(api.audiobooks.getAudiobook, {
+            audiobookId: bookId as any
+          });
+        } catch (error) {
+          console.log('[API] Book not found by Convex ID');
+        }
+      }
+      
+      // If not found by Convex ID or if it's not a Convex ID format, try by YouTube ID
+      if (!audiobook) {
         try {
           audiobook = await convex.query(api.audiobooks.getAudiobookByYouTubeId, {
             youtubeVideoId: bookId
           });
-        } catch (error2) {
+        } catch (error) {
           console.log('[API] Book not found by YouTube ID either');
         }
       }

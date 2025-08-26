@@ -634,57 +634,159 @@
     },
     {
       "chapter_idx": 1,
-      "start_s": 451.72,
-      "end_s": 453.72,
-      "text": "I'm a new child that I want to see."
+      "start_s": 452.72,
+      "end_s": 455.72,
+      "text": "With Archer, you can shine."
     },
     {
       "chapter_idx": 1,
-      "start_s": 453.72,
+      "start_s": 455.72,
+      "end_s": 456.72,
+      "text": "A little more."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 456.72,
       "end_s": 459.72,
-      "text": "I want to become someone who, when the time comes for me to die,"
+      "text": "With Archer, you've got what it takes."
     },
     {
       "chapter_idx": 1,
       "start_s": 459.72,
+      "end_s": 462.72,
+      "text": "It's just how you need to shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 462.72,
       "end_s": 463.72,
-      "text": "I go, oh my goodness, I have boosted up."
+      "text": "You got to shine."
     },
     {
       "chapter_idx": 1,
       "start_s": 463.72,
+      "end_s": 464.72,
+      "text": "Just shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 464.72,
       "end_s": 465.72,
-      "text": "I have brung it dry."
+      "text": "Shine."
     },
     {
       "chapter_idx": 1,
       "start_s": 465.72,
+      "end_s": 466.72,
+      "text": "You got to shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 466.72,
       "end_s": 467.72,
-      "text": "Everybody gets a start."
+      "text": "Shine."
     },
     {
       "chapter_idx": 1,
       "start_s": 467.72,
+      "end_s": 468.72,
+      "text": "Shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 468.72,
+      "end_s": 469.72,
+      "text": "Shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 469.72,
       "end_s": 470.72,
-      "text": "They just need to learn how to shine."
+      "text": "Shine."
     },
     {
       "chapter_idx": 1,
       "start_s": 470.72,
+      "end_s": 471.72,
+      "text": "Shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 471.72,
       "end_s": 472.72,
-      "text": "I'm a new child that I want to see."
+      "text": "Shine."
     },
     {
       "chapter_idx": 1,
       "start_s": 472.72,
+      "end_s": 473.72,
+      "text": "Shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 473.72,
+      "end_s": 474.72,
+      "text": "Shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 474.72,
+      "end_s": 475.72,
+      "text": "Shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 475.72,
+      "end_s": 476.72,
+      "text": "Shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 476.72,
+      "end_s": 477.72,
+      "text": "Shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 477.72,
       "end_s": 478.72,
-      "text": "I want to become someone who, when the time comes for me to die,"
+      "text": "Shine."
     },
     {
       "chapter_idx": 1,
       "start_s": 478.72,
+      "end_s": 479.72,
+      "text": "Shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 479.72,
+      "end_s": 480.72,
+      "text": "Shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 480.72,
       "end_s": 481.72,
-      "text": "I go, oh my goodness, I have boosted up."
+      "text": "Shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 481.72,
+      "end_s": 482.72,
+      "text": "Shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 482.72,
+      "end_s": 483.72,
+      "text": "Shine."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 483.72,
+      "end_s": 483.72,
+      "text": ""
     }
   ],
   "paragraphs": [
@@ -943,32 +1045,26 @@
     {
       "chapter_idx": 1,
       "start_s": 443.72,
-      "end_s": 453.72,
-      "text": "They just need to learn how to shine. I'm a new child that I want to see."
+      "end_s": 455.72,
+      "text": "They just need to learn how to shine. With Archer, you can shine."
     },
     {
       "chapter_idx": 1,
-      "start_s": 453.72,
+      "start_s": 455.72,
+      "end_s": 459.72,
+      "text": "A little more. With Archer, you've got what it takes."
+    },
+    {
+      "chapter_idx": 1,
+      "start_s": 459.72,
       "end_s": 463.72,
-      "text": "I want to become someone who, when the time comes for me to die, I go, oh my goodness, I have boosted up."
+      "text": "It's just how you need to shine. You got to shine."
     },
     {
       "chapter_idx": 1,
       "start_s": 463.72,
-      "end_s": 467.72,
-      "text": "I have brung it dry. Everybody gets a start."
-    },
-    {
-      "chapter_idx": 1,
-      "start_s": 467.72,
-      "end_s": 472.72,
-      "text": "They just need to learn how to shine. I'm a new child that I want to see."
-    },
-    {
-      "chapter_idx": 1,
-      "start_s": 472.72,
-      "end_s": 481.72,
-      "text": "I want to become someone who, when the time comes for me to die, I go, oh my goodness, I have boosted up."
+      "end_s": 466.72,
+      "text": "Just shine. You got to shine."
     }
   ]
 }
