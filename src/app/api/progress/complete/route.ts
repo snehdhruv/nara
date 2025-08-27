@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
+import { getUserId } from "../../../../lib/auth-utils";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-
-const DEMO_USER_ID = 'k175aznf9t8wfzxpjx1h1s8f3c6zzxkh' as const;
 
 // PUT /api/progress/complete - Mark book as completed
 export async function PUT(request: NextRequest) {
   try {
+    const userId = await getUserId(request);
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { bookId } = body;
 
@@ -21,7 +28,7 @@ export async function PUT(request: NextRequest) {
 
     // Mark as completed in Convex
     await convex.mutation(api.progress.markCompleted, {
-      userId: DEMO_USER_ID,
+      userId,
       audiobookId: bookId
     });
 

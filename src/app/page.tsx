@@ -103,7 +103,7 @@ export default function Home() {
         router.push('/nara');
       } else {
         // Redirect to Spotify OAuth
-        router.push('/auth/sign-in');
+        router.push('/nara');
       }
     } catch (error) {
       console.error('Authentication failed:', error);

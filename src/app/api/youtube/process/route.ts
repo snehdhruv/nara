@@ -115,7 +115,8 @@ export async function POST(request: NextRequest) {
         })) || [],
         
         // Use real paragraphs as content (transform format)
-        content: processedData.paragraphs?.slice(0, 100).map((para: { text: any; start_s: any; end_s: any; }) => ({
+        // Don't limit to 100 - use all paragraphs for proper chunking
+        content: processedData.paragraphs?.map((para: { text: any; start_s: any; end_s: any; }) => ({
           text: para.text,
           startTime: para.start_s,
           endTime: para.end_s
@@ -154,7 +155,8 @@ export async function POST(request: NextRequest) {
         })) || [],
         
         // Use real paragraphs as content (transform format)
-        content: processedData.paragraphs?.slice(0, 100).map((para: { text: any; start_s: any; end_s: any; }) => ({
+        // Don't limit to 100 - use all paragraphs for proper chunking
+        content: processedData.paragraphs?.map((para: { text: any; start_s: any; end_s: any; }) => ({
           text: para.text,
           startTime: para.start_s,
           endTime: para.end_s
